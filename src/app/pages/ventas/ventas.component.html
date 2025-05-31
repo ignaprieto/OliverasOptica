@@ -1,0 +1,164 @@
+<div class="min-h-screen bg-[#edf2ff] text-black px-6 py-8 animate-fade-in-scale">
+    <div class="mb-6">
+  <button
+    routerLink="/dashboard"
+    class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded transition"
+  >
+    ← Volver al Panel
+  </button>
+</div>
+
+  <h2 class="text-2xl font-semibold mb-6">Ventas</h2>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Sección izquierda: productos -->
+    <div class="lg:col-span-2 space-y-4">
+      <div class="mb-4">
+  <input
+    type="text"
+    placeholder="Buscar por código, marca o categoría"
+    [(ngModel)]="filtroGeneral"
+    class="input w-full md:w-2/3"
+  />
+</div>
+
+  <!-- Tabla scrollable con altura máxima -->
+<div class="bg-white rounded-xl shadow p-4 overflow-auto max-h-[400px]">
+  <table class="min-w-[900px] w-full text-sm text-left border-collapse">
+    <thead class="bg-[#1e293b] text-white sticky top-0 z-10">
+      <tr>
+        <th class="px-4 py-2">Código</th>
+        <th class="px-4 py-2">Nombre</th>
+        <th class="px-4 py-2">Marca</th>
+        <th class="px-4 py-2">Talle</th>
+        <th class="px-4 py-2">Categoría</th>
+        <th class="px-4 py-2">Precio</th>
+        <th class="px-4 py-2">Stock</th>
+        <th class="px-4 py-2 text-center">Cantidad</th>
+        <th class="px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let prod of productosFiltrados()">
+        <td class="px-4 py-2">{{ prod.codigo }}</td>
+        <td class="px-4 py-2">{{ prod.nombre }}</td>
+        <td class="px-4 py-2">{{ prod.marca }}</td>
+        <td class="px-4 py-2">{{ prod.talle }}</td>
+        <td class="px-4 py-2">{{ prod.categoria }}</td>
+        <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
+
+        <td class="px-4 py-2">
+  {{ prod.cantidad_stock - (cantidades[prod.id] || 0) }}
+</td>
+
+        <td class="px-4 py-2 flex justify-center items-center gap-2">
+          <button (click)="disminuirCantidad(prod)" class="px-2 py-1 bg-gray-200 rounded">–</button>
+          <span>{{ cantidades[prod.id] || 0 }}</span>
+          <button (click)="aumentarCantidad(prod)" class="px-2 py-1 bg-gray-200 rounded">+</button>
+        </td>
+        <td class="px-4 py-2 text-right">
+        <button
+  *ngIf="prod.cantidad_stock > 0"
+  (click)="agregarAlCarrito(prod)"
+  [disabled]="!(cantidades[prod.id] > 0) || (cantidades[prod.id] > prod.cantidad_stock)"
+
+  class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded disabled:opacity-50">
+  Agregar
+</button>
+
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+    </div>
+
+    <!-- Sección derecha: carrito -->
+    <div class="bg-white rounded-xl shadow p-6 mt-6 lg:mt-0">
+      <h3 class="text-lg font-semibold mb-4">Carrito</h3>
+
+      <div *ngIf="carrito.length === 0" class="text-gray-500 text-sm">Aún no hay productos.</div>
+
+     <ul *ngIf="carrito.length > 0" class="mb-4 space-y-2">
+  <li *ngFor="let item of carrito" class="flex justify-between items-center text-sm">
+    <div>
+      <span>
+  {{ item.producto.nombre }} ({{ item.producto.marca }} - Talle {{ item.producto.talle }}) x{{ item.cantidad }}
+</span>
+
+      <button
+        (click)="quitarUnidad(item.producto)"
+        class="ml-2 px-2 py-0.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
+      >
+        Quitar 1
+      </button>
+      <button
+        *ngIf="item.cantidad > 1"
+        (click)="eliminarDelCarrito(item.producto)"
+        class="ml-1 px-2 py-0.5 bg-gray-500 hover:bg-gray-700 text-white rounded text-xs"
+      >
+        Eliminar
+      </button>
+    </div>
+    <span>{{ item.subtotal | monedaArs }}</span>
+
+  </li>
+</ul>
+
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1">Método de pago</label>
+        <select [(ngModel)]="metodoPago" class="input w-full">
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+          <option value="debito">Débito</option>
+          <option value="credito">Crédito</option>
+          <option value="modo">Modo</option>
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-1">Código de descuento</label>
+        <input type="text" [(ngModel)]="codigoDescuento" placeholder="Ej: PROMO10" class="input w-full" />
+        <button (click)="aplicarDescuento()" class="mt-2 text-blue-600 hover:underline text-sm">Aplicar</button>
+        <div *ngIf="descuentoAplicado > 0" class="text-green-600 text-sm mt-1">
+  Descuento aplicado: {{ descuentoAplicado }}%
+</div>
+
+      </div>
+
+      <div class="mb-4 text-right text-lg font-semibold">
+        Total: {{ totalFinal | monedaArs }}
+
+      </div>
+
+      <hr class="my-4" />
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium">Nombre del cliente</label>
+        <input type="text" [(ngModel)]="clienteNombre" class="input w-full" />
+      </div>
+
+      <div class="mb-4">
+        <label class="block text-sm font-medium">Correo electrónico</label>
+        <input type="email" [(ngModel)]="clienteEmail" class="input w-full" />
+      </div>
+
+      <button
+  (click)="confirmarVenta()"
+  [disabled]="carrito.length === 0 || !clienteNombre || procesandoVenta"
+  class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded disabled:opacity-50 transition">
+  Confirmar Venta
+</button>
+
+    </div>
+  </div>
+<div
+  *ngIf="toastVisible"
+  class="fixed bottom-4 right-4 text-white px-4 py-2 rounded shadow z-50 animate-fade-in-out"
+  [ngClass]="toastColor"
+>
+  {{ toastMensaje }}
+</div>
+
+</div>

@@ -1,0 +1,102 @@
+<div class="min-h-screen bg-[#edf2ff] text-black px-6 py-8 animate-fade-in-scale relative">
+  <!-- Botón volver -->
+  <div class="mb-6">
+    <button routerLink="/dashboard"
+      class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded transition shadow w-full sm:w-auto">
+      ← Volver al Panel
+    </button>
+  </div>
+
+  <h2 class="text-2xl font-semibold mb-6 text-center sm:text-left">Aplicar Aumento</h2>
+
+  <!-- Paso 1: Selección de productos -->
+  <div *ngIf="!confirmando" class="space-y-6">
+    <div *ngFor="let categoria of categorias" class="bg-white rounded-xl shadow-md p-5">
+      <h3 class="text-lg font-boldtext-center sm:text-left text-[#1e293b] mb-3">{{ categoria }}</h3>
+
+      <label class="block mb-3 text-sm font-medium text-gray-700">
+        <input type="checkbox" [(ngModel)]="aumentarTodaCategoria[categoria]" (change)="toggleTodos(categoria)"
+          class="mr-2">
+        Aumentar toda la categoría
+      </label>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <label *ngFor="let producto of productosPorCategoria[categoria]"
+          class="flex items-center bg-gray-100 rounded px-3 py-2 shadow-sm">
+          <input type="checkbox" [checked]="productosSeleccionados[producto.id]"
+            (change)="toggleProducto(producto.id)" [disabled]="aumentarTodaCategoria[categoria]" class="mr-2" />
+          <span>{{ producto.nombre }} — {{ producto.precio | monedaArs }}</span>
+
+        </label>
+      </div>
+    </div>
+
+    <button (click)="pasarAPasoConfirmacion()"
+      class="mt-6 bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded shadow transition w-full sm:w-auto"
+      [disabled]="!seSeleccionoAlgo()">
+      Continuar
+    </button>
+  </div>
+
+  <!-- Modal de confirmación estilo estética -->
+  <div *ngIf="confirmando" class="fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+    <div class="relative z-50 flex items-center justify-center min-h-screen">
+      <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg w-[90%] max-w-md animate-fade-in-scale">
+        <h3 class="text-lg font-semibold mb-4">¿Cómo querés aplicar el aumento?</h3>
+
+        <ul class="mb-4 list-disc pl-5 text-sm text-gray-700">
+          <li *ngFor="let item of resumenAumento">
+            {{ item }}
+          </li>
+        </ul>
+
+        <div class="mb-4">
+          <label class="block mb-2 font-medium">
+            <input type="radio" name="tipo" [(ngModel)]="tipoAumento" value="precio" class="mr-2" />
+            Por monto fijo ($)
+          </label>
+          <label class="block mb-2 font-medium">
+            <input type="radio" name="tipo" [(ngModel)]="tipoAumento" value="porcentaje" class="mr-2" />
+            Por porcentaje (%)
+          </label>
+        </div>
+
+        <input
+          type="number"
+          class="input w-full mb-4"
+          placeholder="Ej: 500 o 10"
+          [(ngModel)]="valorAumento"
+        />
+
+      <div class="flex justify-end gap-3 items-center flex-wrap mt-4">
+  <div *ngIf="errorAumentoInvalido" class="text-red-600 text-sm mr-auto">
+    Seleccioná el tipo de aumento e ingresá un valor válido.
+  </div>
+
+  <button
+    class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded w-full sm:w-auto"
+    (click)="cancelar()"
+  >
+    Cancelar
+  </button>
+
+  <button
+    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded w-full sm:w-auto"
+    (click)="aplicarAumento()"
+  >
+    Aplicar Aumento
+  </button>
+</div>
+
+      </div>
+    </div>
+  </div>
+
+  <div
+    *ngIf="toastVisible"
+    class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow z-50 animate-fade-in-out"
+  >
+    {{ toastMensaje }}
+  </div>
+</div>

@@ -1,0 +1,99 @@
+<div class="min-h-screen bg-[#edf2ff] text-black px-6 py-8 animate-fade-in-scale">
+    <div class="mb-6">
+  <button
+    routerLink="/dashboard"
+    class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded transition"
+  >
+    ← Volver al Panel
+  </button>
+</div>
+
+  <h2 class="text-2xl font-semibold mb-6">Gestión de Descuentos</h2>
+
+<!-- Layout responsive -->
+<div class="flex flex-col lg:flex-row gap-6 mb-8">
+  <!-- Formulario -->
+  <div class="bg-white rounded-xl shadow p-6 w-full lg:max-w-sm">
+    <h3 class="text-lg font-semibold mb-4">{{ modo === 'agregar' ? 'Agregar Descuento' : 'Editar Descuento' }}</h3>
+    <form (ngSubmit)="guardarDescuento()" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Código</label>
+        <input type="text" [(ngModel)]="descuento.codigo" name="codigo" class="input" required />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Porcentaje (%)</label>
+        <input type="number" [(ngModel)]="descuento.porcentaje" name="porcentaje" class="input" required />
+      </div>
+
+      <div class="flex gap-4 mt-4">
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+          {{ modo === 'agregar' ? 'Agregar' : 'Actualizar' }}
+        </button>
+        <button type="button" (click)="cancelarEdicion()" *ngIf="modo === 'editar'" class="text-gray-600 hover:underline">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla -->
+  <div class="overflow-x-auto w-full">
+    <table class="w-full text-sm text-left border-collapse">
+      <thead class="bg-[#1e293b] text-white">
+        <tr>
+          <th class="px-4 py-3">Código</th>
+          <th class="px-4 py-3">Porcentaje</th>
+          <th class="px-4 py-3">Estado</th>
+          <th class="px-4 py-3">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y">
+        <tr *ngFor="let d of descuentos">
+          <td class="px-4 py-2">{{ d.codigo }}</td>
+          <td class="px-4 py-2">{{ d.porcentaje }}%</td>
+          <td class="px-4 py-2">
+            <span class="px-2 py-1 text-xs rounded font-medium"
+              [ngClass]="d.activo ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'">
+              {{ d.activo ? 'Activo' : 'Inactivo' }}
+            </span>
+          </td>
+          <td class="px-4 py-2 flex gap-2">
+            <button (click)="editarDescuento(d)" class="text-blue-600 hover:underline">Editar</button>
+            <button (click)="eliminarDescuento(d.id!)" class="text-red-600 hover:underline">Eliminar</button>
+            <button (click)="cambiarEstado(d)" class="text-yellow-600 hover:underline">
+              {{ d.activo ? 'Desactivar' : 'Activar' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+  <!-- Modal de confirmación -->
+<!-- Modal de confirmación -->
+<div *ngIf="mostrarConfirmacion" class="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center animate-fade-in-scale">
+    <h3 class="text-lg font-semibold mb-4">¿Estás seguro de eliminar este descuento?</h3>
+    <div class="flex justify-center gap-4">
+      <button
+        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+        (click)="confirmarEliminar()"
+      >
+        Eliminar
+      </button>
+      <button
+        class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded"
+        (click)="cancelarEliminar()"
+      >
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="toastVisible" class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow z-50 animate-fade-in-out">
+  {{ toastMensaje }}
+</div>
+
+</div>

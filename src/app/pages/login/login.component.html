@@ -1,0 +1,52 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-blue-100 px-4">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 animate-fade-in-scale">
+
+    <!-- Encabezado -->
+    <div class="text-center mb-6">
+      <h1 class="text-3xl font-bold text-gray-800">Angirû Ventas</h1>
+      <p class="text-sm text-gray-500 mt-1">Acceso exclusivo para administradores</p>
+    </div>
+
+    <!-- Formulario de Login -->
+    <form (ngSubmit)="login()" class="space-y-5">
+      <div>
+        <label for="email" class="block text-sm font-medium text-gray-700">Correo electrónico</label>
+        <input
+          id="email"
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          required
+          placeholder="ejemplo@correo.com"
+          class="w-full mt-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
+        <input
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          required
+          placeholder="ingresar contraseña"
+          class="w-full mt-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+      >
+        Iniciar Sesión
+      </button>
+    </form>
+
+    <!-- Error -->
+    <div *ngIf="error" class="mt-4 text-sm text-center text-red-700 bg-red-100 border border-red-300 rounded p-2">
+      {{ error }}
+    </div>
+
+  </div>
+</div>

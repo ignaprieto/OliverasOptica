@@ -1,0 +1,100 @@
+<div class="min-h-screen bg-[#edf2ff] text-black px-6 py-8 animate-fade-in-scale">
+  <!-- Botón volver -->
+  <div class="mb-6">
+    <button
+      routerLink="/dashboard"
+      class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded transition"
+    >
+      ← Volver al Panel
+    </button>
+  </div>
+
+  <!-- Título -->
+  <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
+
+  <!-- Filtros -->
+  <div class="flex gap-3 mb-6">
+    <button (click)="filtrar('hoy')" [class.bg-white]="filtro === 'hoy'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Hoy</button>
+    <button (click)="filtrar('7dias')" [class.bg-white]="filtro === '7dias'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Últimos 7 días</button>
+    <button (click)="filtrar('30dias')" [class.bg-white]="filtro === '30dias'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Últimos 30 días</button>
+    <button (click)="filtrar('todos')" [class.bg-white]="filtro === 'todos'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Historial Completo</button>
+
+  </div>
+
+  <!-- Total acumulado -->
+  <p class="mb-6 text-lg font-semibold">
+    Total acumulado:
+    <span class="text-green-600">{{ totalAcumulado | monedaArs }}</span>
+
+  </p>
+
+<!-- Paginación -->
+<div class="flex items-center gap-2 mb-6">
+  <button
+    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+    [disabled]="paginaActual === 1"
+    (click)="cambiarPagina(paginaActual - 1)"
+  >
+    ←
+  </button>
+
+  <ng-container *ngFor="let p of [].constructor(totalPaginas); let i = index">
+    <button
+      (click)="cambiarPagina(i + 1)"
+      [class.bg-blue-600]="paginaActual === i + 1"
+      [class.text-white]="paginaActual === i + 1"
+      class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+    >
+      {{ i + 1 }}
+    </button>
+  </ng-container>
+
+  <button
+    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
+    [disabled]="paginaActual === totalPaginas"
+    (click)="cambiarPagina(paginaActual + 1)"
+  >
+    →
+  </button>
+</div>
+
+  <!-- Lista de ventas -->
+  <div *ngFor="let venta of ventasPaginadas" class="bg-white rounded-xl shadow p-4 mb-6">
+    <p class="text-sm font-medium text-gray-600">
+      <strong>Usuario:</strong> {{ venta.nombre_usuario }}
+    </p>
+    <p class="text-sm text-gray-600">
+      <strong>Cliente:</strong> {{ venta.cliente_nombre }} - {{ venta.cliente_email || 'Sin email' }}
+    </p>
+    <p class="text-sm text-gray-600 mb-2">
+      <strong>Fecha:</strong> {{ venta.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}
+    </p>
+
+    <!-- Productos -->
+    <div class="mt-2">
+      <p class="font-medium mb-2">Productos vendidos:</p>
+      <ul class="list-disc ml-6 space-y-1 text-sm">
+        <li *ngFor="let p of venta.productos">
+          {{ p.nombre }} — Cant: {{ p.cantidad }} — {{ p.precio_unitario | monedaArs }} c/u — Subtotal: {{ p.subtotal | monedaArs }}
+
+        </li>
+      </ul>
+    </div>
+
+    <!-- Info de venta -->
+    <div class="mt-4 text-sm">
+      <p><strong>Método de pago:</strong> {{ venta.metodo_pago }}</p>
+      <p *ngIf="venta.descuento_aplicado > 0">
+        <strong>Descuento aplicado:</strong> {{ venta.descuento_aplicado }}%
+        —
+        <span class="text-red-600">
+          {{ ((venta.total_final / (1 - venta.descuento_aplicado / 100)) - venta.total_final) | monedaArs }}
+
+        </span>
+      </p>
+      <p class="text-lg font-semibold mt-2">
+        Total: {{ venta.total_final | monedaArs }}
+      </p>
+    </div>
+  </div>
+</div>

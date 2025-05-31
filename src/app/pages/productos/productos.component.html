@@ -1,0 +1,53 @@
+<div class="min-h-screen bg-[#edf2ff] text-black px-4 sm:px-6 py-6 sm:py-8 animate-fade-in-scale">
+  <div class="mb-6">
+    <button
+      routerLink="/dashboard"
+      class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded transition w-full sm:w-auto"
+    >
+      ← Volver al Panel
+    </button>
+  </div>
+
+  <h2 class="text-2xl font-semibold mb-6 text-center sm:text-left">Listado de Productos</h2>
+
+  <div class="max-w-md mb-6 mx-auto sm:mx-0">
+    <input
+      [(ngModel)]="filtro"
+      type="text"
+      placeholder="Buscar por nombre, marca o categoría..."
+      class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+
+<!-- Tabla dentro de contenedor scrolleable con altura máxima -->
+<div class="bg-white rounded-xl shadow p-4 max-h-[400px] overflow-y-auto">
+  <div class="min-w-[900px] mx-auto">
+  <table class="w-full text-sm text-left border-collapse">
+ <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">
+  <tr>
+    <th class="px-4 py-3">Código</th>
+    <th class="px-4 py-3">Nombre</th>
+    <th class="px-4 py-3">Marca</th>
+    <th class="px-4 py-3">Talle</th>
+    <th class="px-4 py-3">Categoría</th>
+    <th class="px-4 py-3">Precio</th>
+    <th class="px-4 py-3">Stock</th>
+  </tr>
+</thead>
+
+    <tbody class="bg-white divide-y">
+      <tr *ngFor="let prod of productosFiltrados()">
+        <td class="px-4 py-2">{{ prod.codigo }}</td>
+        <td class="px-4 py-2">{{ prod.nombre }}</td>
+        <td class="px-4 py-2">{{ prod.marca }}</td>
+        <td class="px-4 py-2">{{ prod.talle }}</td>
+        <td class="px-4 py-2">{{ prod.categoria }}</td>
+        <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
+        <td class="px-4 py-2">{{ prod.cantidad_stock }}</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+</div>

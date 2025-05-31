@@ -60,7 +60,40 @@ nuevoProducto(): Producto {
   } as Producto; // No incluye "id"
 }
 
-eliminarProducto(id: string) {
+/* eliminarProducto(id: string) {
+  this.idAEliminar = id;
+  this.mostrarConfirmacion = true;
+} */
+
+async eliminarProducto(id: string) {
+  // Consultar si el producto está asociado a alguna venta
+  const { data, error } = await this.supabase.getClient()
+    .from('detalle_venta')
+    .select('id')
+    .eq('producto_id', id)
+    .limit(1);
+
+  if (error) {
+    this.error = 'Error al verificar asociaciones de venta';
+    this.mostrarToast = true;
+    setTimeout(() => {
+      this.mostrarToast = false;
+      this.error = '';
+    }, 3000);
+    return;
+  }
+
+  if (data && data.length > 0) {
+    this.error = 'No se puede eliminar el producto: ya tiene ventas registradas.';
+    this.mostrarToast = true;
+    setTimeout(() => {
+      this.mostrarToast = false;
+      this.error = '';
+    }, 3000);
+    return;
+  }
+
+  // Si no hay ventas asociadas, mostrar la confirmación
   this.idAEliminar = id;
   this.mostrarConfirmacion = true;
 }

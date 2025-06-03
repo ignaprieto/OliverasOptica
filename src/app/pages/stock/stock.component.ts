@@ -133,16 +133,46 @@ async eliminarProducto(id: string) {
 
   try {
     if (this.modo === 'agregar') {
+      // Validar que no exista un producto con el mismo código
+      const { data: existentes, error: errorBusqueda } = await this.supabase.getClient()
+        .from('productos')
+        .select('id')
+        .eq('codigo', this.producto.codigo)
+        .limit(1);
+
+      if (errorBusqueda) throw errorBusqueda;
+
+      if (existentes && existentes.length > 0) {
+        this.error = 'Ya existe un producto con ese código.';
+        return;
+      }
+
       const { error } = await this.supabase.getClient().from('productos').insert([this.producto]);
       if (error) throw error;
+
       this.mostrarMensaje('Producto agregado correctamente');
+
     } else if (this.modo === 'editar' && this.producto.id) {
+      // Obtener producto original para validar el stock
+      const original = this.productos.find(p => p.id === this.producto.id);
+      if (!original) {
+        this.error = 'Producto original no encontrado';
+        return;
+      }
+
+      if (this.producto.cantidad_stock < original.cantidad_stock) {
+        this.error = `No se puede reducir el stock. El valor actual es ${original.cantidad_stock}.`;
+        return;
+      }
+
       const { error } = await this.supabase
         .getClient()
         .from('productos')
         .update(this.producto)
         .eq('id', this.producto.id);
+
       if (error) throw error;
+
       this.mostrarMensaje('Producto actualizado correctamente');
     }
 
@@ -153,6 +183,7 @@ async eliminarProducto(id: string) {
     this.error = error.message || 'Error al guardar el producto';
   }
 }
+
 
   seleccionarProducto(producto: Producto) {
     this.producto = { ...producto };

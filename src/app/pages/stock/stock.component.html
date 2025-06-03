@@ -89,7 +89,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div>
         <label class="text-sm font-medium mb-1 block">Código</label>
-        <input type="text" class="input w-full" [(ngModel)]="producto.codigo" />
+        <input type="text" class="input w-full bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.codigo" [readonly]="true" />
       </div>
       <div>
         <label class="text-sm font-medium mb-1 block">Nombre</label>

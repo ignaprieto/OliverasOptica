@@ -37,38 +37,62 @@
   </div>
 
   <!-- Tabla -->
-  <div class="overflow-x-auto w-full">
-    <table class="w-full text-sm text-left border-collapse">
-      <thead class="bg-[#1e293b] text-white">
-        <tr>
-          <th class="px-4 py-3">Código</th>
-          <th class="px-4 py-3">Porcentaje</th>
-          <th class="px-4 py-3">Estado</th>
-          <th class="px-4 py-3">Acciones</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y">
-        <tr *ngFor="let d of descuentos">
-          <td class="px-4 py-2">{{ d.codigo }}</td>
-          <td class="px-4 py-2">{{ d.porcentaje }}%</td>
-          <td class="px-4 py-2">
-            <span class="px-2 py-1 text-xs rounded font-medium"
-              [ngClass]="d.activo ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'">
-              {{ d.activo ? 'Activo' : 'Inactivo' }}
-            </span>
-          </td>
-          <td class="px-4 py-2 flex gap-2">
-            <button (click)="editarDescuento(d)" class="text-blue-600 hover:underline">Editar</button>
-            <button (click)="eliminarDescuento(d.id!)" class="text-red-600 hover:underline">Eliminar</button>
-            <button (click)="cambiarEstado(d)" class="text-yellow-600 hover:underline">
-              {{ d.activo ? 'Desactivar' : 'Activar' }}
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+<!-- Vista de tabla (escritorio) -->
+<div class="overflow-x-auto w-full hidden sm:block">
+  <table class="w-full text-sm text-left border-collapse">
+    <thead class="bg-[#1e293b] text-white">
+      <tr>
+        <th class="px-4 py-3">Código</th>
+        <th class="px-4 py-3">Porcentaje</th>
+        <th class="px-4 py-3">Estado</th>
+        <th class="px-4 py-3">Acciones</th>
+      </tr>
+    </thead>
+    <tbody class="bg-white divide-y">
+      <tr *ngFor="let d of descuentos">
+        <td class="px-4 py-2">{{ d.codigo }}</td>
+        <td class="px-4 py-2">{{ d.porcentaje }}%</td>
+        <td class="px-4 py-2">
+          <span class="px-2 py-1 text-xs rounded font-medium"
+            [ngClass]="d.activo ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'">
+            {{ d.activo ? 'Activo' : 'Inactivo' }}
+          </span>
+        </td>
+        <td class="px-4 py-2 flex gap-2">
+          <button (click)="editarDescuento(d)" class="text-blue-600 hover:underline">Editar</button>
+          <button (click)="eliminarDescuento(d.id!)" class="text-red-600 hover:underline">Eliminar</button>
+          <button (click)="cambiarEstado(d)" class="text-yellow-600 hover:underline">
+            {{ d.activo ? 'Desactivar' : 'Activar' }}
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Vista tipo tarjeta (mobile) -->
+ 
+<div class="block sm:hidden space-y-4">
+  <div *ngFor="let d of descuentos" class="bg-white rounded-lg shadow p-4">
+    <div class="mb-2"><strong>Código:</strong> {{ d.codigo }}</div>
+    <div class="mb-1"><strong>Porcentaje:</strong> {{ d.porcentaje }}%</div>
+    <div class="mb-2">
+      <strong>Estado:</strong>
+      <span class="ml-1 text-sm font-medium px-2 py-1 rounded"
+        [ngClass]="d.activo ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'">
+        {{ d.activo ? 'Activo' : 'Inactivo' }}
+      </span>
+    </div>
+    <div class="flex flex-wrap gap-3 mt-3 text-sm">
+      <button (click)="editarDescuento(d)" class="text-blue-600 hover:underline">Editar</button>
+      <button (click)="eliminarDescuento(d.id!)" class="text-red-600 hover:underline">Eliminar</button>
+      <button (click)="cambiarEstado(d)" class="text-yellow-600 hover:underline">
+        {{ d.activo ? 'Desactivar' : 'Activar' }}
+      </button>
+    </div>
   </div>
 </div>
+
 
   <!-- Modal de confirmación -->
 <!-- Modal de confirmación -->

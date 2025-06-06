@@ -14,18 +14,17 @@
     <input
       [(ngModel)]="filtro"
       type="text"
-      placeholder="Buscar por codigo, nombre, marca o categoría..."
+      placeholder="Buscar por código, nombre, marca o categoría..."
       class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
   </div>
 
-  <!-- Contador de productos filtrados alineado a la derecha -->
   <div class="text-right font-semibold mb-2 text-sm text-gray-700">
     Mostrando {{ productosFiltrados().length }} de {{ productos.length }} productos
   </div>
 
-  <!-- Tabla dentro de contenedor scrolleable con altura máxima -->
-  <div class="bg-white rounded-xl shadow p-4 max-h-[400px] overflow-y-auto">
+  <!-- Vista de tabla (escritorio) -->
+  <div class="bg-white rounded-xl shadow p-4 max-h-[400px] overflow-y-auto hidden sm:block">
     <div class="min-w-[900px] mx-auto">
       <table class="w-full text-sm text-left border-collapse">
         <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">
@@ -39,7 +38,6 @@
             <th class="px-4 py-3">Stock</th>
           </tr>
         </thead>
-
         <tbody class="bg-white divide-y">
           <tr *ngFor="let prod of productosFiltrados()">
             <td class="px-4 py-2">{{ prod.codigo }}</td>
@@ -52,11 +50,28 @@
           </tr>
         </tbody>
       </table>
+    </div>
+     <!-- Mensaje si no se encuentran productos (escritorio) -->
+    <div *ngIf="productosFiltrados().length === 0" class="text-center text-gray-600 py-4">
+      No se encontraron productos
+    </div>
+  </div>
 
-      <!-- Mensaje si no se encuentran productos -->
-      <div *ngIf="productosFiltrados().length === 0" class="text-center text-gray-600 py-4">
-        No se encontraron productos
-      </div>
+  <!-- Vista tipo tarjeta (mobile) -->
+  <div class="block sm:hidden space-y-4">
+    <div *ngFor="let prod of productosFiltrados()" class="bg-white rounded-lg shadow p-4">
+      <div class="mb-2"><strong>Código:</strong> {{ prod.codigo }}</div>
+      <div class="mb-1"><strong>Nombre:</strong> {{ prod.nombre }}</div>
+      <div class="mb-1"><strong>Marca:</strong> {{ prod.marca }}</div>
+      <div class="mb-1"><strong>Talle:</strong> {{ prod.talle }}</div>
+      <div class="mb-1"><strong>Categoría:</strong> {{ prod.categoria }}</div>
+      <div class="mb-1"><strong>Precio:</strong> {{ prod.precio | monedaArs }}</div>
+      <div class="mb-1"><strong>Stock:</strong> {{ prod.cantidad_stock }}</div>
+    </div>
+
+    <!-- Mensaje si no se encuentran productos (mobile) -->
+    <div *ngIf="productosFiltrados().length === 0" class="text-center text-gray-600 py-4">
+      No se encontraron productos
     </div>
   </div>
 </div>

@@ -147,39 +147,52 @@
   </div>
 
   <!-- Tabla -->
-  <div class="bg-white rounded-xl shadow p-4 max-h-[400px] overflow-y-auto">
-    <div class="min-w-[1000px]">
-    <table class="w-full text-sm text-left border-collapse">
-      <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">
-        <tr>
-          <th class="px-4 py-3">Código</th>
-          <th class="px-4 py-3">Nombre</th>
-          <th class="px-4 py-3">Marca</th>
-          <th class="px-4 py-3">Talle</th>
-          <th class="px-4 py-3">Categoría</th>
-          <th class="px-4 py-3">Precio</th>
-          <th class="px-4 py-3">Stock</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y">
-        <tr 
-          *ngFor="let prod of productosFiltrados()" 
-          class="hover:bg-gray-100 cursor-pointer transition"
-          (click)="seleccionarProducto(prod)"
-        >
-          <td class="px-4 py-2">{{ prod.codigo }}</td>
-          <td class="px-4 py-2">{{ prod.nombre }}</td>
-          <td class="px-4 py-2">{{ prod.marca }}</td>
-          <td class="px-4 py-2">{{ prod.talle }}</td>
-          <td class="px-4 py-2">{{ prod.categoria }}</td>
-          <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
+  <ng-container *ngIf="productosFiltrados() as filtrados">
+  <p class="text-sm text-gray-600 mt-2 text-right font-semibold">
+    Mostrando {{ filtrados.length }} de {{ productos.length }} producto{{ filtrados.length === 1 ? '' : 's' }}.
+  </p>
 
-          <td class="px-4 py-2">{{ prod.cantidad_stock }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <div *ngIf="filtrados.length > 0; else sinResultados" class="bg-white rounded-xl shadow p-4 max-h-[400px] overflow-y-auto">
+    <div class="min-w-[1000px]">
+      <table class="w-full text-sm text-left border-collapse">
+        <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">
+          <tr>
+            <th class="px-4 py-3">Código</th>
+            <th class="px-4 py-3">Nombre</th>
+            <th class="px-4 py-3">Marca</th>
+            <th class="px-4 py-3">Talle</th>
+            <th class="px-4 py-3">Categoría</th>
+            <th class="px-4 py-3">Precio</th>
+            <th class="px-4 py-3">Stock</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y">
+          <tr 
+            *ngFor="let prod of filtrados" 
+            class="hover:bg-gray-100 cursor-pointer transition"
+            (click)="seleccionarProducto(prod)"
+          >
+            <td class="px-4 py-2">{{ prod.codigo }}</td>
+            <td class="px-4 py-2">{{ prod.nombre }}</td>
+            <td class="px-4 py-2">{{ prod.marca }}</td>
+            <td class="px-4 py-2">{{ prod.talle }}</td>
+            <td class="px-4 py-2">{{ prod.categoria }}</td>
+            <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
+            <td class="px-4 py-2">{{ prod.cantidad_stock }}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
+
+  <!-- Template cuando no hay resultados -->
+  <ng-template #sinResultados>
+    <div class="bg-white rounded-xl shadow p-6 text-center text-gray-500">
+      No se encontraron productos.
+    </div>
+  </ng-template>
+</ng-container>
+
   <!-- Modal de confirmación -->
 <div *ngIf="mostrarConfirmacion" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
   <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center animate-fade-in-scale">

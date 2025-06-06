@@ -14,40 +14,49 @@
     <input
       [(ngModel)]="filtro"
       type="text"
-      placeholder="Buscar por nombre, marca o categoría..."
+      placeholder="Buscar por codigo, nombre, marca o categoría..."
       class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
     />
   </div>
 
-<!-- Tabla dentro de contenedor scrolleable con altura máxima -->
-<div class="bg-white rounded-xl shadow p-4 max-h-[400px] overflow-y-auto">
-  <div class="min-w-[900px] mx-auto">
-  <table class="w-full text-sm text-left border-collapse">
- <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">
-  <tr>
-    <th class="px-4 py-3">Código</th>
-    <th class="px-4 py-3">Nombre</th>
-    <th class="px-4 py-3">Marca</th>
-    <th class="px-4 py-3">Talle</th>
-    <th class="px-4 py-3">Categoría</th>
-    <th class="px-4 py-3">Precio</th>
-    <th class="px-4 py-3">Stock</th>
-  </tr>
-</thead>
-
-    <tbody class="bg-white divide-y">
-      <tr *ngFor="let prod of productosFiltrados()">
-        <td class="px-4 py-2">{{ prod.codigo }}</td>
-        <td class="px-4 py-2">{{ prod.nombre }}</td>
-        <td class="px-4 py-2">{{ prod.marca }}</td>
-        <td class="px-4 py-2">{{ prod.talle }}</td>
-        <td class="px-4 py-2">{{ prod.categoria }}</td>
-        <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
-        <td class="px-4 py-2">{{ prod.cantidad_stock }}</td>
-      </tr>
-    </tbody>
-  </table>
+  <!-- Contador de productos filtrados alineado a la derecha -->
+  <div class="text-right font-semibold mb-2 text-sm text-gray-700">
+    Mostrando {{ productosFiltrados().length }} de {{ productos.length }} productos
   </div>
-</div>
 
+  <!-- Tabla dentro de contenedor scrolleable con altura máxima -->
+  <div class="bg-white rounded-xl shadow p-4 max-h-[400px] overflow-y-auto">
+    <div class="min-w-[900px] mx-auto">
+      <table class="w-full text-sm text-left border-collapse">
+        <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">
+          <tr>
+            <th class="px-4 py-3">Código</th>
+            <th class="px-4 py-3">Nombre</th>
+            <th class="px-4 py-3">Marca</th>
+            <th class="px-4 py-3">Talle</th>
+            <th class="px-4 py-3">Categoría</th>
+            <th class="px-4 py-3">Precio</th>
+            <th class="px-4 py-3">Stock</th>
+          </tr>
+        </thead>
+
+        <tbody class="bg-white divide-y">
+          <tr *ngFor="let prod of productosFiltrados()">
+            <td class="px-4 py-2">{{ prod.codigo }}</td>
+            <td class="px-4 py-2">{{ prod.nombre }}</td>
+            <td class="px-4 py-2">{{ prod.marca }}</td>
+            <td class="px-4 py-2">{{ prod.talle }}</td>
+            <td class="px-4 py-2">{{ prod.categoria }}</td>
+            <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
+            <td class="px-4 py-2">{{ prod.cantidad_stock }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Mensaje si no se encuentran productos -->
+      <div *ngIf="productosFiltrados().length === 0" class="text-center text-gray-600 py-4">
+        No se encontraron productos
+      </div>
+    </div>
+  </div>
 </div>

@@ -23,12 +23,13 @@ productos: Producto[] = [];
     if (!error && data) this.productos = data;
   }
 
-  productosFiltrados(): Producto[] {
-    const termino = this.filtro.toLowerCase();
-    return this.productos.filter(p =>
-      p.nombre.toLowerCase().includes(termino) ||
-      p.marca.toLowerCase().includes(termino) ||
-      p.categoria.toLowerCase().includes(termino)
-    );
+ productosFiltrados(): Producto[] {
+  const termino = this.filtro.toLowerCase();
+  return this.productos.filter(p =>
+    p.codigo.toLowerCase().includes(termino) ||
+    p.nombre.toLowerCase().includes(termino) ||
+    p.marca.toLowerCase().includes(termino) ||
+    p.categoria.toLowerCase().includes(termino)
+  );
   }
 }

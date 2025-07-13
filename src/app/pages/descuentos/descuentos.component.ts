@@ -20,6 +20,7 @@ descuentos: Descuento[] = [];
 idAEliminar: string | null = null;
 toastVisible = false;
 toastMensaje = '';
+toastColor = 'bg-green-600'; 
 mostrarConfirmacion: boolean = false;
   constructor(private supabase: SupabaseService) {}
 
@@ -67,6 +68,10 @@ mostrarConfirmacion: boolean = false;
       }
 
       this.mensaje = 'Descuento agregado correctamente';
+        this.toastMensaje = 'Descuento agregado correctamente.';
+         this.toastColor = 'bg-green-600'; // ✔ éxito
+    this.toastVisible = true;
+    setTimeout(() => this.toastVisible = false, 2500);
     } else if (this.modo === 'editar' && this.descuento.id) {
       const { error } = await this.supabase.getClient()
         .from('descuentos')
@@ -82,6 +87,10 @@ mostrarConfirmacion: boolean = false;
       }
 
       this.mensaje = 'Descuento actualizado correctamente';
+        this.toastMensaje = 'Descuento actualizado correctamente.';
+         this.toastColor = 'bg-green-600'; // ✔ éxito
+    this.toastVisible = true;
+      setTimeout(() => this.toastVisible = false, 2500);
     }
 
     this.descuento = this.nuevoDescuento();
@@ -125,11 +134,12 @@ async confirmarEliminar() {
 
   if (!error) {
     this.toastMensaje = 'Descuento eliminado correctamente.';
+     this.toastColor = 'bg-red-600'; // ✔ éxito
     this.toastVisible = true;
     this.mostrarConfirmacion = false;
     this.idAEliminar = '';
     await this.obtenerDescuentos();  // Re-cargar
-    setTimeout(() => this.toastVisible = false, 2500);
+    setTimeout(() => {this.toastVisible = false; this.toastColor = 'bg-green-600';  }, 2500);
   }
 }
 

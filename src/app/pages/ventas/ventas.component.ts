@@ -202,7 +202,8 @@ aumentarCantidad(prod: Producto) {
       producto_id: item.producto.id,
       cantidad: item.cantidad,
       precio_unitario: item.producto.precio,
-      subtotal: item.subtotal
+      subtotal: item.subtotal,
+      talle: item.producto.talle
     });
 
     await this.supabase.getClient()

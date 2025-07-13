@@ -75,7 +75,7 @@
       <p class="font-medium mb-2">Productos vendidos:</p>
       <ul class="list-disc ml-6 space-y-1 text-sm">
         <li *ngFor="let p of venta.productos">
-          {{ p.nombre }} — Cant: {{ p.cantidad }} — {{ p.precio_unitario | monedaArs }} c/u — Subtotal: {{ p.subtotal | monedaArs }}
+          {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ p.precio_unitario | monedaArs }} c/u — Subtotal: {{ p.subtotal | monedaArs }}
 
         </li>
       </ul>

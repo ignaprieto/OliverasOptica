@@ -25,7 +25,7 @@
           class="flex items-center bg-gray-100 rounded px-3 py-2 shadow-sm">
           <input type="checkbox" [checked]="productosSeleccionados[producto.id]"
             (change)="toggleProducto(producto.id)" [disabled]="aumentarTodaCategoria[categoria]" class="mr-2" />
-          <span>{{ producto.nombre }} — {{ producto.precio | monedaArs }}</span>
+          <span>{{ producto.nombre }} —  Talle: {{ producto.talle }} — {{ producto.marca }} — {{ producto.precio | monedaArs }}</span>
 
         </label>
       </div>

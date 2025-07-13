@@ -235,4 +235,18 @@ aumentarCantidad(prod: Producto) {
     this.totalFinal = 0;
     this.cantidades = {};
   }
+
+  quitarDescuento() {
+  this.descuentoAplicado = 0;
+  this.codigoDescuento = '';
+  this.actualizarTotal();
+
+  this.toastMensaje = ' Descuento eliminado.';
+  this.toastColor = 'bg-red-600';  
+  this.toastVisible = true;
+  setTimeout(() => {
+    this.toastVisible = false; this.toastColor = 'bg-green-600';
+  }, 2500);
+}
+
 }

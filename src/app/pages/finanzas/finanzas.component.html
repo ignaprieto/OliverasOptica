@@ -1,0 +1,222 @@
+<div class="min-h-screen bg-[#f6f9fc] text-black px-2 sm:px-4 py-6 flex justify-center animate-fade-in-scale">
+  <div class="w-full max-w-screen-lg space-y-6">
+
+    <div class="mb-6 text-left">
+      <button
+        routerLink="/dashboard"
+        class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded transition"
+      >
+        ← Volver al Panel
+      </button>
+    </div>
+
+    <!-- Título -->
+    <h2 class="text-2xl font-semibold">Finanzas</h2>
+
+    <!-- Formulario -->
+    <form #formGasto="ngForm" (ngSubmit)="editandoId ? guardarEdicion() : agregarGasto()"
+      class="bg-white p-4 sm:p-6 rounded-lg shadow space-y-4 border">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <input type="date" [(ngModel)]="fecha" name="fecha" class="input" required />
+
+        <input
+          type="text"
+          [(ngModel)]="categoria"
+          name="categoria"
+          placeholder="Categoría"
+          class="input categoria"
+        />
+
+        <input
+          type="text"
+          [(ngModel)]="descripcion"
+          name="descripcion"
+          placeholder="Descripción"
+          class="input descripcion"
+        />
+
+        <input
+          type="number"
+          [(ngModel)]="monto"
+          name="monto"
+          placeholder="Monto"
+          class="input monto"
+          [disabled]="!!editandoId"
+        />
+      </div>
+
+      <div class="flex flex-wrap justify-end gap-2">
+        <button type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition shadow font-medium">
+          {{ editandoId ? 'Guardar Cambios' : 'Agregar Gasto' }}
+        </button>
+        <button *ngIf="editandoId" type="button" (click)="cancelarEdicion()"
+          class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md transition shadow font-medium">
+          Cancelar
+        </button>
+      </div>
+    </form>
+
+    <!-- Resumen -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-lg shadow border">
+      <div>
+        <p class="text-gray-600 text-sm">Ingresos:</p>
+        <p class="text-blue-700 text-xl font-semibold">{{ totalVentas | monedaArs }}</p>
+      </div>
+      <div>
+        <p class="text-gray-600 text-sm">Gastos del mes:</p>
+        <p class="text-red-600 text-xl font-semibold">{{ totalGastos | monedaArs }}</p>
+      </div>
+      <div>
+        <p class="text-gray-600 text-sm">Ganancia neta:</p>
+        <p class="text-green-600 text-xl font-semibold">{{ gananciaNeta | monedaArs }}</p>
+      </div>
+    </div>
+
+    <!-- Total histórico, anual y promedio mensual -->
+    <div class="bg-green-100 border-l-4 border-grey-400 text-black-800 p-4 rounded-md shadow space-y-1">
+      <p class="font-medium">Total histórico de gastos:</p>
+      <p class="text-lg font-bold">{{ totalGastosHistorico | monedaArs }}</p>
+      <p class="font-medium mt-2">Gastos del año actual:</p>
+      <p class="text-lg font-bold">{{ totalGastosAnual | monedaArs }}</p>
+      <p class="font-medium mt-2">Promedio mensual de gastos:</p>
+      <p class="text-lg font-bold">{{ promedioGastosMensual | monedaArs }}</p>
+    </div>
+
+    <!-- Filtros -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end mb-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">Filtrar por mes:</label>
+        <input
+          type="month"
+          [(ngModel)]="filtroMes"
+          name="filtroMes"
+          (change)="aplicarFiltros()"
+          class="w-full border border-gray-300 rounded px-3 py-2"
+        />
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">Filtrar por categoría:</label>
+        <input
+          type="text"
+          [(ngModel)]="filtroCategoria"
+          name="filtroCategoria"
+          (input)="aplicarFiltros()"
+          placeholder="Ej: Luz, Agua..."
+          class="w-full border border-gray-300 rounded px-3 py-2"
+        />
+      </div>
+
+      <div>
+        <button
+          (click)="mostrarTodosLosGastos()"
+          class="bg-gray-200 hover:bg-gray-300 text-sm text-gray-800 px-4 py-2 rounded w-full"
+        >
+          Mostrar todos los gastos historico
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla de gastos (desktop) -->
+    <div class="overflow-x-auto max-h-[400px] overflow-y-auto bg-white rounded-lg shadow border hidden sm:block">
+      <table class="min-w-[900px] w-full text-sm text-left border-collapse">
+        <thead class="bg-[#1e293b] text-white sticky top-0 z-10">
+          <tr>
+            <th class="px-4 py-2 border font-medium">Fecha</th>
+            <th class="px-4 py-2 border font-medium">Categoría</th>
+            <th class="px-4 py-2 border font-medium">Descripción</th>
+            <th class="px-4 py-2 border font-medium">Monto</th>
+            <th class="px-4 py-2 border font-medium text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let gasto of gastosFiltrados" class="hover:bg-blue-50 transition">
+            <td class="px-4 py-2 border">{{ gasto.fecha }}</td>
+            <td class="px-4 py-2 border">{{ gasto.categoria }}</td>
+            <td class="px-4 py-2 border">{{ gasto.descripcion }}</td>
+            <td class="px-4 py-2 border">{{ gasto.monto | monedaArs }}</td>
+            <td class="px-4 py-2 border text-center">
+              <div class="flex justify-center gap-2">
+                <button
+                  (click)="editarGasto(gasto); scrollToFormYResaltarInputs()"
+                  class="text-blue-600 hover:text-blue-800 transition rounded-full p-1 bg-blue-50 hover:bg-blue-100"
+                  title="Editar"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M17.414 2.586a2 2 0 010 2.828L8.828 14H6v-2.828l8.586-8.586a2 2 0 012.828 0z" />
+                    <path fill-rule="evenodd" d="M5 13.828V16h2.172l8.586-8.586-2.172-2.172L5 13.828z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <button (click)="mostrarModalEliminar(gasto.id)" class="text-red-600 hover:text-red-800 transition rounded-full p-1 bg-red-50 hover:bg-red-100" title="Eliminar">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="gastosFiltrados.length === 0">
+            <td colspan="5" class="text-center py-6 text-gray-400">No hay gastos para mostrar.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tabla de gastos (mobile cards) -->
+    <div class="block sm:hidden space-y-4">
+      <div *ngFor="let gasto of gastosFiltrados" class="bg-white rounded-lg shadow border p-4 flex flex-col gap-2">
+        <div class="flex justify-between items-center">
+          <span class="font-semibold text-gray-700">{{ gasto.categoria }}</span>
+          <span class="text-blue-700 font-bold">{{ gasto.monto | monedaArs }}</span>
+        </div>
+        <div class="text-xs text-gray-500">{{ gasto.fecha }}</div>
+        <div class="text-gray-600">{{ gasto.descripcion }}</div>
+        <div class="flex justify-end gap-2 mt-2">
+          <button
+            (click)="editarGasto(gasto); scrollToFormYResaltarInputs()"
+            class="text-blue-600 hover:text-blue-800 transition rounded-full p-1 bg-blue-50 hover:bg-blue-100"
+            title="Editar"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M17.414 2.586a2 2 0 010 2.828L8.828 14H6v-2.828l8.586-8.586a2 2 0 012.828 0z" />
+              <path fill-rule="evenodd" d="M5 13.828V16h2.172l8.586-8.586-2.172-2.172L5 13.828z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          <button (click)="mostrarModalEliminar(gasto.id)" class="text-red-600 hover:text-red-800 transition rounded-full p-1 bg-red-50 hover:bg-red-100" title="Eliminar">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div *ngIf="gastosFiltrados.length === 0" class="text-center py-6 text-gray-400">
+        No hay gastos para mostrar.
+      </div>
+    </div>
+
+    <!-- Modal eliminar -->
+    <div *ngIf="mostrarModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md animate-fade-in-scale border">
+        <h3 class="text-lg font-semibold mb-4 text-gray-800 text-center">¿Estas seguro de eliminar este gasto?</h3>
+        <div class="flex justify-center gap-4">
+          <button class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow"
+            (click)="confirmarEliminar()">Eliminar</button>
+          <button class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded-md shadow"
+            (click)="cancelarEliminar()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div *ngIf="toastVisible"
+      class="fixed bottom-4 right-4 text-white px-4 py-2 rounded shadow z-50 animate-fade-in-out"
+      [ngClass]="toastcolor">
+      {{ toastMensaje }}
+    </div>
+
+  </div>
+</div>

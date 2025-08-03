@@ -152,7 +152,7 @@
     Mostrando {{ filtrados.length }} de {{ productos.length }} producto{{ filtrados.length === 1 ? '' : 's' }}.
   </p>
 
-  <div *ngIf="filtrados.length > 0; else sinResultados" class="bg-white rounded-xl shadow p-4 max-h-[400px] overflow-y-auto">
+  <div *ngIf="filtrados.length > 0; else sinResultados"  class="overflow-x-auto max-h-[400px] overflow-y-auto bg-white rounded-lg shadow border">
     <div class="min-w-[1000px]">
       <table class="w-full text-sm text-left border-collapse">
         <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">

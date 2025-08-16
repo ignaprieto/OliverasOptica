@@ -14,14 +14,14 @@ import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
   styleUrl: './historial.component.css'
 })
 export class HistorialComponent implements OnInit{
-ventas: any[] = [];
+  ventas: any[] = [];
   ventasFiltradas: any[] = [];
-  filtro: 'hoy' | '7dias' | '30dias' | 'todos' = 'hoy';
-//filtro: 'hoy' | '7dias' | '30dias' = 'hoy';
+  filtro: 'hoy' | '7dias' | '30dias' | 'todos'| 'fechaEspecifica' = 'hoy';
+  fechaEspecifica: string = '';
   totalAcumulado: number = 0;
-paginaActual = 1;
-ventasPorPagina = 10;
-   constructor(private supabase: SupabaseService) {}
+  paginaActual = 1;
+  ventasPorPagina = 10;
+  constructor(private supabase: SupabaseService) {}
 
   async ngOnInit() {
     await this.cargarVentas();
@@ -42,102 +42,65 @@ cambiarPagina(pagina: number) {
   }
 }
 
-  async filtrar(f: 'hoy' | '7dias' | '30dias'| 'todos') {
+  async filtrar(f: 'hoy' | '7dias' | '30dias'| 'todos'| 'fechaEspecifica') {
+    // CORRECCIÓN: Reiniciamos la paginación a la página 1 antes de filtrar
+    this.paginaActual = 1;
     this.filtro = f;
     await this.cargarVentas();
   }
 
-/*async cargarVentas() {
-  const desde = this.calcularFechaDesde(this.filtro);
+  async cargarVentas() {
+    const { data: ventas, error }: { data: any[] | null, error: any } = await this.supabase
+      .getClient()
+      .rpc('obtener_historial_completo');
 
-  const { data: ventas, error }: { data: any[] | null, error: any } = await this.supabase
-    .getClient()
-    .rpc('obtener_historial_completo');
+    if (error) {
+      console.error('Error al obtener historial:', error.message);
+      return;
+    }
 
-  if (error) {
-    console.error('Error al obtener historial:', error.message);
-    return;
-  }
-
-  this.ventas = (ventas || [])
-    .map(v => ({
+    let ventasProcesadas = (ventas || []).map(v => ({
       ...v,
-      // Ajustamos -3 horas porque Supabase guarda en UTC
+      // Ajustamos la hora para que coincida con la zona horaria local (-3 horas)
       fecha_venta: new Date(new Date(v.fecha_venta).getTime() - 3 * 60 * 60 * 1000)
-    }))
-    .filter(v => new Date(v.fecha_venta) >= new Date(desde));
+    }));
 
-  this.totalAcumulado = this.ventas.reduce((acc, v) => acc + Number(v.total_final), 0);
-}*/
-
-async cargarVentas() {
-  const desde = this.calcularFechaDesde(this.filtro);
-
-  const { data: ventas, error }: { data: any[] | null, error: any } = await this.supabase
-    .getClient()
-    .rpc('obtener_historial_completo');
-
-  if (error) {
-    console.error('Error al obtener historial:', error.message);
-    return;
-  }
-
-  this.ventas = (ventas || []).map(v => ({
-    ...v,
-    // Ajustamos -3 horas porque Supabase guarda en UTC
-    fecha_venta: new Date(new Date(v.fecha_venta).getTime() - 3 * 60 * 60 * 1000)
-  }));
-
-  if (desde) {
-    this.ventas = this.ventas.filter(v => new Date(v.fecha_venta) >= new Date(desde));
-  }
-
-  this.totalAcumulado = this.ventas.reduce((acc, v) => acc + Number(v.total_final), 0);
-}
-
-
-/*private calcularFechaDesde(filtro: 'hoy' | '7dias' | '30dias'): string {
-    const hoy = new Date();
-    let desde: Date;
-
-    switch (filtro) {
+    switch (this.filtro) {
+      case 'hoy':
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        ventasProcesadas = ventasProcesadas.filter(v => v.fecha_venta >= hoy);
+        break;
       case '7dias':
-        desde = new Date(hoy.setDate(hoy.getDate() - 7));
+        const hace7dias = new Date();
+        hace7dias.setDate(hace7dias.getDate() - 7);
+        ventasProcesadas = ventasProcesadas.filter(v => v.fecha_venta >= hace7dias);
         break;
       case '30dias':
-        desde = new Date(hoy.setDate(hoy.getDate() - 30));
+        const hace30dias = new Date();
+        hace30dias.setDate(hace30dias.getDate() - 30);
+        ventasProcesadas = ventasProcesadas.filter(v => v.fecha_venta >= hace30dias);
         break;
+      case 'fechaEspecifica':
+        // CORRECCIÓN: Creamos un objeto Date en la zona horaria local
+        const partesFecha = this.fechaEspecifica.split('-');
+        const anio = parseInt(partesFecha[0], 10);
+        const mes = parseInt(partesFecha[1], 10) - 1; // Meses en JS son 0-11
+        const dia = parseInt(partesFecha[2], 10);
+
+        const inicioDia = new Date(anio, mes, dia);
+        const finDia = new Date(anio, mes, dia);
+        finDia.setHours(23, 59, 59, 999);
+        
+        ventasProcesadas = ventasProcesadas.filter(v => v.fecha_venta >= inicioDia && v.fecha_venta <= finDia);
+        break;
+      case 'todos':
       default:
-        // 'hoy'
-        desde = new Date();
-        desde.setHours(0, 0, 0, 0);
+        // No se aplica ningún filtro
         break;
     }
 
-    return desde.toISOString();
-  }*/
-
-    private calcularFechaDesde(filtro: 'hoy' | '7dias' | '30dias' | 'todos'): string | null {
-  if (filtro === 'todos') return null;
-
-  const hoy = new Date();
-  let desde: Date;
-
-  switch (filtro) {
-    case '7dias':
-      desde = new Date(hoy.setDate(hoy.getDate() - 7));
-      break;
-    case '30dias':
-      desde = new Date(hoy.setDate(hoy.getDate() - 30));
-      break;
-    default:
-      // 'hoy'
-      desde = new Date();
-      desde.setHours(0, 0, 0, 0);
-      break;
+    this.ventas = ventasProcesadas;
+    this.totalAcumulado = this.ventas.reduce((acc, v) => acc + Number(v.total_final), 0);
   }
-
-  return desde.toISOString();
-}
-
 }

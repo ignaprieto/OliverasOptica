@@ -18,7 +18,19 @@
     <button (click)="filtrar('7dias')" [class.bg-white]="filtro === '7dias'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Últimos 7 días</button>
     <button (click)="filtrar('30dias')" [class.bg-white]="filtro === '30dias'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Últimos 30 días</button>
     <button (click)="filtrar('todos')" [class.bg-white]="filtro === 'todos'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Historial Completo</button>
+   
+    <button (click)="filtrar('fechaEspecifica')" [class.bg-white]="filtro === 'fechaEspecifica'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Fecha Específica</button>
 
+    <div class="flex items-center space-x-2 p-4 ml-auto" *ngIf="filtro === 'fechaEspecifica'">
+  <label for="fecha-especifica" class="text-gray-700 font-medium">Selecciona una fecha:</label>
+  <input
+    type="date"
+    id="fecha-especifica"
+    class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+    [(ngModel)]="fechaEspecifica"
+    (change)="cargarVentas()"
+  >
+</div>
   </div>
 
   <!-- Total acumulado -->

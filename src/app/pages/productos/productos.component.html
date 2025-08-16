@@ -56,22 +56,4 @@
       No se encontraron productos
     </div>
   </div>
-
-  <!-- Vista tipo tarjeta (mobile) -->
-  <div class="block sm:hidden space-y-4">
-    <div *ngFor="let prod of productosFiltrados()" class="bg-white rounded-lg shadow p-4">
-      <div class="mb-2"><strong>Código:</strong> {{ prod.codigo }}</div>
-      <div class="mb-1"><strong>Nombre:</strong> {{ prod.nombre }}</div>
-      <div class="mb-1"><strong>Marca:</strong> {{ prod.marca }}</div>
-      <div class="mb-1"><strong>Talle:</strong> {{ prod.talle }}</div>
-      <div class="mb-1"><strong>Categoría:</strong> {{ prod.categoria }}</div>
-      <div class="mb-1"><strong>Precio:</strong> {{ prod.precio | monedaArs }}</div>
-      <div class="mb-1"><strong>Stock:</strong> {{ prod.cantidad_stock }}</div>
-    </div>
-
-    <!-- Mensaje si no se encuentran productos (mobile) -->
-    <div *ngIf="productosFiltrados().length === 0" class="text-center text-gray-600 py-4">
-      No se encontraron productos
-    </div>
-  </div>
 </div>

@@ -1,110 +1,103 @@
-<div class="min-h-screen bg-[#edf2ff] text-black px-6 py-8 animate-fade-in-scale">
+<div class="min-h-screen bg-[#edf2ff] text-black px-3 sm:px-6 py-6 sm:py-8 animate-fade-in-scale">
   <!-- Botón volver -->
   <div class="mb-6">
     <button
       routerLink="/dashboard"
-      class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded transition"
+      class="bg-gray-300 hover:bg-gray-400 text-black px-3 sm:px-4 py-2 rounded transition text-sm sm:text-base"
     >
       ← Volver al Panel
     </button>
   </div>
 
   <!-- Título -->
-  <h2 class="text-2xl font-semibold mb-4">Historial de Ventas</h2>
+  <h2 class="text-xl sm:text-2xl font-semibold mb-4">Historial de Ventas</h2>
 
   <!-- Filtros -->
-  <div class="flex gap-3 mb-6">
-    <button (click)="filtrar('hoy')" [class.bg-white]="filtro === 'hoy'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Hoy</button>
-    <button (click)="filtrar('7dias')" [class.bg-white]="filtro === '7dias'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Últimos 7 días</button>
-    <button (click)="filtrar('30dias')" [class.bg-white]="filtro === '30dias'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Últimos 30 días</button>
-    <button (click)="filtrar('todos')" [class.bg-white]="filtro === 'todos'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Historial Completo</button>
-   
-    <button (click)="filtrar('fechaEspecifica')" [class.bg-white]="filtro === 'fechaEspecifica'" class="px-4 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition">Fecha Específica</button>
+  <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 mb-6">
+    <button (click)="filtrar('hoy')" [class.bg-white]="filtro === 'hoy'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base">Hoy</button>
+    <button (click)="filtrar('7dias')" [class.bg-white]="filtro === '7dias'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base">Últimos 7 días</button>
+    <button (click)="filtrar('30dias')" [class.bg-white]="filtro === '30dias'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base">Últimos 30 días</button>
+    <button (click)="filtrar('todos')" [class.bg-white]="filtro === 'todos'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base">Historial Completo</button>
+    <button (click)="filtrar('fechaEspecifica')" [class.bg-white]="filtro === 'fechaEspecifica'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base col-span-2 sm:col-span-1">Fecha Específica</button>
+  </div>
 
-    <div class="flex items-center space-x-2 p-4 ml-auto" *ngIf="filtro === 'fechaEspecifica'">
-  <label for="fecha-especifica" class="text-gray-700 font-medium">Selecciona una fecha:</label>
-  <input
-    type="date"
-    id="fecha-especifica"
-    class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-    [(ngModel)]="fechaEspecifica"
-    (change)="cargarVentas()"
-  >
-</div>
+  <!-- Fecha específica -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 bg-white p-3 rounded-lg shadow mb-6" *ngIf="filtro === 'fechaEspecifica'">
+    <label for="fecha-especifica" class="text-gray-700 font-medium mb-2 sm:mb-0 text-sm sm:text-base">Selecciona una fecha:</label>
+    <input
+      type="date"
+      id="fecha-especifica"
+      class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 text-sm sm:text-base"
+      [(ngModel)]="fechaEspecifica"
+      (change)="cargarVentas()"
+    >
   </div>
 
   <!-- Total acumulado -->
-  <p class="mb-6 text-lg font-semibold">
+  <p class="mb-6 text-base sm:text-lg font-semibold">
     Total acumulado:
     <span class="text-green-600">{{ totalAcumulado | monedaArs }}</span>
-
   </p>
 
-<!-- Paginación -->
-<div class="flex items-center gap-2 mb-6">
-  <button
-    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-    [disabled]="paginaActual === 1"
-    (click)="cambiarPagina(paginaActual - 1)"
-  >
-    ←
-  </button>
-
-  <ng-container *ngFor="let p of [].constructor(totalPaginas); let i = index">
+  <!-- Paginación -->
+  <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
     <button
-      (click)="cambiarPagina(i + 1)"
-      [class.bg-blue-600]="paginaActual === i + 1"
-      [class.text-white]="paginaActual === i + 1"
-      class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+      class="px-2 sm:px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm sm:text-base"
+      [disabled]="paginaActual === 1"
+      (click)="cambiarPagina(paginaActual - 1)"
     >
-      {{ i + 1 }}
+      ←
     </button>
-  </ng-container>
 
-  <button
-    class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300"
-    [disabled]="paginaActual === totalPaginas"
-    (click)="cambiarPagina(paginaActual + 1)"
-  >
-    →
-  </button>
-</div>
+    <ng-container *ngFor="let p of [].constructor(totalPaginas); let i = index">
+      <button
+        (click)="cambiarPagina(i + 1)"
+        [class.bg-blue-600]="paginaActual === i + 1"
+        [class.text-white]="paginaActual === i + 1"
+        class="px-2 sm:px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm sm:text-base"
+      >
+        {{ i + 1 }}
+      </button>
+    </ng-container>
+
+    <button
+      class="px-2 sm:px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm sm:text-base"
+      [disabled]="paginaActual === totalPaginas"
+      (click)="cambiarPagina(paginaActual + 1)"
+    >
+      →
+    </button>
+  </div>
 
   <!-- Lista de ventas -->
-  <div *ngFor="let venta of ventasPaginadas" class="bg-white rounded-xl shadow p-4 mb-6">
-    <p class="text-sm font-medium text-gray-600">
-      <strong>Usuario:</strong> {{ venta.nombre_usuario }}
-    </p>
-    <p class="text-sm text-gray-600">
-      <strong>Cliente:</strong> {{ venta.cliente_nombre }} - {{ venta.cliente_email || 'Sin email' }}
-    </p>
-    <p class="text-sm text-gray-600 mb-2">
-      <strong>Fecha:</strong> {{ venta.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}
-    </p>
+  <div *ngFor="let venta of ventasPaginadas" class="bg-white rounded-xl shadow p-4 sm:p-6 mb-6">
+    <div class="text-sm sm:text-base space-y-1">
+      <p class="font-medium text-gray-700"><strong>Usuario:</strong> {{ venta.nombre_usuario }}</p>
+      <p class="text-gray-600"><strong>Cliente:</strong> {{ venta.cliente_nombre }} - {{ venta.cliente_email || 'Sin email' }}</p>
+      <p class="text-gray-600"><strong>Fecha:</strong> {{ venta.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}</p>
+    </div>
 
     <!-- Productos -->
-    <div class="mt-2">
-      <p class="font-medium mb-2">Productos vendidos:</p>
-      <ul class="list-disc ml-6 space-y-1 text-sm">
+    <div class="mt-3">
+      <p class="font-medium mb-2 text-sm sm:text-base">Productos vendidos:</p>
+      <ul class="list-disc ml-5 space-y-1 text-sm sm:text-base">
         <li *ngFor="let p of venta.productos">
           {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ p.precio_unitario | monedaArs }} c/u — Subtotal: {{ p.subtotal | monedaArs }}
-
         </li>
       </ul>
     </div>
 
     <!-- Info de venta -->
-    <div class="mt-4 text-sm">
+    <div class="mt-4 text-sm sm:text-base">
       <p><strong>Método de pago:</strong> {{ venta.metodo_pago }}</p>
       <p *ngIf="venta.descuento_aplicado > 0">
         <strong>Descuento aplicado:</strong> {{ venta.descuento_aplicado }}%
         —
         <span class="text-red-600">
           {{ ((venta.total_final / (1 - venta.descuento_aplicado / 100)) - venta.total_final) | monedaArs }}
-
         </span>
       </p>
-      <p class="text-lg font-semibold mt-2">
+      <p class="text-lg sm:text-xl font-semibold mt-2">
         Total: {{ venta.total_final | monedaArs }}
       </p>
     </div>

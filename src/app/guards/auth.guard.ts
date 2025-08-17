@@ -6,14 +6,26 @@ export const authGuard: CanActivateFn = async (route, state) => {
   const supabase = inject(SupabaseService);
   const router = inject(Router);
 
-  const { data, error } = await supabase.getClient().auth.getSession();
+  try {
+    const { data, error } = await supabase.getClient().auth.getSession();
 
-  const session = data.session;
+    if (error) {
+      console.error('Error checking auth session:', error);
+      router.navigate(['/login']);
+      return false;
+    }
 
-  if (!session || !session.user) {
+    const session = data.session;
+
+    if (!session || !session.user) {
+      router.navigate(['/login']);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Unexpected error in auth guard:', error);
     router.navigate(['/login']);
     return false;
   }
-
-  return true;
 };

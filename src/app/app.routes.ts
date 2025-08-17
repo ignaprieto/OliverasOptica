@@ -2,8 +2,8 @@ import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  // Ruta raíz redirige a login
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  // Ruta raíz redirige a dashboard (si está autenticado) o login (si no lo está)
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
   // Login (pública)
   {
@@ -78,7 +78,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
 
-    // Finanzas
+  // Finanzas
   {
     path: 'finanzas',
     loadComponent: () =>
@@ -88,6 +88,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
 
-  // Rutas no encontradas redirigen a login
-  { path: '**', redirectTo: 'login' },
+  // Rutas no encontradas redirigen a dashboard (el guard se encargará de redirigir a login si no está autenticado)
+  { path: '**', redirectTo: 'dashboard' },
 ];

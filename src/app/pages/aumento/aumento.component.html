@@ -1,5 +1,17 @@
-<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex justify-center">
-  <div class="w-full max-w-6xl space-y-8">
+<!-- Contenido principal con visibilidad controlada -->
+<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex justify-center" 
+     [class.animate-fade-in-scale]="!isLoading">
+  
+  <!-- Loading spinner inicial -->
+  <div *ngIf="isLoading" class="w-full max-w-6xl flex items-center justify-center min-h-[60vh]">
+    <div class="flex flex-col items-center">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+      <p class="text-gray-600">Cargando productos...</p>
+    </div>
+  </div>
+
+  <!-- Contenido principal (solo cuando no está cargando) -->
+  <div *ngIf="!isLoading" class="w-full max-w-6xl space-y-8">
 
     <!-- Header y botón de volver -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
@@ -25,7 +37,6 @@
           </label>
         </div>
         
-
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <label 
             *ngFor="let producto of productosPorCategoria[categoria]"
@@ -55,62 +66,132 @@
       </button>
     </div>
 
-    <!-- Modal de confirmación (Paso 2) -->
-    <div *ngIf="confirmando" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-      <div class="relative bg-white p-6 rounded-xl shadow-lg w-full max-w-sm animate-fade-in-scale">
-        <h3 class="text-xl font-bold text-gray-900 mb-4 text-center">Aplicar Aumento</h3>
-
-        <ul class="mb-4 list-disc pl-5 text-sm text-gray-700 space-y-1">
-          <li *ngFor="let item of resumenAumento">
-            {{ item }}
-          </li>
-        </ul>
-
-        <div class="mb-4 space-y-2">
-          <label class="block font-medium text-gray-700 cursor-pointer">
-            <input type="radio" name="tipo" [(ngModel)]="tipoAumento" value="precio" class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500" />
-            Por monto fijo ($)
-          </label>
-          <label class="block font-medium text-gray-700 cursor-pointer">
-            <input type="radio" name="tipo" [(ngModel)]="tipoAumento" value="porcentaje" class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500" />
-            Por porcentaje (%)
-          </label>
-        </div>
-
-        <input 
-          type="number"
-          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          placeholder="Ej: 500 o 10"
-          [(ngModel)]="valorAumento"
-        />
-
-        <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 items-end sm:items-center mt-4">
-          <div *ngIf="errorAumentoInvalido" class="text-red-600 text-sm sm:mr-auto">
-            Seleccioná el tipo de aumento e ingresá un valor válido.
-          </div>
-
-          <button
-            class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-6 py-2 rounded-lg shadow-md transition-colors w-full sm:w-auto"
-            (click)="cancelar()">
-            Cancelar
-          </button>
-
-          <button
-            class="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg shadow-md transition-colors w-full sm:w-auto"
-            (click)="aplicarAumento()">
-            Aplicar Aumento
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Toast de notificación -->
-    <div *ngIf="toastVisible"
-      class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 text-white font-medium animate-slide-up"
-      [ngClass]="toastColor">
-      {{ toastMensaje }}
-    </div>
-
   </div>
 </div>
+
+<!-- Modal de confirmación (FUERA del contenido principal para mejor overlay) -->
+<div *ngIf="confirmando && !isLoading" 
+     class="fixed inset-0 z-50 flex items-center justify-center p-4"
+     (click)="cancelarSiClickAfuera($event)">
+  
+  <!-- Backdrop mejorado -->
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300"></div>
+  
+  <!-- Modal content -->
+  <div class="relative bg-white p-6 rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300 scale-100"
+       (click)="$event.stopPropagation()"
+       [@slideIn]>
+    
+    <h3 class="text-xl font-bold text-gray-900 mb-4 text-center">Aplicar Aumento</h3>
+
+    <ul class="mb-4 list-disc pl-5 text-sm text-gray-700 space-y-1 max-h-32 overflow-y-auto">
+      <li *ngFor="let item of resumenAumento">
+        {{ item }}
+      </li>
+    </ul>
+
+    <div class="mb-4 space-y-2">
+      <label class="block font-medium text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded">
+        <input type="radio" name="tipo" [(ngModel)]="tipoAumento" value="precio" 
+               class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500" />
+        Por monto fijo ($)
+      </label>
+      <label class="block font-medium text-gray-700 cursor-pointer hover:bg-gray-50 p-2 rounded">
+        <input type="radio" name="tipo" [(ngModel)]="tipoAumento" value="porcentaje" 
+               class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500" />
+        Por porcentaje (%)
+      </label>
+    </div>
+
+    <input 
+      type="number"
+      class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+      placeholder="Ej: 500 o 10"
+      [(ngModel)]="valorAumento"
+      (keydown.enter)="aplicarAumento()"
+      (keydown.escape)="cancelar()"
+    />
+
+    <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 items-end sm:items-center mt-6">
+      <div *ngIf="errorAumentoInvalido" class="text-red-600 text-sm sm:mr-auto animate-pulse">
+        Seleccioná el tipo de aumento e ingresá un valor válido.
+      </div>
+
+      <button
+        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-6 py-2 rounded-lg shadow-md transition-all duration-200 hover:scale-105 w-full sm:w-auto"
+        (click)="cancelar()">
+        Cancelar
+      </button>
+
+      <button
+        class="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-lg shadow-md transition-all duration-200 hover:scale-105 w-full sm:w-auto"
+        (click)="aplicarAumento()">
+        Aplicar Aumento
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast de notificación mejorado -->
+<div *ngIf="toastVisible"
+     class="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-[60] text-white font-medium transition-all duration-300"
+     [ngClass]="toastColor"
+     [@slideUp]>
+  {{ toastMensaje }}
+</div>
+
+<style>
+/* Animaciones mejoradas */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-fade-in-scale {
+  animation: fadeInScale 0.4s ease-out;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Mejorar el backdrop para evitar que se rompa */
+.fixed.inset-0.z-50 {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Prevenir scroll del body cuando el modal está abierto */
+body.modal-open {
+  overflow: hidden;
+}
+
+/* Mejorar la visibilidad del toast */
+.z-\[60\] {
+  z-index: 60;
+}
+</style>

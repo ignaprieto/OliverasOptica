@@ -79,6 +79,7 @@ export class HistorialComponent implements OnInit {
   // Filtros
   filtro: 'hoy' | '7dias' | '30dias' | 'todos' | 'fechaEspecifica' = 'hoy';
   tipoFiltro: 'todos' | 'ventas' | 'recambios' = 'todos';
+  metodoPagoFiltro: 'todos' | 'efectivo' | 'transferencia' | 'debito' | 'credito' | 'modo' = 'todos';
   fechaEspecifica: string = '';
   
   // Totales (sin totalGeneral)
@@ -173,6 +174,14 @@ export class HistorialComponent implements OnInit {
   async filtrarTipo(tipo: 'todos' | 'ventas' | 'recambios') {
     this.paginaActual = 1;
     this.tipoFiltro = tipo;
+    this.aplicarFiltros();
+    this.calcularTotales();
+  }
+
+  // NUEVO MÉTODO PARA FILTRAR POR MÉTODO DE PAGO
+  async filtrarMetodoPago(metodoPago: 'todos' | 'efectivo' | 'transferencia' | 'debito' | 'credito' | 'modo') {
+    this.paginaActual = 1;
+    this.metodoPagoFiltro = metodoPago;
     this.aplicarFiltros();
     this.calcularTotales();
   }
@@ -315,6 +324,19 @@ export class HistorialComponent implements OnInit {
       case 'todos':
       default:
         break;
+    }
+
+    // NUEVO FILTRO POR MÉTODO DE PAGO
+    if (this.metodoPagoFiltro !== 'todos') {
+      itemsFiltrados = itemsFiltrados.filter(item => {
+        if (item.tipo === 'venta') {
+          return item.metodo_pago === this.metodoPagoFiltro;
+        } else if (item.tipo === 'recambio') {
+          // Para recambios, filtramos por el método de pago de la diferencia
+          return item.metodo_pago_diferencia === this.metodoPagoFiltro;
+        }
+        return false;
+      });
     }
 
     this.itemsFiltrados = itemsFiltrados;

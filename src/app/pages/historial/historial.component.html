@@ -10,7 +10,7 @@
       </button>
     </div>
 
-    <!-- Filtros de tipo y fecha -->
+    <!-- Filtros de tipo , metodo de pago y fecha -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Filtros de Tipo -->
       <div class="bg-white rounded-xl shadow-lg p-4">
@@ -43,6 +43,66 @@
         </div>
       </div>
 
+<!-- Filtro por Método de Pago -->
+<div class="bg-white rounded-xl shadow-lg p-4">
+  <h3 class="text-lg font-semibold text-gray-800 mb-3">Filtrar por Método de Pago</h3>
+  <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
+    <button (click)="filtrarMetodoPago('todos')"
+      [ngClass]="{
+        'bg-blue-600 text-white': metodoPagoFiltro === 'todos',
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'todos'
+      }"
+      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      Todos
+    </button>
+    
+    <button (click)="filtrarMetodoPago('efectivo')"
+      [ngClass]="{
+        'bg-blue-600 text-white': metodoPagoFiltro === 'efectivo',
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'efectivo'
+      }"
+      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      💵 Efectivo
+    </button>
+    
+    <button (click)="filtrarMetodoPago('transferencia')"
+      [ngClass]="{
+        'bg-blue-600 text-white': metodoPagoFiltro === 'transferencia',
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'transferencia'
+      }"
+      class="px-2 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-xs sm:text-sm">
+      🏦 Transfer.
+    </button>
+    
+    <button (click)="filtrarMetodoPago('debito')"
+      [ngClass]="{
+        'bg-blue-600 text-white': metodoPagoFiltro === 'debito',
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'debito'
+      }"
+      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      💳 Débito
+    </button>
+    
+    <button (click)="filtrarMetodoPago('credito')"
+      [ngClass]="{
+        'bg-blue-600 text-white': metodoPagoFiltro === 'credito',
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'credito'
+      }"
+      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      💳 Crédito
+    </button>
+    
+    <button (click)="filtrarMetodoPago('modo')"
+      [ngClass]="{
+        'bg-blue-600 text-white': metodoPagoFiltro === 'modo',
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'modo'
+      }"
+      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      📱 Modo
+    </button>
+  </div>
+</div>
+      
       <!-- Filtros de Fecha -->
       <div class="bg-white rounded-xl shadow-lg p-4">
         <h3 class="text-lg font-semibold text-gray-800 mb-3">Filtrar por Período</h3>

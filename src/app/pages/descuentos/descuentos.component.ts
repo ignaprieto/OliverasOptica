@@ -4,24 +4,26 @@ import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { Descuento } from '../../models/descuento.model';
 import { RouterModule } from '@angular/router';
+
 @Component({
   selector: 'app-descuentos',
-  imports: [CommonModule, FormsModule,RouterModule],
-  standalone:true,
+  imports: [CommonModule, FormsModule, RouterModule],
+  standalone: true,
   templateUrl: './descuentos.component.html',
   styleUrl: './descuentos.component.css'
 })
-export class DescuentosComponent implements OnInit{
-descuentos: Descuento[] = [];
+export class DescuentosComponent implements OnInit {
+  descuentos: Descuento[] = [];
   descuento: Descuento = this.nuevoDescuento();
   modo: 'agregar' | 'editar' = 'agregar';
   mensaje = '';
   error = '';
-idAEliminar: string | null = null;
-toastVisible = false;
-toastMensaje = '';
-toastColor = 'bg-green-600'; 
-mostrarConfirmacion: boolean = false;
+  idAEliminar: string | null = null;
+  toastVisible = false;
+  toastMensaje = '';
+  toastColor = 'bg-green-600'; 
+  mostrarConfirmacion: boolean = false;
+
   constructor(private supabase: SupabaseService) {}
 
   ngOnInit(): void {
@@ -37,65 +39,121 @@ mostrarConfirmacion: boolean = false;
   }
 
   async obtenerDescuentos() {
-    const { data, error } = await this.supabase.getClient().from('descuentos').select('*').order('fecha_creacion', { ascending: false });
+    const { data, error } = await this.supabase.getClient()
+      .from('descuentos')
+      .select('*')
+      .order('fecha_creacion', { ascending: false });
+    
     if (error) {
       console.error(error);
-      this.error = 'Error al obtener los descuentos';
+      this.mostrarToast('Error al obtener los descuentos', 'bg-red-600');
       return;
     }
     this.descuentos = data as Descuento[];
+  }
+
+  // Función helper para mostrar toast
+  mostrarToast(mensaje: string, color: string = 'bg-green-600') {
+    this.toastMensaje = mensaje;
+    this.toastColor = color;
+    this.toastVisible = true;
+    
+    // Auto ocultar después de 3 segundos
+    setTimeout(() => {
+      this.toastVisible = false;
+    }, 3000);
   }
 
   async guardarDescuento() {
     this.mensaje = '';
     this.error = '';
 
-    if (!this.descuento.codigo || this.descuento.porcentaje == null) {
-      this.error = 'Todos los campos son obligatorios';
+    // Validaciones
+    if (!this.descuento.codigo.trim()) {
+      this.mostrarToast('El código de descuento es obligatorio', 'bg-red-600');
       return;
     }
 
-    if (this.modo === 'agregar') {
-      const { error } = await this.supabase.getClient().from('descuentos').insert({
-        codigo: this.descuento.codigo,
-        porcentaje: this.descuento.porcentaje,
-        activo: true
-      });
-
-      if (error) {
-        this.error = 'Error al agregar el descuento: ' + error.message;
-        return;
-      }
-
-      this.mensaje = 'Descuento agregado correctamente';
-        this.toastMensaje = 'Descuento agregado correctamente.';
-         this.toastColor = 'bg-green-600'; // ✔ éxito
-    this.toastVisible = true;
-    setTimeout(() => this.toastVisible = false, 2500);
-    } else if (this.modo === 'editar' && this.descuento.id) {
-      const { error } = await this.supabase.getClient()
-        .from('descuentos')
-        .update({
-          codigo: this.descuento.codigo,
-          porcentaje: this.descuento.porcentaje
-        })
-        .eq('id', this.descuento.id);
-
-      if (error) {
-        this.error = 'Error al actualizar: ' + error.message;
-        return;
-      }
-
-      this.mensaje = 'Descuento actualizado correctamente';
-        this.toastMensaje = 'Descuento actualizado correctamente.';
-         this.toastColor = 'bg-green-600'; // ✔ éxito
-    this.toastVisible = true;
-      setTimeout(() => this.toastVisible = false, 2500);
+    if (this.descuento.porcentaje == null || this.descuento.porcentaje <= 0) {
+      this.mostrarToast('El porcentaje debe ser mayor a 0', 'bg-red-600');
+      return;
     }
 
-    this.descuento = this.nuevoDescuento();
-    this.modo = 'agregar';
-    this.obtenerDescuentos();
+    if (this.descuento.porcentaje > 100) {
+      this.mostrarToast('El porcentaje no puede ser mayor a 100', 'bg-red-600');
+      return;
+    }
+
+    try {
+      if (this.modo === 'agregar') {
+        // Verificar si el código ya existe
+        const { data: existente } = await this.supabase.getClient()
+          .from('descuentos')
+          .select('id')
+          .eq('codigo', this.descuento.codigo.trim().toUpperCase())
+          .single();
+
+        if (existente) {
+          this.mostrarToast('El código de descuento ya existe', 'bg-red-600');
+          return;
+        }
+
+        const { error } = await this.supabase.getClient()
+          .from('descuentos')
+          .insert({
+            codigo: this.descuento.codigo.trim().toUpperCase(),
+            porcentaje: this.descuento.porcentaje,
+            activo: true
+          });
+
+        if (error) {
+          console.error('Error al agregar:', error);
+          this.mostrarToast('Error al agregar el descuento: ' + error.message, 'bg-red-600');
+          return;
+        }
+
+        this.mostrarToast('Descuento agregado correctamente', 'bg-green-600');
+
+      } else if (this.modo === 'editar' && this.descuento.id) {
+        // Verificar si el código ya existe (excluyendo el actual)
+        const { data: existente } = await this.supabase.getClient()
+          .from('descuentos')
+          .select('id')
+          .eq('codigo', this.descuento.codigo.trim().toUpperCase())
+          .neq('id', this.descuento.id)
+          .single();
+
+        if (existente) {
+          this.mostrarToast('El código de descuento ya existe', 'bg-red-600');
+          return;
+        }
+
+        const { error } = await this.supabase.getClient()
+          .from('descuentos')
+          .update({
+            codigo: this.descuento.codigo.trim().toUpperCase(),
+            porcentaje: this.descuento.porcentaje
+          })
+          .eq('id', this.descuento.id);
+
+        if (error) {
+          console.error('Error al actualizar:', error);
+          this.mostrarToast('Error al actualizar: ' + error.message, 'bg-red-600');
+          return;
+        }
+
+        this.mostrarToast('Descuento actualizado correctamente', 'bg-green-600');
+      }
+
+      // Limpiar formulario y recargar datos
+      this.descuento = this.nuevoDescuento();
+      this.modo = 'agregar';
+      await this.obtenerDescuentos();
+
+    } catch (error) {
+      console.error('Error inesperado:', error);
+      this.mostrarToast('Error inesperado al guardar el descuento', 'bg-red-600');
+    }
   }
 
   editarDescuento(desc: Descuento) {
@@ -103,6 +161,12 @@ mostrarConfirmacion: boolean = false;
     this.modo = 'editar';
     this.mensaje = '';
     this.error = '';
+    
+    // Scroll hacia el formulario en dispositivos móviles
+    const formulario = document.querySelector('form');
+    if (formulario && window.innerWidth < 1024) {
+      formulario.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   cancelarEdicion() {
@@ -113,44 +177,66 @@ mostrarConfirmacion: boolean = false;
   }
 
   async cambiarEstado(desc: Descuento) {
-    const { error } = await this.supabase.getClient()
-      .from('descuentos')
-      .update({ activo: !desc.activo })
-      .eq('id', desc.id);
+    try {
+      const { error } = await this.supabase.getClient()
+        .from('descuentos')
+        .update({ activo: !desc.activo })
+        .eq('id', desc.id);
 
-    if (error) {
-      this.error = 'Error al cambiar estado';
-      return;
+      if (error) {
+        console.error('Error al cambiar estado:', error);
+        this.mostrarToast('Error al cambiar estado del descuento', 'bg-red-600');
+        return;
+      }
+
+      const accion = desc.activo ? 'desactivado' : 'activado';
+      this.mostrarToast(`Descuento ${accion} correctamente`, 'bg-green-600');
+      await this.obtenerDescuentos();
+
+    } catch (error) {
+      console.error('Error inesperado:', error);
+      this.mostrarToast('Error inesperado al cambiar estado', 'bg-red-600');
     }
-
-    this.obtenerDescuentos();
   }
 
-async confirmarEliminar() {
-  const { error } = await this.supabase.getClient()
-    .from('descuentos')
-    .delete()
-    .eq('id', this.idAEliminar);
+  eliminarDescuento(id: string) {
+    this.idAEliminar = id;
+    this.mostrarConfirmacion = true;
+  }
 
-  if (!error) {
-    this.toastMensaje = 'Descuento eliminado correctamente.';
-     this.toastColor = 'bg-red-600'; // ✔ éxito
-    this.toastVisible = true;
+  async confirmarEliminar() {
+    if (!this.idAEliminar) return;
+
+    try {
+      const { error } = await this.supabase.getClient()
+        .from('descuentos')
+        .delete()
+        .eq('id', this.idAEliminar);
+
+      if (error) {
+        console.error('Error al eliminar:', error);
+        this.mostrarToast('Error al eliminar el descuento', 'bg-red-600');
+        return;
+      }
+
+      this.mostrarToast('Descuento eliminado correctamente', 'bg-red-600');
+      this.mostrarConfirmacion = false;
+      this.idAEliminar = null;
+      await this.obtenerDescuentos();
+
+    } catch (error) {
+      console.error('Error inesperado:', error);
+      this.mostrarToast('Error inesperado al eliminar', 'bg-red-600');
+    }
+  }
+
+  cancelarEliminar() {
     this.mostrarConfirmacion = false;
-    this.idAEliminar = '';
-    await this.obtenerDescuentos();  // Re-cargar
-    setTimeout(() => {this.toastVisible = false; this.toastColor = 'bg-green-600';  }, 2500);
+    this.idAEliminar = null;
   }
-}
 
-eliminarDescuento(id: string) {
-  this.idAEliminar = id;
-  this.mostrarConfirmacion = true; // ← corregido: antes usabas modalVisible
-}
-
-
-cancelarEliminar() {
-  this.mostrarConfirmacion = false;
-  this.idAEliminar = '';
-}
+  // Método para cerrar el toast manualmente
+  cerrarToast() {
+    this.toastVisible = false;
+  }
 }

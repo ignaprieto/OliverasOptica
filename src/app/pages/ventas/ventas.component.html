@@ -1,67 +1,196 @@
-<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex justify-center animate-fade-in-scale">
-  <div class="w-full max-w-7xl space-y-8">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-800 p-4 sm:p-8 flex justify-center animate-fade-in-scale">
+  <div class="w-full max-w-full space-y-8">
     
-    <!-- Header y botón de volver -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-      <h2 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Ventas</h2>
+    <!-- Header mejorado -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 backdrop-blur-sm bg-white/70 p-6 rounded-2xl border border-white/20 shadow-xl">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 0L3 3z"></path>
+          </svg>
+        </div>
+        <h2 class="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-4 sm:mb-0">Ventas</h2>
+      </div>
       <button routerLink="/dashboard"
-        class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition-colors font-medium text-sm">
-        ← Volver al Panel
+        class="group bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800 px-6 py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+        <span class="flex items-center space-x-2">
+          <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          <span>Volver al Panel</span>
+        </span>
       </button>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Sección izquierda: productos -->
-      <div class="lg:col-span-2 space-y-6">
-        <div class="mb-4">
-          <input
-            type="text"
-            placeholder="Buscar por código, nombre, marca o categoría"
-            [(ngModel)]="filtroGeneral"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          />
+    <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+      <!-- Sección izquierda: productos - Ensanchada -->
+      <div class="xl:col-span-3 space-y-6">
+        <!-- Barra de búsqueda mejorada -->
+        <div class="bg-white p-6 rounded-2xl shadow-xl border border-gray-200/50">
+          <div class="relative">
+            <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por código, nombre, marca o categoría..."
+              [(ngModel)]="filtroGeneral"
+              class="w-full px-12 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white shadow-md"
+            />
+          </div>
+        </div>
+
+        <!-- Indicadores de filtros activos -->
+        <div *ngIf="ordenPrecio !== 'none' || ordenStock !== 'none'" class="bg-white p-4 rounded-xl shadow-md border border-gray-200">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+              <span class="text-sm font-medium text-gray-700">Filtros activos:</span>
+              <div class="flex space-x-2">
+                <span *ngIf="ordenPrecio !== 'none'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 2H4v8h12V6z" clip-rule="evenodd" />
+                  </svg>
+                  Precio {{ ordenPrecio === 'asc' ? '↑' : '↓' }}
+                </span>
+                <span *ngIf="ordenStock !== 'none'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                  </svg>
+                  Stock {{ ordenStock === 'asc' ? '↑' : '↓' }}
+                </span>
+              </div>
+            </div>
+            <button (click)="limpiarFiltros()" 
+                    class="text-sm text-red-600 hover:text-red-800 font-medium flex items-center space-x-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              <span>Limpiar filtros</span>
+            </button>
+          </div>
         </div>
       
-        <!-- Tabla scrollable con altura máxima -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-          <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
-            <table class="w-full text-sm text-left border-collapse min-w-[900px]">
-              <thead class="sticky top-0 z-30 bg-gray-800 text-white">
+        <!-- Tabla scrollable sin scroll horizontal -->
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200/50 overflow-hidden">
+          <div class="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4">
+            <h3 class="text-xl font-semibold text-white flex items-center">
+              <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+              Productos Disponibles
+            </h3>
+          </div>
+          <div class="max-h-[600px] overflow-y-auto">
+            <table class="w-full text-sm text-left border-collapse">
+              <thead class="sticky top-0 z-30 bg-gray-100 border-b border-gray-200">
                 <tr>
-                  <th class="px-4 py-3">Código</th>
-                  <th class="px-4 py-3">Nombre</th>
-                  <th class="px-4 py-3">Marca</th>
-                  <th class="px-4 py-3">Talle</th>
-                  <th class="px-4 py-3">Categoría</th>
-                  <th class="px-4 py-3">Precio</th>
-                  <th class="px-4 py-3">Stock</th>
-                  <th class="px-4 py-3 text-center">Cantidad</th>
-                  <th class="px-4 py-3"></th>
+                  <th class="px-3 py-4 font-semibold text-gray-800 w-[10%]">Código</th>
+                  <th class="px-3 py-4 font-semibold text-gray-800 w-[25%]">Nombre</th>
+                  <th class="px-3 py-4 font-semibold text-gray-800 w-[12%]">Marca</th>
+                  <th class="px-3 py-4 font-semibold text-gray-800 text-center w-[8%]">Talle</th>
+                  <th class="px-3 py-4 font-semibold text-gray-800 w-[12%]">Categoría</th>
+                  <th class="px-3 py-4 font-semibold text-gray-800 cursor-pointer hover:bg-gray-200 transition-colors rounded-lg select-none text-center w-[10%]"
+                      (click)="toggleOrdenPrecio()"
+                      title="Click para ordenar por precio">
+                    <div class="flex items-center justify-center space-x-1 px-1 py-1">
+                      <span>Precio</span>
+                      <div class="flex flex-col">
+                        <svg class="w-3 h-3 transition-colors" 
+                             [class.text-blue-600]="ordenPrecio === 'desc'"
+                             [class.text-gray-400]="ordenPrecio !== 'desc'"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        <svg class="w-3 h-3 -mt-1 transition-colors" 
+                             [class.text-blue-600]="ordenPrecio === 'asc'"
+                             [class.text-gray-400]="ordenPrecio !== 'asc'"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  </th>
+                  <th class="px-3 py-4 font-semibold text-gray-800 cursor-pointer hover:bg-gray-200 transition-colors rounded-lg select-none text-center w-[8%]"
+                      (click)="toggleOrdenStock()"
+                      title="Click para ordenar por stock">
+                    <div class="flex items-center justify-center space-x-1 px-1 py-1">
+                      <span>Stock</span>
+                      <div class="flex flex-col">
+                        <svg class="w-3 h-3 transition-colors" 
+                             [class.text-green-600]="ordenStock === 'desc'"
+                             [class.text-gray-400]="ordenStock !== 'desc'"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        <svg class="w-3 h-3 -mt-1 transition-colors" 
+                             [class.text-green-600]="ordenStock === 'asc'"
+                             [class.text-gray-400]="ordenStock !== 'asc'"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  </th>
+                  <th class="px-3 py-4 text-center font-semibold text-gray-800 w-[10%]">Cantidad</th>
+                  <th class="px-3 py-4 font-semibold text-gray-800 text-center w-[5%]"></th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
-                <tr *ngFor="let prod of productosFiltrados()" class="hover:bg-gray-50 transition-colors">
-                  <td class="px-4 py-2">{{ prod.codigo }}</td>
-                  <td class="px-4 py-2">{{ prod.nombre }}</td>
-                  <td class="px-4 py-2">{{ prod.marca }}</td>
-                  <td class="px-4 py-2">{{ prod.talle }}</td>
-                  <td class="px-4 py-2">{{ prod.categoria }}</td>
-                  <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
-                  <td class="px-4 py-2">
-                    {{ prod.cantidad_stock - (cantidades[prod.id] || 0) }}
+                <tr *ngFor="let prod of productosFiltrados(); let i = index" 
+                    class="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
+                    [class.bg-gray-50]="i % 2 === 0">
+                  <td class="px-3 py-3 font-mono text-xs font-semibold text-gray-800">{{ prod.codigo }}</td>
+                  <td class="px-3 py-3 font-medium text-gray-800">{{ prod.nombre }}</td>
+                  <td class="px-3 py-3 text-gray-600">{{ prod.marca }}</td>
+                  <td class="px-3 py-3 text-center">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      {{ prod.talle }}
+                    </span>
                   </td>
-                  <td class="px-4 py-2 flex justify-center items-center gap-2">
-                    <button (click)="disminuirCantidad(prod)" class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded transition-colors text-lg font-bold text-gray-700">–</button>
-                    <span class="w-8 text-center">{{ cantidades[prod.id] || 0 }}</span>
-                    <button (click)="aumentarCantidad(prod)" class="w-8 h-8 flex items-center justify-center bg-gray-200 hover:bg-gray-300 rounded transition-colors text-lg font-bold text-gray-700">+</button>
+                  <td class="px-3 py-3">
+                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {{ prod.categoria }}
+                    </span>
                   </td>
-                  <td class="px-4 py-2 text-right">
+                  <td class="px-3 py-3 text-center font-bold text-gray-900">{{ prod.precio | monedaArs }}</td>
+                  <td class="px-3 py-3 text-center">
+                    <span class="inline-flex items-center justify-center w-10 h-7 rounded-lg text-xs font-bold"
+                          [class.bg-red-100]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) <= 5"
+                          [class.text-red-800]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) <= 5"
+                          [class.bg-yellow-100]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) > 5 && (prod.cantidad_stock - (cantidades[prod.id] || 0)) <= 15"
+                          [class.text-yellow-800]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) > 5 && (prod.cantidad_stock - (cantidades[prod.id] || 0)) <= 15"
+                          [class.bg-green-100]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) > 15"
+                          [class.text-green-800]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) > 15">
+                      {{ prod.cantidad_stock - (cantidades[prod.id] || 0) }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-3">
+                    <div class="flex items-center justify-center gap-1">
+                      <button (click)="disminuirCantidad(prod)" 
+                              class="w-6 h-6 flex items-center justify-center bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 text-sm font-bold">
+                        –
+                      </button>
+                      <span class="w-6 text-center font-semibold text-gray-800 text-sm">{{ cantidades[prod.id] || 0 }}</span>
+                      <button (click)="aumentarCantidad(prod)" 
+                              class="w-6 h-6 flex items-center justify-center bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 text-sm font-bold">
+                        +
+                      </button>
+                    </div>
+                  </td>
+                  <td class="px-3 py-3 text-center">
                     <button
                       *ngIf="prod.cantidad_stock > 0"
                       (click)="agregarAlCarrito(prod)"
                       [disabled]="!(cantidades[prod.id] > 0) || (cantidades[prod.id] > prod.cantidad_stock)"
-                      class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-1 rounded-lg shadow-sm disabled:opacity-50 transition-colors">
-                      Agregar
+                      class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs px-3 py-2 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-md transform hover:-translate-y-1">
+                      <span class="flex items-center space-x-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <span>Agregar</span>
+                      </span>
                     </button>
                   </td>
                 </tr>
@@ -71,96 +200,148 @@
         </div>
       </div>
 
-      <!-- Sección derecha: carrito -->
-      <div class="bg-white rounded-xl shadow-lg p-6 mt-6 lg:mt-0 space-y-4">
-        <h3 class="text-xl font-semibold mb-4 text-gray-900">Resumen de Venta</h3>
+      <!-- Sección derecha: carrito - Compacto -->
+      <div class="xl:col-span-1 bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-xl p-6 mt-6 xl:mt-0 space-y-4 border border-gray-200/50 relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500"></div>
+        
+        <h3 class="text-xl font-bold mb-4 text-gray-900 flex items-center">
+          <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg mr-3 flex items-center justify-center">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 0L3 3z"></path>
+            </svg>
+          </div>
+          Resumen
+        </h3>
 
-        <div *ngIf="carrito.length === 0" class="text-gray-500 text-sm italic">Aún no hay productos en el carrito.</div>
+        <div *ngIf="carrito.length === 0" class="text-center py-6 text-gray-500">
+          <div class="w-12 h-12 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full mx-auto mb-3 flex items-center justify-center">
+            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 0L3 3z"></path>
+            </svg>
+          </div>
+          <p class="font-medium text-sm">Carrito vacío</p>
+          <p class="text-xs text-gray-400 mt-1">Agrega productos</p>
+        </div>
       
-        <ul *ngIf="carrito.length > 0" class="space-y-3">
-          <li *ngFor="let item of carrito" class="flex justify-between items-center text-sm border-b pb-2">
-            <div>
-              <span class="font-medium">
-                {{ item.producto.nombre }} ({{ item.producto.marca }}) x{{ item.cantidad }}
-              </span>
-              <div class="text-xs text-gray-500">
-                Talle: {{ item.producto.talle }}
+        <ul *ngIf="carrito.length > 0" class="space-y-2 max-h-48 overflow-y-auto">
+          <li *ngFor="let item of carrito" class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="flex justify-between items-start">
+              <div class="flex-1 min-w-0">
+                <span class="font-semibold text-gray-800 text-sm block truncate">
+                  {{ item.producto.nombre }}
+                </span>
+                <div class="text-xs text-gray-500 mt-1">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-700 mr-1">
+                    {{ item.producto.talle }}
+                  </span>
+                  <span class="font-medium">x{{ item.cantidad }}</span>
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="font-semibold text-gray-700">{{ item.subtotal | monedaArs }}</span>
-              <button
-                (click)="eliminarDelCarrito(item.producto)"
-                class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs transition-colors"
-                title="Eliminar producto"
-              >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/>
-              </svg>
-              </button>
+              <div class="text-right ml-2">
+                <div class="font-bold text-sm text-gray-900">{{ item.subtotal | monedaArs }}</div>
+                <button
+                  (click)="eliminarDelCarrito(item.producto)"
+                  class="mt-1 p-1 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+                  title="Eliminar">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </li>
         </ul>
       
         <hr class="border-gray-300" />
       
-        <div class="space-y-4">
+        <div class="space-y-3">
           <div>
-            <label class="block text-sm font-medium mb-1">Método de pago</label>
-            <select [(ngModel)]="metodoPago" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-              <option value="efectivo">Efectivo</option>
-              <option value="transferencia">Transferencia</option>
-              <option value="debito">Débito</option>
-              <option value="credito">Crédito</option>
-              <option value="modo">Modo</option>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Método de pago</label>
+            <select [(ngModel)]="metodoPago" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white text-sm">
+              <option value="efectivo">💰 Efectivo</option>
+              <option value="transferencia">🏦 Transferencia</option>
+              <option value="debito">💳 Débito</option>
+              <option value="credito">💳 Crédito</option>
+              <option value="modo">📱 Modo</option>
             </select>
           </div>
       
           <div>
-            <label class="block text-sm font-medium mb-1">Código de descuento</label>
-            <div class="flex gap-2">
-              <input type="text" [(ngModel)]="codigoDescuento" placeholder="Ej: PROMO10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
-              <button (click)="aplicarDescuento()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-sm">Aplicar</button>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Código de descuento</label>
+            <div class="flex gap-1">
+              <input type="text" [(ngModel)]="codigoDescuento" placeholder="PROMO10" class="flex-1 px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white text-sm" />
+              <button (click)="aplicarDescuento()" class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-1 text-xs">
+                OK
+              </button>
             </div>
-            <div *ngIf="descuentoAplicado > 0" class="text-green-600 text-sm mt-1 flex justify-between items-center">
-              <span>Descuento: {{ descuentoAplicado }}% aplicado</span>
-              <button (click)="quitarDescuento()" class="text-red-600 hover:underline text-xs">Quitar</button>
+            <div *ngIf="descuentoAplicado > 0" class="bg-green-50 border border-green-200 rounded-lg p-2 mt-1">
+              <div class="flex justify-between items-center">
+                <span class="text-green-800 text-xs font-medium">Descuento: {{ descuentoAplicado }}%</span>
+                <button (click)="quitarDescuento()" class="text-red-600 hover:text-red-800 hover:underline text-xs font-medium">Quitar</button>
+              </div>
             </div>
           </div>
       
-          <div class="text-right text-2xl font-bold">
-            Total: {{ totalFinal | monedaArs }}
+          <div class="bg-gradient-to-r from-gray-100 to-gray-200 p-3 rounded-xl">
+            <div class="text-right text-xl font-bold text-gray-900">
+              Total: {{ totalFinal | monedaArs }}
+            </div>
           </div>
         </div>
 
         <hr class="border-gray-300" />
 
-        <div class="space-y-4">
+        <div class="space-y-3">
           <div>
-            <label class="block text-sm font-medium mb-1">Nombre del cliente</label>
-            <input type="text" [(ngModel)]="clienteNombre" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Nombre del cliente</label>
+            <input type="text" [(ngModel)]="clienteNombre" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white text-sm" placeholder="Nombre completo" />
           </div>
       
           <div>
-            <label class="block text-sm font-medium mb-1">Correo electrónico</label>
-            <input type="email" [(ngModel)]="clienteEmail" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Correo electrónico</label>
+            <input type="email" [(ngModel)]="clienteEmail" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white text-sm" placeholder="email@cliente.com" />
           </div>
         </div>
       
         <button
           (click)="confirmarVenta()"
           [disabled]="carrito.length === 0 || !clienteNombre || procesandoVenta"
-          class="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg shadow-md disabled:opacity-50 transition-colors text-lg font-semibold">
-          Confirmar Venta
+          class="w-full bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white py-3 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm font-bold hover:shadow-xl transform hover:-translate-y-1">
+          <span *ngIf="!procesandoVenta" class="flex items-center justify-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Confirmar Venta</span>
+          </span>
+          <span *ngIf="procesandoVenta" class="flex items-center justify-center space-x-2">
+            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Procesando...</span>
+          </span>
         </button>
       </div>
     </div>
 
-    <!-- Toast de notificación -->
+    <!-- Toast mejorado -->
     <div *ngIf="toastVisible"
-      class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 text-white font-medium animate-slide-up"
-      [ngClass]="toastColor">
-      {{ toastMensaje }}
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 px-8 py-4 rounded-2xl shadow-2xl z-50 text-white font-semibold animate-slide-up border border-white/20"
+      [ngClass]="toastColor"
+      [style.background]="toastColor === 'bg-green-600' ? 'linear-gradient(to right, rgb(34 197 94), rgb(16 185 129))' : 'linear-gradient(to right, rgb(239 68 68), rgb(220 38 38))'">
+      <div class="flex items-center space-x-3">
+        <div *ngIf="toastColor === 'bg-green-600'" class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <div *ngIf="toastColor === 'bg-red-600'" class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </div>
+        <span>{{ toastMensaje }}</span>
+      </div>
     </div>
 
   </div>

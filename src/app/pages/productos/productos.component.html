@@ -1,95 +1,247 @@
-<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex justify-center animate-fade-in-scale">
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-800 p-4 sm:p-8 flex justify-center animate-fade-in-scale">
   <div class="w-full max-w-7xl space-y-8">
 
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-      <h2 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Listado de Productos</h2>
+    <!-- Header con glassmorphism -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 backdrop-blur-sm bg-white/70 p-6 rounded-2xl border border-white/20 shadow-xl">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+          </svg>
+        </div>
+        <h2 class="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-4 sm:mb-0">Listado de Productos</h2>
+      </div>
       <button
         routerLink="/dashboard"
-        class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+        class="group bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800 px-6 py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1"
       >
-        ← Volver al Panel
+        <span class="flex items-center space-x-2">
+          <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          <span>Volver al Panel</span>
+        </span>
       </button>
     </div>
 
+    <!-- Barra de búsqueda y contador mejorados -->
     <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-      <div class="w-full md:max-w-md">
+      <div class="w-full md:max-w-md relative">
+        <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
         <input
           [(ngModel)]="filtro"
           type="text"
           placeholder="Buscar por código, nombre, marca o categoría..."
-          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          class="w-full border border-gray-300 rounded-xl px-12 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white shadow-md hover:shadow-lg"
         />
       </div>
-      <div class="text-sm text-gray-700 md:text-right font-semibold">
-        Mostrando {{ productosFiltrados().length }} de {{ productos.length }} productos
+      <div class="bg-white px-6 py-3 rounded-xl shadow-md border border-gray-200">
+        <span class="text-sm text-gray-700 font-semibold">
+          Mostrando <span class="text-blue-600 font-bold">{{ productosFiltrados().length }}</span> de <span class="text-gray-900 font-bold">{{ productos.length }}</span> productos
+        </span>
       </div>
     </div>
 
-    <div class="overflow-hidden rounded-xl shadow-md border border-gray-200 hidden md:block">
-      <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+    <!-- Tabla desktop mejorada con filtros clickeables -->
+    <div class="overflow-hidden rounded-2xl shadow-xl border border-gray-200/50 hidden md:block bg-white">
+      <div class="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-4">
+        <h3 class="text-xl font-semibold text-white flex items-center">
+          <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h2a2 2 0 002-2V7a2 2 0 00-2-2H9m0 0V3a2 2 0 012-2h2a2 2 0 012 2v2M7 13h10l-4 4m0 0l4-4M7 13l4 4"></path>
+          </svg>
+          Catálogo de Productos
+        </h3>
+      </div>
+      <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
         <table class="min-w-full w-full text-sm text-left">
-          <thead class="bg-gray-800 text-white sticky top-0 z-10">
+          <thead class="bg-gray-100 sticky top-0 z-10 border-b border-gray-200">
             <tr>
-              <th class="px-6 py-3 font-semibold">Código</th>
-              <th class="px-6 py-3 font-semibold">Nombre</th>
-              <th class="px-6 py-3 font-semibold">Marca</th>
-              <th class="px-6 py-3 font-semibold">Talle</th>
-              <th class="px-6 py-3 font-semibold">Categoría</th>
-              <th class="px-6 py-3 font-semibold text-right">Precio</th>
-              <th class="px-6 py-3 font-semibold text-center">Stock</th>
+              <th class="px-6 py-4 font-semibold text-gray-800">Código</th>
+              <th class="px-6 py-4 font-semibold text-gray-800">Nombre</th>
+              <th class="px-6 py-4 font-semibold text-gray-800">Marca</th>
+              <th class="px-6 py-4 font-semibold text-gray-800">Talle</th>
+              <th class="px-6 py-4 font-semibold text-gray-800">Categoría</th>
+              <th class="px-6 py-4 font-semibold text-gray-800 text-right cursor-pointer hover:bg-gray-200 transition-colors rounded-lg select-none"
+                  (click)="toggleOrdenPrecio()"
+                  title="Click para ordenar por precio">
+                <div class="flex items-center justify-end space-x-2 px-2 py-1">
+                  <span>Precio</span>
+                  <div class="flex flex-col">
+                    <svg class="w-3 h-3 transition-colors" 
+                         [class.text-blue-600]="ordenPrecio === 'desc'"
+                         [class.text-gray-400]="ordenPrecio !== 'desc'"
+                         fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <svg class="w-3 h-3 -mt-1 transition-colors" 
+                         [class.text-blue-600]="ordenPrecio === 'asc'"
+                         [class.text-gray-400]="ordenPrecio !== 'asc'"
+                         fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              </th>
+              <th class="px-6 py-4 font-semibold text-gray-800 text-center cursor-pointer hover:bg-gray-200 transition-colors rounded-lg select-none"
+                  (click)="toggleOrdenStock()"
+                  title="Click para ordenar por stock">
+                <div class="flex items-center justify-center space-x-2 px-2 py-1">
+                  <span>Stock</span>
+                  <div class="flex flex-col">
+                    <svg class="w-3 h-3 transition-colors" 
+                         [class.text-green-600]="ordenStock === 'desc'"
+                         [class.text-gray-400]="ordenStock !== 'desc'"
+                         fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                    </svg>
+                    <svg class="w-3 h-3 -mt-1 transition-colors" 
+                         [class.text-green-600]="ordenStock === 'asc'"
+                         [class.text-gray-400]="ordenStock !== 'asc'"
+                         fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                  </div>
+                </div>
+              </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr *ngFor="let prod of productosFiltrados()"
-              class="hover:bg-gray-100 transition-colors">
-              <td class="px-6 py-4">{{ prod.codigo }}</td>
-              <td class="px-6 py-4">{{ prod.nombre }}</td>
-              <td class="px-6 py-4">{{ prod.marca }}</td>
-              <td class="px-6 py-4">{{ prod.talle }}</td>
-              <td class="px-6 py-4">{{ prod.categoria }}</td>
-              <td class="px-6 py-4 text-right">{{ prod.precio | monedaArs }}</td>
-              <td class="px-6 py-4 text-center">{{ prod.cantidad_stock }}</td>
+          <tbody>
+            <tr *ngFor="let prod of productosFiltrados(); let i = index"
+                class="border-b border-gray-100 last:border-b-0 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200"
+                [class.bg-gray-50]="i % 2 === 0">
+              <td class="px-6 py-4 font-mono text-sm font-semibold text-gray-800">{{ prod.codigo }}</td>
+              <td class="px-6 py-4 font-medium text-gray-800">{{ prod.nombre }}</td>
+              <td class="px-6 py-4 text-gray-600">{{ prod.marca }}</td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  {{ prod.talle }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {{ prod.categoria }}
+                </span>
+              </td>
+              <td class="px-6 py-4 text-right font-bold text-lg text-gray-900">{{ prod.precio | monedaArs }}</td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold"
+                      [class.bg-red-100]="prod.cantidad_stock <= 5"
+                      [class.text-red-800]="prod.cantidad_stock <= 5"
+                      [class.bg-yellow-100]="prod.cantidad_stock > 5 && prod.cantidad_stock <= 15"
+                      [class.text-yellow-800]="prod.cantidad_stock > 5 && prod.cantidad_stock <= 15"
+                      [class.bg-green-100]="prod.cantidad_stock > 15"
+                      [class.text-green-800]="prod.cantidad_stock > 15">
+                  {{ prod.cantidad_stock }}
+                </span>
+              </td>
             </tr>
             <tr *ngIf="productosFiltrados().length === 0">
-              <td colspan="7" class="text-center py-6 text-gray-400">No se encontraron productos.</td>
+              <td colspan="7" class="text-center py-12 text-gray-500">
+                <div class="flex flex-col items-center space-y-4">
+                  <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                  </svg>
+                  <p class="text-lg font-medium">No se encontraron productos</p>
+                  <p class="text-sm text-gray-400">Intenta con otros términos de búsqueda</p>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
 
+    <!-- Indicadores de filtros activos -->
+    <div *ngIf="ordenPrecio !== 'none' || ordenStock !== 'none'" class="bg-white p-4 rounded-xl shadow-md border border-gray-200">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          <span class="text-sm font-medium text-gray-700">Filtros activos:</span>
+          <div class="flex space-x-2">
+            <span *ngIf="ordenPrecio !== 'none'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm12 2H4v8h12V6z" clip-rule="evenodd" />
+              </svg>
+              Precio {{ ordenPrecio === 'asc' ? '↑' : '↓' }}
+            </span>
+            <span *ngIf="ordenStock !== 'none'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+              </svg>
+              Stock {{ ordenStock === 'asc' ? '↑' : '↓' }}
+            </span>
+          </div>
+        </div>
+        <button (click)="limpiarFiltros()" 
+                class="text-sm text-red-600 hover:text-red-800 font-medium flex items-center space-x-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          <span>Limpiar filtros</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Cards móvil mejorados -->
     <div class="block md:hidden space-y-4">
       <div *ngFor="let prod of productosFiltrados()"
-        class="bg-white rounded-xl shadow-md border border-gray-200 p-4 space-y-2">
-        <div class="flex justify-between items-center">
-          <span class="font-bold text-lg text-gray-900">{{ prod.nombre }}</span>
-          <span class="text-blue-700 font-bold text-lg">{{ prod.precio | monedaArs }}</span>
+        class="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-4 hover:shadow-xl transition-all duration-200 transform hover:-translate-y-1">
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <h3 class="font-bold text-lg text-gray-900 mb-2">{{ prod.nombre }}</h3>
+            <div class="flex space-x-2 mb-3">
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {{ prod.categoria }}
+              </span>
+              <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                {{ prod.talle }}
+              </span>
+            </div>
+          </div>
+          <div class="text-right">
+            <span class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{{ prod.precio | monedaArs }}</span>
+          </div>
         </div>
-        <div class="text-sm text-gray-600 space-y-1">
+        
+        <div class="bg-gray-50 p-4 rounded-xl space-y-2 text-sm">
           <div class="flex justify-between items-center">
-            <span class="font-medium">Código:</span>
-            <span>{{ prod.codigo }}</span>
+            <span class="font-medium text-gray-700">Código:</span>
+            <span class="font-mono font-semibold text-gray-900">{{ prod.codigo }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="font-medium">Marca:</span>
-            <span>{{ prod.marca }}</span>
+            <span class="font-medium text-gray-700">Marca:</span>
+            <span class="text-gray-900">{{ prod.marca }}</span>
           </div>
           <div class="flex justify-between items-center">
-            <span class="font-medium">Talle:</span>
-            <span>{{ prod.talle }}</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="font-medium">Categoría:</span>
-            <span>{{ prod.categoria }}</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="font-medium">Stock:</span>
-            <span>{{ prod.cantidad_stock }}</span>
+            <span class="font-medium text-gray-700">Stock:</span>
+            <span class="inline-flex items-center justify-center w-12 h-6 rounded-lg text-xs font-bold"
+                  [class.bg-red-100]="prod.cantidad_stock <= 5"
+                  [class.text-red-800]="prod.cantidad_stock <= 5"
+                  [class.bg-yellow-100]="prod.cantidad_stock > 5 && prod.cantidad_stock <= 15"
+                  [class.text-yellow-800]="prod.cantidad_stock > 5 && prod.cantidad_stock <= 15"
+                  [class.bg-green-100]="prod.cantidad_stock > 15"
+                  [class.text-green-800]="prod.cantidad_stock > 15">
+              {{ prod.cantidad_stock }}
+            </span>
           </div>
         </div>
       </div>
-      <div *ngIf="productosFiltrados().length === 0" class="text-center py-6 text-gray-400">
-        No se encontraron productos.
+      
+      <div *ngIf="productosFiltrados().length === 0" class="text-center py-12 bg-white rounded-2xl shadow-lg border border-gray-200">
+        <div class="flex flex-col items-center space-y-4">
+          <div class="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full flex items-center justify-center">
+            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+          </div>
+          <div>
+            <p class="text-lg font-medium text-gray-600">No se encontraron productos</p>
+            <p class="text-sm text-gray-400 mt-1">Intenta con otros términos de búsqueda</p>
+          </div>
+        </div>
       </div>
     </div>
 

@@ -1,59 +1,97 @@
-<div class="min-h-screen bg-[#edf2ff] text-black px-4 sm:px-6 py-6 sm:py-8 animate-fade-in-scale">
-  <div class="mb-6">
-    <button
-      routerLink="/dashboard"
-      class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded transition w-full sm:w-auto"
-    >
-      ← Volver al Panel
-    </button>
-  </div>
+<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex justify-center">
+  <div class="w-full max-w-7xl space-y-8">
 
-  <h2 class="text-2xl font-semibold mb-6 text-center sm:text-left">Listado de Productos</h2>
-
-  <div class="max-w-md mb-6 mx-auto sm:mx-0">
-    <input
-      [(ngModel)]="filtro"
-      type="text"
-      placeholder="Buscar por código, nombre, marca o categoría..."
-      class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  </div>
-
-  <div class="text-right font-semibold mb-2 text-sm text-gray-700">
-    Mostrando {{ productosFiltrados().length }} de {{ productos.length }} productos
-  </div>
-
-  <!-- Vista de tabla (escritorio) -->
-  <div class="overflow-x-auto max-h-[400px] overflow-y-auto bg-white rounded-lg shadow border">
-    <div class="min-w-[900px] mx-auto">
-      <table class="w-full text-sm text-left border-collapse">
-        <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">
-          <tr>
-            <th class="px-4 py-3">Código</th>
-            <th class="px-4 py-3">Nombre</th>
-            <th class="px-4 py-3">Marca</th>
-            <th class="px-4 py-3">Talle</th>
-            <th class="px-4 py-3">Categoría</th>
-            <th class="px-4 py-3">Precio</th>
-            <th class="px-4 py-3">Stock</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y">
-          <tr *ngFor="let prod of productosFiltrados()">
-            <td class="px-4 py-2">{{ prod.codigo }}</td>
-            <td class="px-4 py-2">{{ prod.nombre }}</td>
-            <td class="px-4 py-2">{{ prod.marca }}</td>
-            <td class="px-4 py-2">{{ prod.talle }}</td>
-            <td class="px-4 py-2">{{ prod.categoria }}</td>
-            <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
-            <td class="px-4 py-2">{{ prod.cantidad_stock }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Listado de Productos</h2>
+      <button
+        routerLink="/dashboard"
+        class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg transition-colors font-medium text-sm"
+      >
+        ← Volver al Panel
+      </button>
     </div>
-     <!-- Mensaje si no se encuentran productos (escritorio) -->
-    <div *ngIf="productosFiltrados().length === 0" class="text-center text-gray-600 py-4">
-      No se encontraron productos
+
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
+      <div class="w-full md:max-w-md">
+        <input
+          [(ngModel)]="filtro"
+          type="text"
+          placeholder="Buscar por código, nombre, marca o categoría..."
+          class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+        />
+      </div>
+      <div class="text-sm text-gray-700 md:text-right font-semibold">
+        Mostrando {{ productosFiltrados().length }} de {{ productos.length }} productos
+      </div>
     </div>
+
+    <div class="overflow-hidden rounded-xl shadow-md border border-gray-200 hidden md:block">
+      <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+        <table class="min-w-full w-full text-sm text-left">
+          <thead class="bg-gray-800 text-white sticky top-0 z-10">
+            <tr>
+              <th class="px-6 py-3 font-semibold">Código</th>
+              <th class="px-6 py-3 font-semibold">Nombre</th>
+              <th class="px-6 py-3 font-semibold">Marca</th>
+              <th class="px-6 py-3 font-semibold">Talle</th>
+              <th class="px-6 py-3 font-semibold">Categoría</th>
+              <th class="px-6 py-3 font-semibold text-right">Precio</th>
+              <th class="px-6 py-3 font-semibold text-center">Stock</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr *ngFor="let prod of productosFiltrados()"
+              class="hover:bg-gray-100 transition-colors">
+              <td class="px-6 py-4">{{ prod.codigo }}</td>
+              <td class="px-6 py-4">{{ prod.nombre }}</td>
+              <td class="px-6 py-4">{{ prod.marca }}</td>
+              <td class="px-6 py-4">{{ prod.talle }}</td>
+              <td class="px-6 py-4">{{ prod.categoria }}</td>
+              <td class="px-6 py-4 text-right">{{ prod.precio | monedaArs }}</td>
+              <td class="px-6 py-4 text-center">{{ prod.cantidad_stock }}</td>
+            </tr>
+            <tr *ngIf="productosFiltrados().length === 0">
+              <td colspan="7" class="text-center py-6 text-gray-400">No se encontraron productos.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="block md:hidden space-y-4">
+      <div *ngFor="let prod of productosFiltrados()"
+        class="bg-white rounded-xl shadow-md border border-gray-200 p-4 space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-lg text-gray-900">{{ prod.nombre }}</span>
+          <span class="text-blue-700 font-bold text-lg">{{ prod.precio | monedaArs }}</span>
+        </div>
+        <div class="text-sm text-gray-600 space-y-1">
+          <div class="flex justify-between items-center">
+            <span class="font-medium">Código:</span>
+            <span>{{ prod.codigo }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-medium">Marca:</span>
+            <span>{{ prod.marca }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-medium">Talle:</span>
+            <span>{{ prod.talle }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-medium">Categoría:</span>
+            <span>{{ prod.categoria }}</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="font-medium">Stock:</span>
+            <span>{{ prod.cantidad_stock }}</span>
+          </div>
+        </div>
+      </div>
+      <div *ngIf="productosFiltrados().length === 0" class="text-center py-6 text-gray-400">
+        No se encontraron productos.
+      </div>
+    </div>
+
   </div>
 </div>

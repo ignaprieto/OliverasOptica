@@ -18,7 +18,10 @@ export class FinanzasComponent implements OnInit {
   categoria: string = '';
   descripcion: string = '';
   monto: number = 0;
-  ventas: any[] = []; // guardarlas para reutilizar
+
+  // NUEVO: Almacenar ventas y recambios para reutilizar
+  ventas: any[] = []; 
+  recambios: any[] = []; 
 
   // Gastos
   gastos: any[] = [];
@@ -47,16 +50,25 @@ export class FinanzasComponent implements OnInit {
   toastTipo: 'success' | 'error' = 'success';
   toastTimeout: any = null;
 
+  constructor(private supabase: SupabaseService) {}
+
+  async ngOnInit() {
+    await this.cargarDatos();
+  }
+
+  // Muestra el modal de confirmación para eliminar un gasto
   mostrarModalEliminar(id: string) {
     this.gastoAEliminar = id;
     this.mostrarModal = true;
   }
 
+  // Cierra el modal de eliminación
   cancelarEliminar() {
     this.mostrarModal = false;
     this.gastoAEliminar = null;
   }
 
+  // Muestra una notificación de toast
   mostrarToast(mensaje: string, tipo: 'success' | 'error' = 'success') {
     this.toastMensaje = mensaje;
     this.toastTipo = tipo;
@@ -67,6 +79,7 @@ export class FinanzasComponent implements OnInit {
     }, 2500);
   }
 
+  // Confirma y elimina un gasto
   async confirmarEliminar() {
     if (!this.gastoAEliminar) return;
 
@@ -77,182 +90,136 @@ export class FinanzasComponent implements OnInit {
       .eq('id', this.gastoAEliminar);
 
     if (!error) {
-      // Elimina el gasto localmente
       this.gastos = this.gastos.filter((g) => g.id !== this.gastoAEliminar);
       this.aplicarFiltros();
-
-      // Actualiza totales en la vista sin recargar desde la base
-      this.totalGastosHistorico = this.gastos.reduce(
-        (acc: number, g: any) => acc + g.monto,
-        0
-      );
-
-      // Actualiza total anual y promedio mensual automáticamente
-      const year = new Date().getFullYear().toString();
-      const gastosAnio = this.gastos.filter((g) => g.fecha && g.fecha.startsWith(year));
-      this.totalGastosAnual = gastosAnio.reduce((acc: number, g: any) => acc + g.monto, 0);
-      const mesesConGastos = new Set(
-        gastosAnio.map((g) => g.fecha.substring(0, 7))
-      );
-      const cantidadMeses = mesesConGastos.size || 1;
-      this.promedioGastosMensual = cantidadMeses > 0 ? Math.round(this.totalGastosAnual / cantidadMeses) : 0;
-
-      this.totalGastos = this.gastosFiltrados.reduce(
-        (acc: number, g: any) => acc + g.monto,
-        0
-      );
-      this.gananciaNeta = this.totalVentas - this.totalGastos;
       this.mostrarToast('Gasto eliminado correctamente', 'success');
     } else {
       this.mostrarToast('Error al eliminar gasto', 'error');
     }
-
     this.cancelarEliminar();
   }
 
-  constructor(private supabase: SupabaseService) {}
-
-  async ngOnInit() {
-    await this.cargarDatos();
-  }
-
+  // Carga todas las ventas, recambios y gastos
   async cargarDatos() {
     const client = this.supabase.getClient();
 
-    // Cargar gastos
-    const { data: gastos, error: errorGastos } = await client
-      .from('gastos')
-      .select('*')
-      .order('fecha', { ascending: false });
+    const [gastosRes, ventasRes, recambiosRes] = await Promise.all([
+      client.from('gastos').select('*').order('fecha', { ascending: false }),
+      client.from('ventas').select('total_final, fecha_venta'),
+      client.from('recambios').select('diferencia_abonada, fecha_recambio'),
+    ]);
 
-    if (errorGastos) {
-      console.error('Error al obtener gastos:', errorGastos.message);
+    if (gastosRes.error) {
+      console.error('Error al obtener gastos:', gastosRes.error.message);
       return;
     }
+    this.gastos = gastosRes.data || [];
 
-    this.gastos = gastos || [];
+    if (ventasRes.error) {
+      console.error('Error al obtener ventas:', ventasRes.error.message);
+      return;
+    }
+    this.ventas = ventasRes.data || [];
 
-    // Total histórico (antes de filtrar)
+    if (recambiosRes.error) {
+      console.error('Error al obtener recambios:', recambiosRes.error.message);
+      return;
+    }
+    this.recambios = recambiosRes.data || [];
+
+    // Calcular total histórico de gastos
     this.totalGastosHistorico = this.gastos.reduce(
-      (acc: number, g: any) => acc + g.monto,
-      0
+      (acc: number, g: any) => acc + g.monto, 0
     );
 
-    // --- NUEVO: Calcular total anual y promedio mensual ---
+    // Calcular total anual y promedio mensual de gastos
     const year = new Date().getFullYear().toString();
-    const gastosAnio = this.gastos.filter((g) => g.fecha && g.fecha.startsWith(year));
+    const gastosAnio = this.gastos.filter((g) => g.fecha?.startsWith(year));
     this.totalGastosAnual = gastosAnio.reduce((acc: number, g: any) => acc + g.monto, 0);
-
-    // Calcular meses únicos con gastos en el año
     const mesesConGastos = new Set(
-      gastosAnio.map((g) => g.fecha.substring(0, 7))
+      gastosAnio.map((g) => g.fecha?.substring(0, 7))
     );
     const cantidadMeses = mesesConGastos.size || 1;
     this.promedioGastosMensual = cantidadMeses > 0 ? Math.round(this.totalGastosAnual / cantidadMeses) : 0;
 
-    // Cargar ventas del mes
-    const { data: ventas, error: errorVentas } = await client
-      .from('ventas')
-      .select('total_final, fecha_venta');
-
-    if (errorVentas) {
-      console.error('Error al obtener ventas:', errorVentas.message);
-      return;
-    }
-
-    this.ventas = ventas || [];
+    // Aplicar los filtros actuales
     this.aplicarFiltros();
-    // esto actualiza this.gastosFiltrados
-
-    // Calcular total de gastos del mes filtrado
-    this.totalGastos = this.gastosFiltrados.reduce(
-      (acc: number, g: any) => acc + g.monto,
-      0
-    );
-
-    const ventasDelMes = ventas?.filter((v: any) =>
-      this.filtroMes ? (v.fecha_venta as string).startsWith(this.filtroMes) : true
-    );
-
-    this.totalVentas = ventasDelMes?.reduce(
-      (acc: number, v: any) => acc + v.total_final,
-      0
-    ) ?? 0;
-
-    // Calcular ganancia neta
-    this.gananciaNeta = this.totalVentas - this.totalGastos;
-    
   }
 
+  // Aplica los filtros a los datos cargados y recalcula los totales
   aplicarFiltros() {
-    const coincideMes = (g: any) => !this.filtroMes || g.fecha?.startsWith(this.filtroMes);
+    // 1. Filtrar y recalcular gastos
+    const coincideMes = (item: any) => !this.filtroMes || item.fecha?.startsWith(this.filtroMes);
     const coincideCategoria = (g: any) =>
-      g.categoria && g.categoria.toLowerCase().includes(this.filtroCategoria.toLowerCase());
+      g.categoria?.toLowerCase().includes(this.filtroCategoria.toLowerCase());
 
-    // Solo filtrar tabla según mes y categoría
-    this.gastosFiltrados = this.gastos.filter(
-      (g) => coincideMes(g) && coincideCategoria(g)
-    );
+    this.gastosFiltrados = this.gastos.filter((g) => coincideMes(g) && coincideCategoria(g));
+    this.totalGastos = this.gastosFiltrados.reduce((acc, g) => acc + g.monto, 0);
 
-    // Recalcular total gastos del mes
-    const gastosDelMes = this.gastos.filter(coincideMes);
-    this.totalGastos = gastosDelMes.reduce((acc, g) => acc + g.monto, 0);
-
-    // Ventas del mes
+    // 2. Filtrar y recalcular ventas
     const ventasFiltradas = this.ventas.filter(
       (v) => !this.filtroMes || v.fecha_venta?.startsWith(this.filtroMes)
     );
-
-    this.totalVentas = ventasFiltradas.reduce(
-      (acc, v) => acc + v.total_final,
-      0
+    const totalVentas = ventasFiltradas.reduce(
+      (acc, v) => acc + v.total_final, 0
     );
 
+    // 3. Filtrar y recalcular ganancias por recambios
+    const recambiosFiltrados = this.recambios.filter(
+      (r) => !this.filtroMes || r.fecha_recambio?.startsWith(this.filtroMes)
+    );
+    const totalGananciaRecambios = recambiosFiltrados.reduce(
+      (acc, r) => acc + (r.diferencia_abonada || 0), 0
+    );
+
+    // 4. Sumar ambos para el total de ingresos y calcular la ganancia neta
+    this.totalVentas = totalVentas + totalGananciaRecambios;
     this.gananciaNeta = this.totalVentas - this.totalGastos;
   }
 
-  async agregarGasto() {
-    if (!this.categoria || !this.descripcion || this.monto <= 0 || !this.fecha) return;
+  // Agrega un nuevo gasto
+ // En finanzas.component.ts
 
-    const client = this.supabase.getClient();
-    const { error } = await client.from('gastos').insert([
-      {
-        fecha: this.fecha,
-        categoria: this.categoria,
-        descripcion: this.descripcion,
-        monto: this.monto,
-      },
-    ]);
-
-    if (error) {
-      console.error('Error al agregar gasto:', error.message);
-      this.mostrarToast('Error al agregar gasto', 'error');
-      return;
-    }
-
-    this.resetForm();
-    await this.cargarDatos();
-    this.aplicarFiltros();
-
-    // Actualiza total anual y promedio mensual automáticamente
-    const year = new Date().getFullYear().toString();
-    const gastosAnio = this.gastos.filter((g) => g.fecha && g.fecha.startsWith(year));
-    this.totalGastosAnual = gastosAnio.reduce((acc: number, g: any) => acc + g.monto, 0);
-    const mesesConGastos = new Set(
-      gastosAnio.map((g) => g.fecha.substring(0, 7))
+async agregarGasto() {
+  // === CAMBIA ESTO ===
+  if (!this.categoria || !this.descripcion || this.monto <= 0 || !this.fecha) {
+    this.mostrarToast(
+      'Por favor, completa todos los campos correctamente. El monto debe ser mayor a 0.',
+      'error'
     );
-    const cantidadMeses = mesesConGastos.size || 1;
-    this.promedioGastosMensual = cantidadMeses > 0 ? Math.round(this.totalGastosAnual / cantidadMeses) : 0;
+    return;
+  }
+  // ===================
 
-    this.mostrarToast('Gasto agregado correctamente', 'success');
+  const client = this.supabase.getClient();
+  const { error } = await client.from('gastos').insert([
+    {
+      fecha: this.fecha,
+      categoria: this.categoria,
+      descripcion: this.descripcion,
+      monto: this.monto,
+    },
+  ]);
+
+  if (error) {
+    console.error('Error al agregar gasto:', error.message);
+    this.mostrarToast('Error al agregar gasto', 'error');
+    return;
   }
 
+  this.resetForm();
+  await this.cargarDatos();
+  this.mostrarToast('Gasto agregado correctamente', 'success');
+}
+
+  // Edita un gasto existente
   editarGasto(gasto: any) {
     this.editandoId = gasto.id;
     this.categoria = gasto.categoria;
     this.descripcion = gasto.descripcion;
   }
 
+  // Guarda los cambios de un gasto editado
   async guardarEdicion() {
     if (!this.editandoId) return;
 
@@ -271,26 +238,16 @@ export class FinanzasComponent implements OnInit {
     this.resetForm();
     this.editandoId = null;
     await this.cargarDatos();
-    this.aplicarFiltros();
-
-    // Actualiza total anual y promedio mensual automáticamente
-    const year = new Date().getFullYear().toString();
-    const gastosAnio = this.gastos.filter((g) => g.fecha && g.fecha.startsWith(year));
-    this.totalGastosAnual = gastosAnio.reduce((acc: number, g: any) => acc + g.monto, 0);
-    const mesesConGastos = new Set(
-      gastosAnio.map((g) => g.fecha.substring(0, 7))
-    );
-    const cantidadMeses = mesesConGastos.size || 1;
-    this.promedioGastosMensual = cantidadMeses > 0 ? Math.round(this.totalGastosAnual / cantidadMeses) : 0;
-
     this.mostrarToast('Gasto editado correctamente', 'success');
   }
 
+  // Cancela la edición de un gasto
   cancelarEdicion() {
     this.editandoId = null;
     this.resetForm();
   }
 
+  // Reinicia los campos del formulario
   resetForm() {
     this.categoria = '';
     this.descripcion = '';
@@ -298,15 +255,14 @@ export class FinanzasComponent implements OnInit {
     this.fecha = new Date().toISOString().substring(0, 10);
   }
 
+  // Muestra todos los gastos y recalcula totales
   mostrarTodosLosGastos() {
     this.filtroMes = '';
     this.filtroCategoria = '';
-    this.gastosFiltrados = [...this.gastos];
-    this.totalGastos = this.gastosFiltrados.reduce((acc: number, g: any) => acc + g.monto, 0);
-    this.totalVentas = 0;
-    this.gananciaNeta = -this.totalGastos;
+    this.aplicarFiltros();
   }
 
+  // Se desplaza al formulario y resalta los campos
   scrollToFormYResaltarInputs() {
     const form = document.getElementById('formularioGasto');
     if (form) {
@@ -314,11 +270,11 @@ export class FinanzasComponent implements OnInit {
     }
 
     const inputs = ['categoria', 'descripcion', 'monto'];
-    inputs.forEach(id => {
+    inputs.forEach((id) => {
       const input = document.querySelector(`.${id}`) as HTMLElement;
       if (input) {
         input.classList.add('destacar');
-        setTimeout(() => input.classList.remove('destacar'), 2000); // quitar luego del efecto
+        setTimeout(() => input.classList.remove('destacar'), 2000);
       }
     });
   }

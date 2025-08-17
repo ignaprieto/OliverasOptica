@@ -1,69 +1,108 @@
-<div class="min-h-screen bg-gradient-to-br from-[#e3ebff] to-[#edf2ff] text-black px-6 py-8 animate-fade-in-scale">
-  <h2 class="text-3xl font-bold mb-8 tracking-tight">Panel Principal</h2>
+<div class="bg-gray-100 min-h-screen p-4 sm:p-8 md:p-12 flex justify-center items-center">
+  <div class="w-full max-w-6xl mx-auto">
+    <!-- Título principal y descripción -->
+    <header class="text-center mb-10 md:mb-16">
+      <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-2">
+        Panel de Control Administrativo
+      </h1>
+      <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+        Accede rápidamente a las funcionalidades clave de tu sistema de gestión.
+      </p>
+    </header>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+    <!-- Contenedor de las tarjetas de navegación -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-    <button
-      routerLink="/stock"
-      class="w-full sm:w-auto bg-[#1e293b] text-left p-6 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform"
-    >
-      <i class="fas fa-box-open text-white text-2xl mb-3"></i>
-      <h3 class="text-lg text-gray-200 font-semibold mb-1">Stock</h3>
-      <p class="text-sm text-gray-300">Agregar Productos y actualizar el stock disponible.</p>
-    </button>
+      <!-- Tarjeta para Stock -->
+      <a routerLink="/stock" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <div class="flex items-start">
+          <div class="bg-indigo-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <i class="fas fa-box-open text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Stock</h3>
+            <p class="text-sm text-gray-500">Agrega productos y actualiza el stock disponible.</p>
+          </div>
+        </div>
+      </a>
 
-    <button
-      routerLink="/ventas"
-      class="w-full sm:w-auto bg-[#1e293b] text-left p-6 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform"
-    >
-      <i class="fas fa-cash-register text-white text-2xl mb-3"></i>
-      <h3 class="text-lg text-gray-200 font-semibold mb-1">Ventas</h3>
-      <p class="text-sm text-gray-300">Gestión y registro de ventas.</p>
-    </button>
+      <!-- Tarjeta para Ventas -->
+      <a routerLink="/ventas" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <div class="flex items-start">
+          <div class="bg-green-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <i class="fas fa-cash-register text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Ventas</h3>
+            <p class="text-sm text-gray-500">Gestión y registro de ventas.</p>
+          </div>
+        </div>
+      </a>
 
-    <button
-      routerLink="/historial"
-      class="w-full sm:w-auto bg-[#1e293b] text-left p-6 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform"
-    >
-      <i class="fas fa-history text-white text-2xl mb-3"></i>
-      <h3 class="text-lg text-gray-200 font-semibold mb-1">Historial</h3>
-      <p class="text-sm text-gray-300">Consultar historial de ventas y movimientos.</p>
-    </button>
+      <!-- Tarjeta para Historial -->
+      <a routerLink="/historial" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <div class="flex items-start">
+          <div class="bg-red-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <i class="fas fa-history text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Historial</h3>
+            <p class="text-sm text-gray-500">Consulta historial de ventas y movimientos.</p>
+          </div>
+        </div>
+      </a>
 
-    <button
-      routerLink="/productos"
-      class="w-full sm:w-auto bg-[#1e293b] text-left p-6 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform"
-    >
-      <i class="fas fa-tags text-white text-2xl mb-3"></i>
-      <h3 class="text-lg text-gray-200 font-semibold mb-1">Productos</h3>
-      <p class="text-sm text-gray-300">Ver productos disponibles.</p>
-    </button>
+      <!-- Tarjeta para Productos -->
+      <a routerLink="/productos" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <div class="flex items-start">
+          <div class="bg-yellow-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <i class="fas fa-tags text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Productos</h3>
+            <p class="text-sm text-gray-500">Ver productos disponibles.</p>
+          </div>
+        </div>
+      </a>
 
-    <button
-      routerLink="/aumento"
-      class="w-full sm:w-auto bg-[#1e293b] text-left p-6 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform"
-    >
-      <i class="fas fa-arrow-up text-white text-2xl mb-3"></i>
-      <h3 class="text-lg text-gray-200 font-semibold mb-1">Aumento</h3>
-      <p class="text-sm text-gray-300">Aplicar aumentos por categoría o individual.</p>
-    </button>
+      <!-- Tarjeta para Aumento -->
+      <a routerLink="/aumento" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <div class="flex items-start">
+          <div class="bg-orange-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <i class="fas fa-arrow-up text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Aumento</h3>
+            <p class="text-sm text-gray-500">Aplica aumentos por categoría o individual.</p>
+          </div>
+        </div>
+      </a>
 
-    <button
-      routerLink="/descuentos"
-      class="w-full sm:w-auto bg-[#1e293b] text-left p-6 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform"
-    >
-      <i class="fas fa-percent text-white text-2xl mb-3"></i>
-      <h3 class="text-lg text-gray-200 font-semibold mb-1">Descuentos</h3>
-      <p class="text-sm text-gray-300">Gestionar descuentos en productos.</p>
-    </button>
+      <!-- Tarjeta para Descuentos -->
+      <a routerLink="/descuentos" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <div class="flex items-start">
+          <div class="bg-teal-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <i class="fas fa-percent text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Descuentos</h3>
+            <p class="text-sm text-gray-500">Gestiona descuentos en productos.</p>
+          </div>
+        </div>
+      </a>
 
-     <button
-      routerLink="/finanzas"
-      class="w-full sm:w-auto bg-[#1e293b] text-left p-6 rounded-2xl shadow hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform"
-    >
-      <i class="fas fa-dollar-sign text-white text-2xl mb-3"></i>
-      <h3 class="text-lg text-gray-200 font-semibold mb-1">Finanzas</h3>
-      <p class="text-sm text-gray-300">Gestion de gastos y finanzas</p>
-    </button>
+      <!-- Tarjeta para Finanzas -->
+      <a routerLink="/finanzas" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <div class="flex items-start">
+          <div class="bg-rose-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <i class="fas fa-dollar-sign text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Finanzas</h3>
+            <p class="text-sm text-gray-500">Gestión de gastos y finanzas.</p>
+          </div>
+        </div>
+      </a>
+    </div>
   </div>
 </div>

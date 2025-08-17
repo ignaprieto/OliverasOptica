@@ -22,36 +22,22 @@ export class AumentoComponent implements OnInit {
   valorAumento: number | null = null;
   productosConfirmados: any[] = [];
   paso = 1;
-expandido: { [key: string]: boolean } = {};  // <- Asegura que podés indexar por string
-productosSeleccionados: { [key: string]: boolean } = {};  // <- Igual
-confirmando: boolean = false;
-tipoAumento: 'precio' | 'porcentaje' | null = null;
-toastVisible = false;
-toastMensaje = '';
-resumenAumento: string[] = [];
-productos: any[] = [];
-errorAumentoInvalido = false;
+  expandido: { [key: string]: boolean } = {}; 
+  productosSeleccionados: { [key: string]: boolean } = {};
+  confirmando: boolean = false;
+  tipoAumento: 'precio' | 'porcentaje' | null = null;
+  toastVisible = false;
+  toastMensaje = '';
+  toastColor: string = ''; // <-- Nueva variable agregada
+  resumenAumento: string[] = [];
+  productos: any[] = [];
+  errorAumentoInvalido = false;
 
 
   constructor(private supabase: SupabaseService) {}
 
   async ngOnInit() {
-    const productos = await this.supabase.obtenerProductos();
-    const agrupados = productos.reduce((acc: any, prod: any) => {
-      acc[prod.categoria] = acc[prod.categoria] || [];
-      acc[prod.categoria].push(prod);
-      return acc;
-    }, {});
-
-this.categorias.forEach(cat => {
-  this.expandido[cat] = false;
-  this.aumentarTodaCategoria[cat] = false; // <- importante
-});
-
-
-    this.categorias = Object.keys(agrupados);
-    this.productosPorCategoria = agrupados;
-    this.categorias.forEach(cat => this.expandido[cat] = false);
+    await this.obtenerProductos();
   }
 
   toggleSeleccion(id: string) {
@@ -72,89 +58,98 @@ this.categorias.forEach(cat => {
     this.paso = 2;
   }
 
-resetearSeleccion() {
-  this.aumentarTodaCategoria = {};
-  this.productosSeleccionados = {};
-  this.resumenAumento = [];
-}
-organizarPorCategoria() {
-  const agrupados = this.productos.reduce((acc: any, prod: any) => {
-    acc[prod.categoria] = acc[prod.categoria] || [];
-    acc[prod.categoria].push(prod);
-    return acc;
-  }, {});
-
-  this.categorias = Object.keys(agrupados);
-  this.productosPorCategoria = agrupados;
-
-  this.categorias.forEach(cat => {
-    this.expandido[cat] = false;
-    this.aumentarTodaCategoria[cat] = false;
-  });
-}
-
-
-async obtenerProductos() {
-  const { data, error } = await this.supabase.getClient()
-    .from('productos')
-    .select('*');
-
-  if (error) {
-    console.error('Error al obtener productos', error.message);
-    return;
+  resetearSeleccion() {
+    this.aumentarTodaCategoria = {};
+    this.productosSeleccionados = {};
+    this.resumenAumento = [];
   }
 
-  this.productos = data || [];
-  this.organizarPorCategoria();
-}
+  organizarPorCategoria() {
+    const agrupados = this.productos.reduce((acc: any, prod: any) => {
+      acc[prod.categoria] = acc[prod.categoria] || [];
+      acc[prod.categoria].push(prod);
+      return acc;
+    }, {});
 
-async aplicarAumento() {
-  if (!this.tipoAumento || this.valorAumento === null) {
-    this.errorAumentoInvalido = true;
+    this.categorias = Object.keys(agrupados);
+    this.productosPorCategoria = agrupados;
 
-    setTimeout(() => {
-      this.errorAumentoInvalido = false;
-    }, 3000);
-
-    return;
+    this.categorias.forEach(cat => {
+      this.expandido[cat] = false;
+      this.aumentarTodaCategoria[cat] = false;
+    });
   }
 
-  this.errorAumentoInvalido = false;
 
-  const productosParaActualizar: any[] = [];
+  async obtenerProductos() {
+    const { data, error } = await this.supabase.getClient()
+      .from('productos')
+      .select('*');
 
-  for (const cat of this.categorias) {
-    const todos = this.aumentarTodaCategoria[cat];
-    const productos = this.productosPorCategoria[cat];
+    if (error) {
+      console.error('Error al obtener productos', error.message);
+      return;
+    }
 
-    const filtrados = todos
-      ? productos
-      : productos.filter(p => this.productosSeleccionados[p.id]);
+    this.productos = data || [];
+    this.organizarPorCategoria();
+  }
 
-    for (const prod of filtrados) {
-      let nuevoPrecio = prod.precio;
+  async aplicarAumento() {
+    if (!this.tipoAumento || this.valorAumento === null) {
+      this.errorAumentoInvalido = true;
 
-      if (this.tipoAumento === 'precio') {
-        nuevoPrecio += this.valorAumento!;
-      } else if (this.tipoAumento === 'porcentaje') {
-        nuevoPrecio += prod.precio * (this.valorAumento! / 100);
-      }
+      setTimeout(() => {
+        this.errorAumentoInvalido = false;
+      }, 3000);
 
-      const { error } = await this.supabase.getClient()
-        .from('productos')
-        .update({ precio: Math.round(nuevoPrecio) })
-        .eq('id', prod.id);
+      return;
+    }
 
-      if (error) {
-        console.error(`Error al actualizar producto ${prod.nombre}:`, error.message);
-      } else {
-        productosParaActualizar.push(prod.id);
+    this.errorAumentoInvalido = false;
+
+    const productosParaActualizar: any[] = [];
+    let huboError = false; // <-- Nueva variable para controlar errores
+
+    for (const cat of this.categorias) {
+      const todos = this.aumentarTodaCategoria[cat];
+      const productos = this.productosPorCategoria[cat];
+
+      const filtrados = todos
+        ? productos
+        : productos.filter(p => this.productosSeleccionados[p.id]);
+
+      for (const prod of filtrados) {
+        let nuevoPrecio = prod.precio;
+
+        if (this.tipoAumento === 'precio') {
+          nuevoPrecio += this.valorAumento!;
+        } else if (this.tipoAumento === 'porcentaje') {
+          nuevoPrecio += prod.precio * (this.valorAumento! / 100);
+        }
+
+        const { error } = await this.supabase.getClient()
+          .from('productos')
+          .update({ precio: Math.round(nuevoPrecio) })
+          .eq('id', prod.id);
+
+        if (error) {
+          console.error(`Error al actualizar producto ${prod.nombre}:`, error.message);
+          huboError = true;
+        } else {
+          productosParaActualizar.push(prod.id);
+        }
       }
     }
-  }
 
-  if (productosParaActualizar.length > 0) {
-    this.toastMensaje = 'Aumento aplicado correctamente.';
+    if (productosParaActualizar.length > 0 && !huboError) {
+      this.toastMensaje = 'Aumento aplicado correctamente.';
+      this.toastColor = 'bg-green-600'; // <-- Asigna el color de éxito
+    } else {
+      this.toastMensaje = 'Hubo un error al aplicar el aumento.';
+      this.toastColor = 'bg-red-600'; // <-- Asigna el color de error
+    }
+    
     this.toastVisible = true;
 
     setTimeout(() => {
@@ -166,7 +161,6 @@ async aplicarAumento() {
       this.obtenerProductos();
     }, 2500);
   }
-}
 
 
   reset() {
@@ -178,47 +172,48 @@ async aplicarAumento() {
     this.valorAumento = 0;
   }
 
-  // Marca todos los productos de una categoría como seleccionados o no
-toggleTodos(categoria: string) {
-  const productos = this.productosPorCategoria[categoria];
-  const todosSeleccionados = productos.every(p => this.productosSeleccionados[p.id] === true);
-  productos.forEach(p => {
-    this.productosSeleccionados[p.id] = !todosSeleccionados;
-  });
-}
+  toggleTodos(categoria: string) {
+    const productos = this.productosPorCategoria[categoria];
+    const todosSeleccionados = productos.every(p => this.productosSeleccionados[p.id] === true);
+    productos.forEach(p => {
+      this.productosSeleccionados[p.id] = !todosSeleccionados;
+    });
+  }
 
-// Marca o desmarca un producto individualmente
-toggleProducto(id: string) {
-  this.productosSeleccionados[id] = !this.productosSeleccionados[id];
-}
+  toggleProducto(id: string) {
+    this.productosSeleccionados[id] = !this.productosSeleccionados[id];
+  }
 
-// Verifica si hay al menos un producto seleccionado
-seSeleccionoAlgo(): boolean {
-  return Object.values(this.productosSeleccionados).some(s => s);
-}
+  seSeleccionoAlgo(): boolean {
+    return Object.values(this.productosSeleccionados).some(s => s);
+  }
 
-// Pasa al paso de confirmación si hay productos seleccionados
-pasarAPasoConfirmacion() {
-  this.resumenAumento = [];
+  pasarAPasoConfirmacion() {
+    this.resumenAumento = [];
 
-  for (const categoria of this.categorias) {
-    if (this.aumentarTodaCategoria[categoria]) {
-      this.resumenAumento.push(`Toda la categoría "${categoria}"`);
+    for (const categoria of this.categorias) {
+      if (this.aumentarTodaCategoria[categoria]) {
+        this.resumenAumento.push(`Toda la categoría "${categoria}"`);
+      } else {
+        const seleccionados = this.productosPorCategoria[categoria]
+          .filter(p => this.productosSeleccionados[p.id])
+          .map(p => `${p.nombre} - $${p.precio.toLocaleString()}`);
+        this.resumenAumento.push(...seleccionados);
+      }
+    }
+    if (this.seSeleccionoAlgo()){
+        this.confirmando = true;
     } else {
-      const seleccionados = this.productosPorCategoria[categoria]
-        .filter(p => this.productosSeleccionados[p.id])
-        .map(p => `${p.nombre} - $${p.precio.toLocaleString()}`);
-      this.resumenAumento.push(...seleccionados);
+        this.toastMensaje = "Selecciona al menos un producto para continuar.";
+        this.toastColor = 'bg-red-600';
+        this.toastVisible = true;
+        setTimeout(() => this.toastVisible = false, 2500);
     }
   }
 
-  this.confirmando = true;
-}
 
-
-// Cancela la acción de confirmación
-cancelar() {
-  this.confirmando = false;
-  this.valorAumento = 0;
-}
+  cancelar() {
+    this.confirmando = false;
+    this.valorAumento = 0;
+  }
 }

@@ -1,217 +1,213 @@
-<div class="min-h-screen bg-[#edf2ff] text-black px-4 sm:px-6 py-6 animate-fade-in-scale">
-  <div class="mb-6">
-    <button
-      routerLink="/dashboard"
-      class="bg-gray-200 hover:bg-gray-300 text-black px-4 py-2 rounded-lg shadow transition"
-    >
-      ← Volver al Panel Principal
-    </button>
-  </div>
+<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex justify-center">
+  <div class="w-full max-w-6xl space-y-8">
+    
+    <!-- Header y botón de volver -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Gestión de Stock</h2>
+      <button routerLink="/dashboard"
+        class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition-colors font-medium text-sm">
+        ← Volver al Panel Principal
+      </button>
+    </div>
 
- <h2 class="text-2xl font-semibold mb-6">Gestión de Stock</h2>
+    <!-- Tabs para Agregar/Editar -->
+    <div class="flex mb-6 space-x-4">
+      <button
+        (click)="modo = 'agregar'"
+        [class.bg-white]="modo === 'agregar'"
+        class="px-5 py-2 rounded-lg bg-gray-200 text-sm font-medium transition-colors hover:bg-white shadow-sm"
+      >
+        Agregar Producto
+      </button>
+      <button
+        (click)="modo = 'editar'"
+        [class.bg-white]="modo === 'editar'"
+        class="px-5 py-2 rounded-lg bg-gray-200 text-sm font-medium transition-colors hover:bg-white shadow-sm"
+      >
+        Editar Producto
+      </button>
+    </div>
 
-<!-- Toast verde flotante al agregar o editar -->
-<!-- Toast verde (éxito) abajo a la derecha -->
-<div
-  *ngIf="mostrarToast"
-  class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg animate-fade-in-scale z-50"
->
-  {{ mensaje }}
-</div>
-
-
-  <!-- Tabs -->
-  <div class="flex mb-6 gap-4">
-    <button
-      (click)="modo = 'agregar'"
-      [class.bg-white]="modo === 'agregar'"
-      class="px-4 py-2 rounded-lg bg-[#cfd8ff] text-sm font-medium transition hover:bg-white"
-    >
-      Agregar Producto
-    </button>
-    <button
-      (click)="modo = 'editar'"
-      [class.bg-white]="modo === 'editar'"
-      class="px-4 py-2 rounded-lg bg-[#cfd8ff] text-sm font-medium transition hover:bg-white"
-    >
-      Editar Producto
-    </button>
-  </div>
-
-  <!-- Formulario Agregar -->
-  <div class="bg-white rounded-xl shadow p-6 max-w-3xl mb-10" *ngIf="modo === 'agregar'">
-    <h3 class="text-lg font-semibold mb-4">Agregar Producto</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-sm font-medium mb-1 block">Código</label>
-        <input type="text" class="input w-full" [(ngModel)]="producto.codigo" />
+    <!-- Formulario Agregar -->
+    <div class="bg-white rounded-xl shadow-lg p-6 max-w-3xl" *ngIf="modo === 'agregar'">
+      <h3 class="text-xl font-semibold mb-4 text-gray-900">Agregar Producto</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Código</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.codigo" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Nombre</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.nombre" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Marca</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.marca" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Talle</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.talle" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Categoría</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.categoria" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Precio</label>
+          <input type="number" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.precio" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-sm font-medium mb-1 block text-gray-700">Cantidad en stock</label>
+          <input type="number" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.cantidad_stock" />
+        </div>
       </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Nombre</label>
-        <input type="text" class="input w-full" [(ngModel)]="producto.nombre" />
-      </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Marca</label>
-        <input type="text" class="input w-full" [(ngModel)]="producto.marca" />
-      </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Talle</label>
-        <input type="text" class="input w-full" [(ngModel)]="producto.talle" />
-      </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Categoría</label>
-        <input type="text" class="input w-full" [(ngModel)]="producto.categoria" />
-      </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Precio</label>
-        <input type="number" class="input w-full" [(ngModel)]="producto.precio" />
-      </div>
-      <div class="md:col-span-2">
-        <label class="text-sm font-medium mb-1 block">Cantidad en stock</label>
-        <input type="number" class="input w-full" [(ngModel)]="producto.cantidad_stock" />
+      <div class="flex items-center gap-4 mt-6">
+        <button (click)="guardarProducto()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-colors">
+          Guardar Producto
+        </button>
+        <p *ngIf="error && modo === 'agregar'" class="text-red-600 text-sm font-medium">
+          {{ error }}
+        </p>
       </div>
     </div>
- <div class="flex items-center gap-4 mt-6">
-  <button (click)="guardarProducto()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded transition">
-    Guardar Producto
-  </button>
-  <p *ngIf="error && modo === 'agregar'" class="text-red-600 text-sm font-medium">
-    {{ error }}
-  </p>
-</div>
 
-  </div>
-
-  <!-- Formulario Editar -->
-  <div class="bg-white rounded-xl shadow p-6 max-w-3xl mb-10" *ngIf="modo === 'editar'">
-    <h3 class="text-lg font-semibold mb-4">Editar Producto</h3>
-    <p class="text-sm text-gray-600 mb-4">Seleccioná un producto de la tabla inferior para modificarlo.</p>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="text-sm font-medium mb-1 block">Código</label>
-        <input type="text" class="input w-full bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.codigo" [readonly]="true" />
+    <!-- Formulario Editar -->
+    <div class="bg-white rounded-xl shadow-lg p-6 max-w-3xl" *ngIf="modo === 'editar'">
+      <h3 class="text-xl font-semibold mb-4 text-gray-900">Editar Producto</h3>
+      <p class="text-sm text-gray-600 mb-4">Seleccioná un producto de la tabla inferior para modificarlo.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Código</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.codigo" [readonly]="true" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Nombre</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.nombre" [readonly]="true" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Marca</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.marca" [readonly]="true" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Talle</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.talle" [readonly]="true" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Categoría</label>
+          <input type="text" class="input w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.categoria" [readonly]="true" />
+        </div>
+        <div>
+          <label class="text-sm font-medium mb-1 block text-gray-700">Precio</label>
+          <input type="number" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.precio" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-sm font-medium mb-1 block text-gray-700">Cantidad en stock</label>
+          <input type="number" class="input w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" [(ngModel)]="producto.cantidad_stock" />
+        </div>
       </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Nombre</label>
-        <input type="text" class="input w-full bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.nombre" [readonly]="true" />
-      </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Marca</label>
-        <input type="text" class="input w-full bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.marca" [readonly]="true" />
-      </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Talle</label>
-        <input type="text" class="input w-full bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.talle" [readonly]="true" />
-      </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Categoría</label>
-        <input type="text" class="input w-full bg-gray-100 cursor-not-allowed" [(ngModel)]="producto.categoria" [readonly]="true" />
-      </div>
-      <div>
-        <label class="text-sm font-medium mb-1 block">Precio</label>
-        <input type="number" class="input w-full" [(ngModel)]="producto.precio" />
-      </div>
-      <div class="md:col-span-2">
-        <label class="text-sm font-medium mb-1 block">Cantidad en stock</label>
-        <input type="number" class="input w-full" [(ngModel)]="producto.cantidad_stock" />
+      <div class="flex flex-wrap items-center gap-4 mt-6">
+        <button (click)="guardarProducto()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-colors">
+          Actualizar Producto
+        </button>
+        <button (click)="cancelarEdicion()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-6 rounded-lg shadow-md transition-colors">
+          Cancelar
+        </button>
+        <button 
+          *ngIf="producto.id" 
+          (click)="eliminarProducto(producto.id)" 
+          class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition-colors">
+          Eliminar Producto
+        </button>
+        <p *ngIf="error && modo === 'editar'" class="text-red-600 text-sm font-medium">
+          {{ error }}
+        </p>
       </div>
     </div>
-  <div class="flex items-center gap-4 mt-6">
-  <button (click)="guardarProducto()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded transition">
-    Actualizar Producto
-  </button>
-  <button (click)="cancelarEdicion()" class="bg-gray-300 hover:bg-gray-400 text-black font-medium py-2 px-6 rounded transition">
-    Cancelar
-  </button>
-  <button 
-  *ngIf="producto.id" 
-  (click)="eliminarProducto(producto.id)" 
-  class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded transition">
-  Eliminar Producto
-</button>
 
-  <p *ngIf="error && modo === 'editar'" class="text-red-600 text-sm font-medium">
-    {{ error }}
-  </p>
-</div>
-  </div>
+    <!-- Filtro -->
+    <div class="mb-4 max-w-lg w-full">
+      <input
+        [(ngModel)]="filtro"
+        type="text"
+        placeholder="Buscar por código, nombre, marca o categoría..."
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+      />
+    </div>
 
-  <!-- Filtro -->
-  <div class="mb-4 max-w-md">
-    <input
-      [(ngModel)]="filtro"
-      type="text"
-      placeholder="Buscar por código, nombre, marca o categoría..."
-      class="w-full border border-gray-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  </div>
+    <!-- Tabla -->
+    <ng-container *ngIf="productosFiltrados() as filtrados">
+      <p class="text-sm text-gray-600 mt-2 text-right font-semibold">
+        Mostrando {{ filtrados.length }} de {{ productos.length }} producto{{ filtrados.length === 1 ? '' : 's' }}.
+      </p>
 
-  <!-- Tabla -->
-  <ng-container *ngIf="productosFiltrados() as filtrados">
-  <p class="text-sm text-gray-600 mt-2 text-right font-semibold">
-    Mostrando {{ filtrados.length }} de {{ productos.length }} producto{{ filtrados.length === 1 ? '' : 's' }}.
-  </p>
+      <div *ngIf="filtrados.length > 0; else sinResultados" class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+          <table class="w-full text-sm text-left border-collapse min-w-[700px]">
+            <thead class="sticky top-0 z-30 bg-gray-800 text-white">
+              <tr>
+                <th class="px-4 py-3">Código</th>
+                <th class="px-4 py-3">Nombre</th>
+                <th class="px-4 py-3">Marca</th>
+                <th class="px-4 py-3">Talle</th>
+                <th class="px-4 py-3">Categoría</th>
+                <th class="px-4 py-3">Precio</th>
+                <th class="px-4 py-3">Stock</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr 
+                *ngFor="let prod of filtrados" 
+                class="hover:bg-gray-50 cursor-pointer transition-colors"
+                (click)="seleccionarProducto(prod)"
+              >
+                <td class="px-4 py-2">{{ prod.codigo }}</td>
+                <td class="px-4 py-2">{{ prod.nombre }}</td>
+                <td class="px-4 py-2">{{ prod.marca }}</td>
+                <td class="px-4 py-2">{{ prod.talle }}</td>
+                <td class="px-4 py-2">{{ prod.categoria }}</td>
+                <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
+                <td class="px-4 py-2">{{ prod.cantidad_stock }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-  <div *ngIf="filtrados.length > 0; else sinResultados"  class="overflow-x-auto max-h-[400px] overflow-y-auto bg-white rounded-lg shadow border">
-    <div class="min-w-[1000px]">
-      <table class="w-full text-sm text-left border-collapse">
-        <thead class="sticky top-0 z-30 bg-[#1e293b] text-white">
-          <tr>
-            <th class="px-4 py-3">Código</th>
-            <th class="px-4 py-3">Nombre</th>
-            <th class="px-4 py-3">Marca</th>
-            <th class="px-4 py-3">Talle</th>
-            <th class="px-4 py-3">Categoría</th>
-            <th class="px-4 py-3">Precio</th>
-            <th class="px-4 py-3">Stock</th>
-          </tr>
-        </thead>
-        <tbody class="bg-white divide-y">
-          <tr 
-            *ngFor="let prod of filtrados" 
-            class="hover:bg-gray-100 cursor-pointer transition"
-            (click)="seleccionarProducto(prod)"
+      <!-- Template cuando no hay resultados -->
+      <ng-template #sinResultados>
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center text-gray-500 border border-gray-200">
+          No se encontraron productos que coincidan con la búsqueda.
+        </div>
+      </ng-template>
+    </ng-container>
+
+    <!-- Modal de confirmación -->
+    <div *ngIf="mostrarConfirmacion" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+      <div class="relative bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center animate-fade-in-scale">
+        <h3 class="text-xl font-semibold mb-4 text-gray-900">¿Estás seguro de eliminar este producto?</h3>
+        <div class="flex justify-center gap-4">
+          <button
+            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-md transition-colors"
+            (click)="confirmarEliminar()"
           >
-            <td class="px-4 py-2">{{ prod.codigo }}</td>
-            <td class="px-4 py-2">{{ prod.nombre }}</td>
-            <td class="px-4 py-2">{{ prod.marca }}</td>
-            <td class="px-4 py-2">{{ prod.talle }}</td>
-            <td class="px-4 py-2">{{ prod.categoria }}</td>
-            <td class="px-4 py-2">{{ prod.precio | monedaArs }}</td>
-            <td class="px-4 py-2">{{ prod.cantidad_stock }}</td>
-          </tr>
-        </tbody>
-      </table>
+            Eliminar
+          </button>
+          <button
+            class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg shadow-md transition-colors"
+            (click)="cancelarEliminar()"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
     </div>
+    
+    <!-- Toast de notificación -->
+    <div *ngIf="mostrarToast"
+      class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 text-white font-medium animate-slide-up bg-green-600">
+      {{ mensaje }}
+    </div>
+
   </div>
-
-  <!-- Template cuando no hay resultados -->
-  <ng-template #sinResultados>
-    <div class="bg-white rounded-xl shadow p-6 text-center text-gray-500">
-      No se encontraron productos.
-    </div>
-  </ng-template>
-</ng-container>
-
-  <!-- Modal de confirmación -->
-<div *ngIf="mostrarConfirmacion" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-  <div class="bg-white p-6 rounded-xl shadow-lg max-w-sm w-full text-center animate-fade-in-scale">
-    <h3 class="text-lg font-semibold mb-4">¿Estás seguro de eliminar este producto?</h3>
-    <div class="flex justify-center gap-4">
-      <button
-        class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-        (click)="confirmarEliminar()"
-      >
-        Eliminar
-      </button>
-      <button
-        class="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded"
-        (click)="cancelarEliminar()"
-      >
-        Cancelar
-      </button>
-    </div>
-  </div>
-</div>
-
 </div>

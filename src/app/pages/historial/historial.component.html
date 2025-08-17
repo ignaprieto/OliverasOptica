@@ -1,105 +1,531 @@
-<div class="min-h-screen bg-[#edf2ff] text-black px-3 sm:px-6 py-6 sm:py-8 animate-fade-in-scale">
-  <!-- Botón volver -->
-  <div class="mb-6">
-    <button
-      routerLink="/dashboard"
-      class="bg-gray-300 hover:bg-gray-400 text-black px-3 sm:px-4 py-2 rounded transition text-sm sm:text-base"
-    >
-      ← Volver al Panel
-    </button>
-  </div>
+<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex justify-center">
+  <div class="w-full max-w-7xl space-y-8">
 
-  <!-- Título -->
-  <h2 class="text-xl sm:text-2xl font-semibold mb-4">Historial de Ventas</h2>
-
-  <!-- Filtros -->
-  <div class="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 mb-6">
-    <button (click)="filtrar('hoy')" [class.bg-white]="filtro === 'hoy'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base">Hoy</button>
-    <button (click)="filtrar('7dias')" [class.bg-white]="filtro === '7dias'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base">Últimos 7 días</button>
-    <button (click)="filtrar('30dias')" [class.bg-white]="filtro === '30dias'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base">Últimos 30 días</button>
-    <button (click)="filtrar('todos')" [class.bg-white]="filtro === 'todos'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base">Historial Completo</button>
-    <button (click)="filtrar('fechaEspecifica')" [class.bg-white]="filtro === 'fechaEspecifica'" class="px-3 py-2 rounded bg-[#cfd8ff] font-medium hover:bg-white transition text-sm sm:text-base col-span-2 sm:col-span-1">Fecha Específica</button>
-  </div>
-
-  <!-- Fecha específica -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-2 bg-white p-3 rounded-lg shadow mb-6" *ngIf="filtro === 'fechaEspecifica'">
-    <label for="fecha-especifica" class="text-gray-700 font-medium mb-2 sm:mb-0 text-sm sm:text-base">Selecciona una fecha:</label>
-    <input
-      type="date"
-      id="fecha-especifica"
-      class="border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 text-sm sm:text-base"
-      [(ngModel)]="fechaEspecifica"
-      (change)="cargarVentas()"
-    >
-  </div>
-
-  <!-- Total acumulado -->
-  <p class="mb-6 text-base sm:text-lg font-semibold">
-    Total acumulado:
-    <span class="text-green-600">{{ totalAcumulado | monedaArs }}</span>
-  </p>
-
-  <!-- Paginación -->
-  <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-2">
-    <button
-      class="px-2 sm:px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm sm:text-base"
-      [disabled]="paginaActual === 1"
-      (click)="cambiarPagina(paginaActual - 1)"
-    >
-      ←
-    </button>
-
-    <ng-container *ngFor="let p of [].constructor(totalPaginas); let i = index">
-      <button
-        (click)="cambiarPagina(i + 1)"
-        [class.bg-blue-600]="paginaActual === i + 1"
-        [class.text-white]="paginaActual === i + 1"
-        class="px-2 sm:px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 text-sm sm:text-base"
-      >
-        {{ i + 1 }}
+    <!-- Header y botón de volver -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+      <h2 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Historial de Ventas y Recambios</h2>
+      <button routerLink="/dashboard"
+        class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg shadow-md transition-colors font-medium text-sm">
+        ← Volver al Panel
       </button>
-    </ng-container>
+    </div>
 
-    <button
-      class="px-2 sm:px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm sm:text-base"
-      [disabled]="paginaActual === totalPaginas"
-      (click)="cambiarPagina(paginaActual + 1)"
-    >
-      →
-    </button>
+    <!-- Filtros de tipo y fecha -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Filtros de Tipo -->
+      <div class="bg-white rounded-xl shadow-lg p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Filtrar por Tipo</h3>
+        <div class="grid grid-cols-3 gap-3">
+          <button (click)="filtrarTipo('todos')"
+           [ngClass]="{
+    'bg-blue-600 text-white': tipoFiltro === 'todos',
+    'bg-gray-200 text-gray-800': tipoFiltro !== 'todos'
+  }"
+            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+            Todos
+          </button>
+          <button (click)="filtrarTipo('ventas')"
+             [ngClass]="{
+    'bg-blue-600 text-white': tipoFiltro === 'ventas',
+    'bg-gray-200 text-gray-800': tipoFiltro !== 'ventas'
+  }"
+            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+            Solo Ventas
+          </button>
+          <button (click)="filtrarTipo('recambios')"
+             [ngClass]="{
+    'bg-blue-600 text-white': tipoFiltro === 'recambios',
+    'bg-gray-200 text-gray-800': tipoFiltro !== 'recambios'
+  }"
+            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+            Solo Recambios
+          </button>
+        </div>
+      </div>
+
+      <!-- Filtros de Fecha -->
+      <div class="bg-white rounded-xl shadow-lg p-4">
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Filtrar por Período</h3>
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+          <button (click)="filtrar('hoy')"
+             [ngClass]="{
+    'bg-blue-600 text-white': filtro === 'hoy',
+    'bg-gray-200 text-gray-800': filtro !== 'hoy'
+  }"
+            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Hoy</button>
+          <button (click)="filtrar('7dias')"
+            [ngClass]="{
+    'bg-blue-600 text-white': filtro === '7dias',
+    'bg-gray-200 text-gray-800': filtro !== '7dias'
+  }"
+            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Últimos 7 días</button>
+          <button (click)="filtrar('30dias')"
+            [ngClass]="{
+    'bg-blue-600 text-white': filtro === '30dias',
+    'bg-gray-200 text-gray-800': filtro !== '30dias'
+  }"
+            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Últimos 30 días</button>
+          <button (click)="filtrar('todos')"
+            [ngClass]="{
+    'bg-blue-600 text-white': filtro === 'todos',
+    'bg-gray-200 text-gray-800': filtro !== 'todos'
+  }"
+            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Historial Completo</button>
+          <button (click)="filtrar('fechaEspecifica')"
+            [ngClass]="{
+    'bg-blue-600 text-white': filtro === 'fechaEspecifica',
+    'bg-gray-200 text-gray-800': filtro !== 'fechaEspecifica'
+  }"
+            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors col-span-2 lg:col-span-1 text-sm sm:text-base">Fecha Específica</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fecha específica -->
+    <div class="bg-white rounded-xl shadow-lg p-6" *ngIf="filtro === 'fechaEspecifica'">
+      <label for="fecha-especifica" class="text-gray-700 font-medium mb-2 sm:mb-0 text-sm sm:text-base block">Selecciona una fecha:</label>
+      <input
+        type="date"
+        id="fecha-especifica"
+        class="border border-gray-300 rounded-lg p-2 mt-2 w-full sm:w-auto focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base"
+        [(ngModel)]="fechaEspecifica"
+        (change)="cargarDatos()"
+      />
+    </div>
+
+    <!-- Totales acumulados -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-white rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-green-500">
+        <div class="bg-green-100 text-green-700 p-3 rounded-full flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2z" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-gray-500 font-medium text-sm">Total Ventas</p>
+          <p class="text-green-600 font-bold text-2xl">{{ totalVentas | monedaArs }}</p>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-orange-500">
+        <div class="bg-orange-100 text-orange-700 p-3 rounded-full flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-4-4v12m-4-8h8m-4-4v12m-4-8h8m-4-4v12M3 13h18M3 17h18" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-gray-500 font-medium text-sm">Total Recambios</p>
+          <p class="text-orange-600 font-bold text-2xl">{{ totalRecambios | monedaArs }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Paginación -->
+    <div class="flex items-center justify-center gap-2 overflow-x-auto py-4">
+      <button
+        class="px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 text-sm font-medium transition"
+        [disabled]="paginaActual === 1"
+        (click)="cambiarPagina(paginaActual - 1)">
+        ← Anterior
+      </button>
+
+      <ng-container *ngFor="let p of [].constructor(totalPaginas || 0); let i = index">
+        <button
+          (click)="cambiarPagina(i + 1)"
+          [class.bg-blue-600]="paginaActual === i + 1"
+          [class.text-white]="paginaActual === i + 1"
+          class="w-8 h-8 rounded-full bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition text-sm">
+          {{ i + 1 }}
+        </button>
+      </ng-container>
+
+      <button
+        class="px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 text-sm font-medium transition"
+        [disabled]="paginaActual === totalPaginas"
+        (click)="cambiarPagina(paginaActual + 1)">
+        Siguiente →
+      </button>
+    </div>
+
+    <!-- Lista de transacciones -->
+    <div class="space-y-6">
+      <div *ngFor="let item of itemsPaginados; trackBy: trackByFn" class="bg-white rounded-xl shadow-lg p-6">
+        
+        <!-- VENTA -->
+        <div *ngIf="item.tipo === 'venta'">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center space-x-3">
+              <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
+                💰 VENTA
+              </span>
+              <div *ngIf="item.recambio_realizado" class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+                ✅ Recambio realizado
+              </div>
+            </div>
+            <span class="text-gray-500 text-sm">ID: {{ item.id.slice(-8) || 'N/A' }}</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 mb-4 text-sm">
+            <p class="font-medium text-gray-700"><strong>Usuario:</strong> {{ item.nombre_usuario || 'Sin usuario' }}</p>
+            <p class="text-gray-600"><strong>Cliente:</strong> {{ item.cliente_nombre || 'Sin cliente' }}</p>
+            <p class="text-gray-600"><strong>Fecha:</strong> {{ item.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}</p>
+            <p *ngIf="item.cliente_email" class="text-gray-600"><strong>Email:</strong> {{ item.cliente_email }}</p>
+          </div>
+
+          <div class="mt-4 border-t border-gray-200 pt-4">
+            <p class="font-semibold mb-2 text-sm sm:text-base">Productos vendidos:</p>
+            <ul class="list-disc ml-5 space-y-1 text-sm">
+              <li *ngFor="let p of item.productos || []" class="text-gray-700">
+                {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="mt-4 border-t border-gray-200 pt-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2">
+              <p><strong>Método de pago:</strong> <span class="font-medium">{{ item.metodo_pago || 'No especificado' }}</span></p>
+              <p *ngIf="(item.descuento_aplicado || 0) > 0">
+                <strong>Descuento:</strong> <span class="text-red-600 font-medium">{{ item.descuento_aplicado || 0 }}%</span>
+                <span class="text-sm text-gray-500 ml-2">({{ (((item.total_final || 0) / (1 - (item.descuento_aplicado || 0) / 100)) - (item.total_final || 0)) | monedaArs }} de ahorro)</span>
+              </p>
+            </div>
+            <p class="text-xl font-bold mt-4 text-green-600">
+              Total: {{ (item.total_final || 0) | monedaArs }}
+            </p>
+          </div>
+
+          <div class="mt-6 flex justify-end">
+            <button
+              (click)="iniciarRecambio(item)"
+              [disabled]="!puedeRealizarRecambio(item)"
+              class="px-5 py-2 rounded-full font-medium transition-all"
+              [class.bg-blue-600]="puedeRealizarRecambio(item)"
+              [class.hover:bg-blue-700]="puedeRealizarRecambio(item)"
+              [class.text-white]="puedeRealizarRecambio(item)"
+              [class.bg-gray-200]="!puedeRealizarRecambio(item)"
+              [class.text-gray-500]="!puedeRealizarRecambio(item)">
+              <span *ngIf="puedeRealizarRecambio(item)">Realizar Recambio</span>
+              <span *ngIf="!puedeRealizarRecambio(item) && item.recambio_realizado">Recambio ya realizado</span>
+              <span *ngIf="!puedeRealizarRecambio(item) && !item.recambio_realizado">Fuera de plazo (>10 días)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- RECAMBIO -->
+        <div *ngIf="item.tipo === 'recambio'">
+          <div class="flex items-start justify-between mb-4">
+            <div class="flex items-center space-x-3">
+              <span class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
+                🔄 RECAMBIO
+              </span>
+            </div>
+            <span class="text-gray-500 text-sm">ID: {{ item.id.slice(-8) || 'N/A' }}</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 mb-4 text-sm">
+            <p class="font-medium text-gray-700"><strong>Realizado por:</strong> {{ item.realizado_por || 'Sin especificar' }}</p>
+            <p class="text-gray-600"><strong>Cliente:</strong> {{ item.cliente_nombre || 'Sin cliente' }}</p>
+            <p class="text-gray-600"><strong>Fecha:</strong> {{ item.fecha_recambio | date: 'dd/MM/yyyy HH:mm' }}</p>
+            <p class="text-gray-600"><strong>ID Venta original:</strong> {{ item.venta_id?.slice(-8) || 'N/A' }}</p>
+          </div>
+
+          <div class="mt-4 border-t border-gray-200 pt-4 space-y-4">
+            <div>
+              <p class="font-semibold mb-2 text-sm text-red-700">Productos devueltos:</p>
+              <ul class="list-disc ml-5 space-y-1 text-sm">
+                <li *ngFor="let p of item.productos_devueltos || []" class="text-gray-700">
+                  {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
+                </li>
+              </ul>
+            </div>
+            <div>
+              <p class="font-semibold mb-2 text-sm text-green-700">Productos de recambio:</p>
+              <ul class="list-disc ml-5 space-y-1 text-sm">
+                <li *ngFor="let p of item.productos_recambio || []" class="text-gray-700">
+                  {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+          
+          <div class="mt-4 border-t border-gray-200 pt-4 space-y-2">
+            <p class="text-lg font-bold text-orange-600">
+              Diferencia: {{ ((item.total_recambio || 0) - (item.total_devuelto || 0)) | monedaArs }}
+            </p>
+            <p *ngIf="(item.diferencia_abonada || 0) > 0">
+              <strong>Diferencia abonada:</strong> <span class="font-medium">{{ (item.diferencia_abonada || 0) | monedaArs }}</span>
+              <span class="text-sm ml-2">({{ item.metodo_pago_diferencia || 'No especificado' }})</span>
+            </p>
+            <div *ngIf="item.motivo" class="mt-3 bg-gray-50 rounded-lg p-3 text-sm">
+              <p class="font-semibold text-gray-700 mb-1">Motivo del recambio:</p>
+              <p class="text-gray-600">{{ item.motivo }}</p>
+            </div>
+            <div *ngIf="item.observaciones" class="mt-3 bg-gray-50 rounded-lg p-3 text-sm">
+              <p class="font-semibold text-gray-700 mb-1">Observaciones:</p>
+              <p class="text-gray-600">{{ item.observaciones }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje cuando no hay datos -->
+    <div *ngIf="itemsPaginados.length === 0" class="text-center py-12 bg-white rounded-xl shadow-lg">
+      <div class="text-gray-400 text-6xl mb-4">📋</div>
+      <h3 class="text-xl font-semibold text-gray-600 mb-2">No hay registros</h3>
+      <p class="text-gray-500">No se encontraron {{ tipoFiltro === 'todos' ? 'transacciones' : tipoFiltro }} para el período seleccionado.</p>
+    </div>
   </div>
+</div>
 
-  <!-- Lista de ventas -->
-  <div *ngFor="let venta of ventasPaginadas" class="bg-white rounded-xl shadow p-4 sm:p-6 mb-6">
-    <div class="text-sm sm:text-base space-y-1">
-      <p class="font-medium text-gray-700"><strong>Usuario:</strong> {{ venta.nombre_usuario }}</p>
-      <p class="text-gray-600"><strong>Cliente:</strong> {{ venta.cliente_nombre }} - {{ venta.cliente_email || 'Sin email' }}</p>
-      <p class="text-gray-600"><strong>Fecha:</strong> {{ venta.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}</p>
+<!-- Modal de Recambio mejorado -->
+<div *ngIf="mostrarModalRecambio" class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in-scale">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-300">
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+      <h3 class="text-xl font-bold text-gray-900">Realizar Recambio</h3>
+      <button (click)="cerrarModalRecambio()" class="text-gray-400 hover:text-gray-700 text-3xl font-light leading-none transition">&times;</button>
     </div>
 
-    <!-- Productos -->
-    <div class="mt-3">
-      <p class="font-medium mb-2 text-sm sm:text-base">Productos vendidos:</p>
-      <ul class="list-disc ml-5 space-y-1 text-sm sm:text-base">
-        <li *ngFor="let p of venta.productos">
-          {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ p.precio_unitario | monedaArs }} c/u — Subtotal: {{ p.subtotal | monedaArs }}
-        </li>
-      </ul>
+    <div class="p-6">
+      <!-- Información de la venta original -->
+      <div class="bg-gray-100 rounded-xl p-4 mb-6 border-l-4 border-blue-500">
+        <h4 class="font-bold text-gray-800 mb-2">Venta Original</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-sm">
+          <p><strong>Cliente:</strong> {{ ventaSeleccionada?.cliente_nombre || 'Sin cliente' }}</p>
+          <p><strong>Fecha:</strong> {{ ventaSeleccionada?.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}</p>
+          <p><strong>Total original:</strong> <span class="font-medium">{{ (ventaSeleccionada?.total_final || 0) | monedaArs }}</span></p>
+          <p *ngIf="(ventaSeleccionada?.descuento_aplicado || 0) > 0">
+            <strong>Descuento original:</strong> {{ ventaSeleccionada?.descuento_aplicado }}%
+          </p>
+        </div>
+      </div>
+
+      <!-- Paso 1: Seleccionar productos a devolver -->
+      <div class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-red-500">
+        <h4 class="font-bold text-lg text-red-700 mb-4">1. Productos a devolver</h4>
+        <div class="space-y-4">
+          <div *ngFor="let producto of productosOriginales; let i = index" 
+            class="bg-gray-50 rounded-lg p-4 transition-all duration-200 hover:bg-gray-100">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
+              <label [for]="'producto-' + i" class="flex items-center space-x-3 flex-1 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  [id]="'producto-' + i"
+                  [(ngModel)]="producto.seleccionado"
+                  (change)="calcularTotalesRecambio()"
+                  class="w-5 h-5 text-red-600 focus:ring-red-500 rounded flex-shrink-0"
+                >
+                <div>
+                  <div class="font-medium text-gray-900">{{ producto.nombre }}</div>
+                  <div class="text-sm text-gray-600">
+                    Talle: {{ producto.talle }} | Precio: {{ (producto.precio_unitario || 0) | monedaArs }}
+                  </div>
+                </div>
+              </label>
+              
+              <!-- Control de cantidad -->
+              <div class="flex items-center space-x-2 text-sm" *ngIf="producto.seleccionado">
+                <label class="font-medium">Cant:</label>
+                <select [(ngModel)]="producto.cantidadDevolver" (change)="calcularTotalesRecambio()" 
+                  class="border border-gray-300 rounded-lg px-2 py-1 w-16 focus:ring-2 focus:ring-red-500">
+                  <option *ngFor="let c of getOpcionesCantidad(producto.cantidad)" [value]="c">{{ c }}</option>
+                </select>
+                <span class="text-gray-500">de {{ producto.cantidad || 0 }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 2: Productos de recambio -->
+      <div class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-green-500">
+        <h4 class="font-bold text-lg text-green-700 mb-4">2. Productos de recambio</h4>
+        
+        <!-- Buscador de productos -->
+        <div class="mb-4">
+          <input 
+            type="text" 
+            [(ngModel)]="busquedaProducto"
+            (input)="buscarProductos()"
+            placeholder="Buscar productos por nombre, código o marca..."
+            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+          >
+        </div>
+
+        <!-- Productos disponibles -->
+        <div class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg mb-4">
+          <div *ngFor="let producto of productosFiltrados" 
+            class="border-b border-gray-200 last:border-b-0 p-3 transition-colors duration-200 hover:bg-green-50 cursor-pointer"
+            (click)="agregarProductoRecambio(producto)">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="font-medium text-gray-900">{{ producto.nombre }}</div>
+                <div class="text-sm text-gray-600">
+                  {{ producto.marca }} | Talle: {{ producto.talle }} | Stock: {{ producto.cantidad_stock }}
+                </div>
+              </div>
+              <div class="text-right flex-shrink-0">
+                <div class="font-semibold text-green-600">{{ (producto.precio || 0) | monedaArs }}</div>
+                <button class="bg-green-500 text-white px-3 py-1 rounded-full text-xs hover:bg-green-600 transition mt-1">
+                  Agregar
+                </button>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="productosFiltrados.length === 0" class="p-4 text-center text-gray-500 text-sm">
+            No se encontraron productos.
+          </div>
+        </div>
+
+        <!-- Productos seleccionados para recambio -->
+        <div *ngIf="productosRecambio.length > 0">
+          <h5 class="font-semibold text-gray-800 mb-2">Productos seleccionados:</h5>
+          <div class="space-y-2">
+            <div *ngFor="let item of productosRecambio; let i = index" 
+              class="bg-green-50 border border-green-200 rounded-lg p-3 flex justify-between items-center transition-all duration-200">
+              <div>
+                <div class="font-medium text-gray-800">{{ item.producto.nombre }}</div>
+                <div class="text-sm text-gray-600">
+                  Talle: {{ item.producto.talle }} | {{ (item.producto.precio || 0) | monedaArs }} c/u
+                </div>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input 
+                  type="number" 
+                  [(ngModel)]="item.cantidad"
+                  (input)="calcularTotalesRecambio()"
+                  min="1" 
+                  [max]="item.producto.cantidad_stock"
+                  class="w-16 border border-gray-300 rounded-lg px-2 py-1 text-center text-sm focus:ring-2 focus:ring-green-500"
+                >
+                <button (click)="quitarProductoRecambio(i)" class="text-gray-400 hover:text-red-500 transition">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 3: Descuento, Resumen y Pago -->
+      <div class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-blue-500">
+        <h4 class="font-bold text-lg text-blue-700 mb-4">3. Resumen y Confirmación</h4>
+
+        <!-- Descuento del recambio -->
+        <div class="mb-6">
+          <p class="font-semibold text-gray-800 mb-2">Descuento (opcional)</p>
+          <div class="flex items-center space-x-3">
+            <input 
+              type="text" 
+              [(ngModel)]="codigoDescuentoRecambio"
+              placeholder="Código de descuento"
+              class="border border-gray-300 rounded-lg px-4 py-2 flex-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+            <button 
+              (click)="aplicarDescuentoRecambio()"
+              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors font-medium"
+            >
+              Aplicar
+            </button>
+          </div>
+          <div *ngIf="descuentoRecambioAplicado > 0" class="mt-2 text-sm text-green-600 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            </svg>
+            Descuento del {{ descuentoRecambioAplicado }}% aplicado
+          </div>
+        </div>
+
+        <!-- Resumen financiero -->
+        <div class="bg-blue-50 rounded-lg p-4 mb-6 text-sm">
+          <p class="font-semibold text-blue-800 mb-3">Detalle</p>
+          <div class="space-y-2">
+            <div class="flex justify-between text-gray-700">
+              <span>Total devuelto:</span>
+              <span class="font-medium text-red-600">- {{ totalDevuelto | monedaArs }}</span>
+            </div>
+            <div class="flex justify-between text-gray-700">
+              <span>Total recambio:</span>
+              <span class="font-medium text-green-600">+ {{ totalRecambio | monedaArs }}</span>
+            </div>
+            <div *ngIf="montoDescuentoRecambio > 0" class="flex justify-between text-gray-700">
+              <span>Ahorro por descuento:</span>
+              <span class="font-medium text-purple-600">- {{ montoDescuentoRecambio | monedaArs }}</span>
+            </div>
+            <hr class="my-2 border-dashed border-gray-300">
+            <div class="flex justify-between font-bold text-lg text-gray-900">
+              <span>Diferencia:</span>
+              <span [class.text-green-600]="diferencia >= 0" [class.text-red-600]="diferencia < 0">
+                {{ diferencia | monedaArs }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Método de pago (si hay diferencia) -->
+        <div *ngIf="diferencia > 0" class="mb-6">
+          <p class="font-semibold text-gray-800 mb-2">Método de pago para la diferencia</p>
+          <div class="flex flex-wrap gap-3">
+            <label *ngFor="let metodo of metodosPago" class="flex items-center space-x-2 cursor-pointer bg-gray-100 rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-200 transition">
+              <input 
+                type="radio" 
+                name="metodoPago" 
+                [value]="metodo"
+                [(ngModel)]="metodoPagoSeleccionado"
+                class="text-blue-600 focus:ring-blue-500"
+              >
+              <span>{{ metodo }}</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Motivo y observaciones -->
+        <div class="space-y-4">
+          <div>
+            <p class="font-semibold text-gray-800 mb-2">Motivo del recambio</p>
+            <textarea 
+              [(ngModel)]="motivoRecambio"
+              placeholder="Describe el motivo del recambio..."
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              rows="3"
+            ></textarea>
+          </div>
+          <div>
+            <p class="font-semibold text-gray-800 mb-2">Observaciones adicionales (opcional)</p>
+            <textarea 
+              [(ngModel)]="observacionesRecambio"
+              placeholder="Detalles adicionales para el registro..."
+              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              rows="2"
+            ></textarea>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Info de venta -->
-    <div class="mt-4 text-sm sm:text-base">
-      <p><strong>Método de pago:</strong> {{ venta.metodo_pago }}</p>
-      <p *ngIf="venta.descuento_aplicado > 0">
-        <strong>Descuento aplicado:</strong> {{ venta.descuento_aplicado }}%
-        —
-        <span class="text-red-600">
-          {{ ((venta.total_final / (1 - venta.descuento_aplicado / 100)) - venta.total_final) | monedaArs }}
-        </span>
-      </p>
-      <p class="text-lg sm:text-xl font-semibold mt-2">
-        Total: {{ venta.total_final | monedaArs }}
-      </p>
+    <!-- Botones del modal -->
+    <div class="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row-reverse justify-between items-center space-y-3 sm:space-y-0 sm:space-x-3">
+      <button 
+        (click)="procesarRecambio()"
+        [disabled]="!puedeConfirmarRecambio()"
+        class="w-full sm:w-auto px-6 py-3 rounded-full font-bold transition-all"
+        [class.bg-green-600]="puedeConfirmarRecambio()"
+        [class.hover:bg-green-700]="puedeConfirmarRecambio()"
+        [class.text-white]="puedeConfirmarRecambio()"
+        [class.bg-gray-200]="!puedeConfirmarRecambio()"
+        [class.text-gray-500]="!puedeConfirmarRecambio()">
+        {{ procesandoRecambio ? 'Procesando...' : 'Confirmar Recambio' }}
+      </button>
+      <button 
+        (click)="cerrarModalRecambio()" 
+        class="w-full sm:w-auto px-6 py-3 rounded-full font-medium bg-red-500 hover:bg-red-600 text-white transition-colors">
+        Cancelar
+      </button>
     </div>
   </div>
+  <div *ngIf="toastVisible" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 text-white font-medium animate-slide-up"
+  [ngClass]="toastColor">
+  {{ toastMensaje }}
+</div>
 </div>

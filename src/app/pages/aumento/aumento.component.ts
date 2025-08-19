@@ -19,6 +19,7 @@ export class AumentoComponent implements OnInit {
   // Propiedades existentes
   categorias: string[] = [];
   productosPorCategoria: { [key: string]: any[] } = {};
+  productosPorCategoriaFiltrados: { [key: string]: any[] } = {};
   categoriaSeleccionada: string | null = null;
   seleccionados: Set<string> = new Set();
   aumentarTodaCategoria: { [key: string]: boolean } = {};
@@ -35,6 +36,9 @@ export class AumentoComponent implements OnInit {
   resumenAumento: string[] = [];
   productos: any[] = [];
   errorAumentoInvalido = false;
+
+  // Nueva propiedad para el filtro de búsqueda
+  filtroTexto: string = '';
 
   constructor(private supabase: SupabaseService) {}
 
@@ -68,6 +72,40 @@ export class AumentoComponent implements OnInit {
     this.resumenAumento = [];
   }
 
+  // Método mejorado para filtrar productos
+  aplicarFiltro() {
+    if (!this.filtroTexto.trim()) {
+      this.productosPorCategoriaFiltrados = { ...this.productosPorCategoria };
+      return;
+    }
+
+    const textoFiltro = this.filtroTexto.toLowerCase().trim();
+    this.productosPorCategoriaFiltrados = {};
+
+    Object.keys(this.productosPorCategoria).forEach(categoria => {
+      const productosFiltrados = this.productosPorCategoria[categoria].filter(producto => 
+        producto.nombre.toLowerCase().includes(textoFiltro) ||
+        producto.categoria.toLowerCase().includes(textoFiltro) ||
+        producto.marca.toLowerCase().includes(textoFiltro)
+      );
+
+      if (productosFiltrados.length > 0) {
+        this.productosPorCategoriaFiltrados[categoria] = productosFiltrados;
+      }
+    });
+  }
+
+  // Método para obtener las categorías filtradas
+  get categoriasFiltradas(): string[] {
+    return Object.keys(this.productosPorCategoriaFiltrados);
+  }
+
+  // Método para limpiar el filtro
+  limpiarFiltro() {
+    this.filtroTexto = '';
+    this.aplicarFiltro();
+  }
+
   organizarPorCategoria() {
     const agrupados = this.productos.reduce((acc: any, prod: any) => {
       acc[prod.categoria] = acc[prod.categoria] || [];
@@ -77,6 +115,7 @@ export class AumentoComponent implements OnInit {
 
     this.categorias = Object.keys(agrupados);
     this.productosPorCategoria = agrupados;
+    this.productosPorCategoriaFiltrados = { ...agrupados };
 
     this.categorias.forEach(cat => {
       this.expandido[cat] = false;
@@ -119,7 +158,7 @@ export class AumentoComponent implements OnInit {
       const productos = this.productosPorCategoria[cat];
 
       const filtrados = todos
-        ? productos
+        ? productos.filter(p => this.productosSeleccionados[p.id] !== false) // Solo excluir los explícitamente deseleccionados
         : productos.filter(p => this.productosSeleccionados[p.id]);
 
       for (const prod of filtrados) {
@@ -174,12 +213,13 @@ export class AumentoComponent implements OnInit {
     this.valorAumento = 0;
   }
 
+  // Método mejorado para manejar la selección de toda la categoría
   toggleTodos(categoria: string) {
     const seleccionarTodos = this.aumentarTodaCategoria[categoria];
     const productos = this.productosPorCategoria[categoria];
     
     if (seleccionarTodos) {
-      // Si se selecciona toda la categoría, marcar todos los productos
+      // Si se selecciona toda la categoría, marcar todos los productos como true
       productos.forEach(p => {
         this.productosSeleccionados[p.id] = true;
       });
@@ -191,16 +231,40 @@ export class AumentoComponent implements OnInit {
     }
   }
 
+  // Método mejorado para toggle individual de productos
   toggleProducto(id: string) {
-    this.productosSeleccionados[id] = !this.productosSeleccionados[id];
+    // Si está marcado como seleccionado, lo desmarcamos (o lo marcamos como false si toda la categoría está seleccionada)
+    if (this.productosSeleccionados[id]) {
+      this.productosSeleccionados[id] = false;
+    } else {
+      this.productosSeleccionados[id] = true;
+    }
+  }
+
+  // Método para verificar si un producto está efectivamente seleccionado
+  estaProductoSeleccionado(productoId: string, categoria: string): boolean {
+    // Si toda la categoría está seleccionada y el producto no está explícitamente deseleccionado
+    if (this.aumentarTodaCategoria[categoria] && this.productosSeleccionados[productoId] !== false) {
+      return true;
+    }
+    // Si el producto está explícitamente seleccionado
+    return this.productosSeleccionados[productoId] === true;
   }
 
   seSeleccionoAlgo(): boolean {
     // Verificar si hay alguna categoría completa seleccionada
-    const hayCategoriasSeleccionadas = Object.values(this.aumentarTodaCategoria).some(s => s);
+    const hayCategoriasSeleccionadas = Object.keys(this.aumentarTodaCategoria).some(categoria => {
+      if (!this.aumentarTodaCategoria[categoria]) return false;
+      
+      // Verificar que al menos un producto de la categoría no esté explícitamente deseleccionado
+      const productos = this.productosPorCategoria[categoria];
+      return productos.some(p => this.productosSeleccionados[p.id] !== false);
+    });
     
     // Verificar si hay productos individuales seleccionados
-    const hayProductosSeleccionados = Object.values(this.productosSeleccionados).some(s => s);
+    const hayProductosSeleccionados = Object.keys(this.productosSeleccionados).some(id => 
+      this.productosSeleccionados[id] === true
+    );
     
     return hayCategoriasSeleccionadas || hayProductosSeleccionados;
   }
@@ -210,10 +274,19 @@ export class AumentoComponent implements OnInit {
 
     for (const categoria of this.categorias) {
       if (this.aumentarTodaCategoria[categoria]) {
-        this.resumenAumento.push(`Toda la categoría "${categoria}"`);
+        const productos = this.productosPorCategoria[categoria];
+        const productosSeleccionados = productos.filter(p => this.productosSeleccionados[p.id] !== false);
+        
+        if (productosSeleccionados.length === productos.length) {
+          this.resumenAumento.push(`Toda la categoría "${categoria}"`);
+        } else {
+          const seleccionados = productosSeleccionados
+            .map(p => `${p.nombre} - $${p.precio.toLocaleString()}`);
+          this.resumenAumento.push(...seleccionados);
+        }
       } else {
         const seleccionados = this.productosPorCategoria[categoria]
-          .filter(p => this.productosSeleccionados[p.id])
+          .filter(p => this.productosSeleccionados[p.id] === true)
           .map(p => `${p.nombre} - $${p.precio.toLocaleString()}`);
         this.resumenAumento.push(...seleccionados);
       }
@@ -241,5 +314,16 @@ export class AumentoComponent implements OnInit {
     // Este método se puede implementar si necesitas cerrar el modal al hacer click afuera
     // Por ahora solo previene la propagación del evento
     event.stopPropagation();
+  }
+
+  // Método para calcular preview del aumento
+  calcularPreview(precioBase: number): number {
+    if (!this.valorAumento || !this.tipoAumento) return precioBase;
+    
+    if (this.tipoAumento === 'precio') {
+      return precioBase + this.valorAumento;
+    } else {
+      return precioBase + (precioBase * (this.valorAumento / 100));
+    }
   }
 }

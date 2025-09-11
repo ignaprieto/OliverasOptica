@@ -8,13 +8,15 @@ import { CommonModule } from '@angular/common';
   selector: 'app-login',
   standalone: true,
   imports: [CommonModule, FormsModule],
-  templateUrl: './login.component.html'
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css'] // Opcional: si quieres agregar el CSS personalizado
 })
 export class LoginComponent implements OnInit {
   email: string = '';
   password: string = '';
   error: string | null = null;
   isLoading: boolean = false;
+  showPassword: boolean = false; // Nueva propiedad para controlar la visibilidad de la contraseña
 
   constructor(private supabase: SupabaseService, private router: Router) {}
 
@@ -26,6 +28,11 @@ export class LoginComponent implements OnInit {
     }
     
     this.error = null;
+  }
+
+  // Nuevo método para alternar la visibilidad de la contraseña
+  togglePasswordVisibility() {
+    this.showPassword = !this.showPassword;
   }
 
   async login() {

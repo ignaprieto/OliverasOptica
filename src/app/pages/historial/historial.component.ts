@@ -64,6 +64,7 @@ interface ItemHistorial {
 }
 
 
+
 @Component({
   selector: 'app-historial',
   imports: [FormsModule, CommonModule, RouterModule, MonedaArsPipe ],
@@ -124,6 +125,12 @@ export class HistorialComponent implements OnInit {
   toastVisible = false;
   toastMensaje = '';
   toastColor = 'bg-green-600'; 
+
+//PROPIEDADES PARA ELIMINACION
+
+mostrandoConfirmacionEliminar = false;
+ventaAEliminar: any = null;
+eliminandoVenta = false;
 
   constructor(private supabase: SupabaseService) {}
 
@@ -666,4 +673,81 @@ export class HistorialComponent implements OnInit {
       this.procesandoRecambio = false;
     }
   }
+
+
+// Método para iniciar la eliminación de una venta
+iniciarEliminacionVenta(venta: any) {
+  if (venta.recambio_realizado) {
+    this.mostrarToast('No se puede eliminar una venta que ya tiene un recambio realizado.', 'bg-red-600');
+    return;
+  }
+  
+  this.ventaAEliminar = venta;
+  this.mostrandoConfirmacionEliminar = true;
+}
+
+// Método para cancelar la eliminación
+cancelarEliminacion() {
+  this.mostrandoConfirmacionEliminar = false;
+  this.ventaAEliminar = null;
+}
+
+// Método para confirmar y procesar la eliminación
+async confirmarEliminacion() {
+  if (!this.ventaAEliminar || this.eliminandoVenta) return;
+  
+  this.eliminandoVenta = true;
+  
+  try {
+    const client = this.supabase.getClient();
+    
+    // 1. Restaurar el stock de los productos vendidos
+    for (const producto of this.ventaAEliminar.productos) {
+      const { error: errorStock } = await client.rpc('actualizar_stock', {
+        producto_id: producto.producto_id,
+        cantidad_cambio: producto.cantidad // Devolver el stock
+      });
+      
+      if (errorStock) {
+        throw new Error(`Error al restaurar stock del producto: ${errorStock.message}`);
+      }
+    }
+    
+    // 2. Eliminar registros de detalle_venta
+    const { error: errorDetalle } = await client
+      .from('detalle_venta')
+      .delete()
+      .eq('venta_id', this.ventaAEliminar.id);
+    
+    if (errorDetalle) {
+      throw new Error(`Error al eliminar detalle de venta: ${errorDetalle.message}`);
+    }
+    
+    // 3. Eliminar la venta principal
+    const { error: errorVenta } = await client
+      .from('ventas')
+      .delete()
+      .eq('id', this.ventaAEliminar.id);
+    
+    if (errorVenta) {
+      throw new Error(`Error al eliminar venta: ${errorVenta.message}`);
+    }
+    
+    // 4. Recargar datos y cerrar modal
+    await this.cargarDatos();
+    this.cancelarEliminacion();
+    
+    this.mostrarToast('✅ Venta eliminada exitosamente. El stock ha sido restaurado.', 'bg-green-600');
+    
+  } catch (error: any) {
+    console.error('Error al eliminar venta:', error);
+    this.mostrarToast(`❌ Error al eliminar la venta: ${error.message}`, 'bg-red-600');
+  } finally {
+    this.eliminandoVenta = false;
+  }
+}
+
+
+
+
 }

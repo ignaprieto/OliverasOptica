@@ -22,7 +22,6 @@ export class LoginComponent implements OnInit {
     // Verificar si ya está logueado al cargar el componente
     const { data } = await this.supabase.getClient().auth.getSession();
     if (data.session) {
-      console.log('Usuario ya autenticado, redirigiendo...');
       this.router.navigate(['/dashboard']);
     }
     
@@ -39,8 +38,6 @@ export class LoginComponent implements OnInit {
       return;
     }
 
-    console.log('Intentando login con:', this.email);
-
     try {
       const { data: loginData, error } = await this.supabase.getClient().auth.signInWithPassword({
         email: this.email,
@@ -48,19 +45,15 @@ export class LoginComponent implements OnInit {
       });
 
       if (error) {
-        console.error('Error de login:', error);
         this.error = 'Credenciales incorrectas';
         this.isLoading = false;
         return;
       }
-
-      console.log('Login exitoso:', loginData);
       
       // Redirigir explícitamente después del login exitoso
       this.router.navigate(['/dashboard']);
       
     } catch (error) {
-      console.error('Error inesperado en login:', error);
       this.error = 'Error inesperado. Inténtalo de nuevo.';
     } finally {
       this.isLoading = false;

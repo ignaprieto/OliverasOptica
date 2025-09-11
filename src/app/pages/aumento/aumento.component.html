@@ -1,32 +1,33 @@
+
 <!-- Contenido principal con visibilidad controlada -->
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-800 p-4 sm:p-8 flex justify-center" 
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-800 p-2 sm:p-4 lg:p-8 flex justify-center" 
      [class.animate-fade-in-scale]="!isLoading">
     
     <!-- Loading spinner inicial -->
     <div *ngIf="isLoading" class="w-full max-w-6xl flex items-center justify-center min-h-[60vh]">
         <div class="flex flex-col items-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-            <p class="text-gray-600">Cargando productos...</p>
+            <div class="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-600 mb-4"></div>
+            <p class="text-gray-600 text-sm sm:text-base">Cargando productos...</p>
         </div>
     </div>
 
     <!-- Contenido principal (solo cuando no está cargando) -->
-    <div *ngIf="!isLoading" class="w-full max-w-6xl space-y-8">
+    <div *ngIf="!isLoading" class="w-full max-w-6xl space-y-4 sm:space-y-6 lg:space-y-8">
 
         <!-- Header y botón de volver mejorado -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
-            <div class="mb-6 sm:mb-0">
-                <h2 class="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-2">
+        <div class="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0 mb-4 sm:mb-6 lg:mb-8">
+            <div class="text-center sm:text-left">
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-1 sm:mb-2">
                     Aplicar Aumento de Precios
                 </h2>
-                <p class="text-gray-600 font-medium">Selecciona los productos y configura el aumento</p>
+                <p class="text-gray-600 font-medium text-sm sm:text-base">Selecciona los productos y configura el aumento</p>
             </div>
             
             <button routerLink="/dashboard"
-              class="group relative overflow-hidden bg-gradient-to-r from-gray-100 to-gray-200 hover:from-white hover:to-gray-100 text-gray-800 px-8 py-4 rounded-2xl transition-all duration-500 font-semibold text-sm shadow-xl hover:shadow-2xl transform hover:-translate-y-2 hover:scale-105 border border-gray-200/50">
+              class="group relative overflow-hidden bg-gradient-to-r from-gray-100 to-gray-200 hover:from-white hover:to-gray-100 text-gray-800 px-4 py-3 sm:px-6 lg:px-8 sm:py-3 lg:py-4 rounded-xl sm:rounded-2xl transition-all duration-500 font-semibold text-xs sm:text-sm shadow-xl hover:shadow-2xl transform hover:-translate-y-1 sm:hover:-translate-y-2 hover:scale-105 border border-gray-200/50 w-full sm:w-auto">
                 <div class="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-purple-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <span class="relative flex items-center space-x-3">
-                    <svg class="w-5 h-5 transition-all duration-500 group-hover:-translate-x-2 group-hover:rotate-[-5deg]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span class="relative flex items-center justify-center space-x-2 sm:space-x-3">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-all duration-500 group-hover:-translate-x-1 sm:group-hover:-translate-x-2 group-hover:rotate-[-5deg]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                     </svg>
                     <span>Volver al Panel</span>
@@ -34,124 +35,154 @@
             </button>
         </div>
         
-        <!-- Barra de búsqueda premium -->
-        <div *ngIf="!confirmando" class="group relative bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/30 p-6 hover:shadow-2xl transition-all duration-500">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-purple-50/30 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <!-- Barra de búsqueda y filtros premium -->
+        <div *ngIf="!confirmando" class="group relative bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/30 p-4 sm:p-6 hover:shadow-2xl transition-all duration-500">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-purple-50/30 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             
             <div class="relative">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
-                    <h3 class="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent flex items-center">
-                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 gap-2">
+                    <h3 class="text-base sm:text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent flex items-center">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                         Filtrar Productos
                     </h3>
-                    <div class="text-sm text-gray-500 font-medium">
+                    <div class="text-xs sm:text-sm text-gray-500 font-medium">
                         {{ categoriasFiltradas.length }} categoría{{ categoriasFiltradas.length !== 1 ? 's' : '' }} encontrada{{ categoriasFiltradas.length !== 1 ? 's' : '' }}
                     </div>
                 </div>
                 
-                <div class="flex flex-col sm:flex-row gap-4">
+                <div class="flex flex-col space-y-3 sm:space-y-0 sm:flex-row sm:gap-4">
+                    <!-- Filtro por texto -->
                     <div class="relative flex-1">
                         <input 
                             type="text" 
                             placeholder="Buscar por nombre, categoría o marca..."
                             [(ngModel)]="filtroTexto"
                             (input)="aplicarFiltro()"
-                            class="w-full pl-12 pr-4 py-4 bg-white/70 backdrop-blur-sm border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-500 font-medium"
+                            class="w-full pl-10 sm:pl-12 pr-4 py-3 sm:py-4 bg-white/70 backdrop-blur-sm border-2 border-gray-200 rounded-xl sm:rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all duration-300 text-gray-800 placeholder-gray-500 font-medium text-sm sm:text-base"
                         />
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="absolute inset-y-0 left-0 pl-3 sm:pl-4 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
                         </div>
                     </div>
                     
-                    <button 
-                        *ngIf="filtroTexto"
-                        (click)="limpiarFiltro()"
-                        class="group/btn relative overflow-hidden bg-gradient-to-r from-gray-200 to-gray-300 hover:from-red-500 hover:to-red-600 text-gray-700 hover:text-white px-6 py-4 rounded-2xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105">
-                        <div class="absolute inset-0 bg-gradient-to-r from-red-400/20 to-red-500/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
-                        <span class="relative flex items-center justify-center space-x-2">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                            <span>Limpiar</span>
-                        </span>
-                    </button>
+                    <!-- Botones de limpiar -->
+                    <div class="flex gap-2 sm:flex-row">
+                        <button 
+                            *ngIf="filtroTexto"
+                            (click)="limpiarFiltro()"
+                            class="group/btn relative overflow-hidden bg-gradient-to-r from-gray-200 to-gray-300 hover:from-red-500 hover:to-red-600 text-gray-700 hover:text-white px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex-1 sm:flex-none">
+                            <div class="absolute inset-0 bg-gradient-to-r from-red-400/20 to-red-500/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                            <span class="relative flex items-center justify-center space-x-1 sm:space-x-2">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                <span class="text-sm sm:text-base">Limpiar</span>
+                            </span>
+                        </button>
+
+                        <button 
+                            *ngIf="categoriaFiltroSeleccionada"
+                            (click)="limpiarFiltroCategoria()"
+                            class="group/btn relative overflow-hidden bg-gradient-to-r from-orange-200 to-orange-300 hover:from-orange-500 hover:to-orange-600 text-orange-700 hover:text-white px-3 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl transition-all duration-300 font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex-1 sm:flex-none">
+                            <div class="absolute inset-0 bg-gradient-to-r from-orange-400/20 to-orange-500/20 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                            <span class="relative flex items-center justify-center space-x-1 sm:space-x-2">
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                                </svg>
+                                <span class="text-xs sm:text-sm truncate max-w-24 sm:max-w-none">{{ categoriaFiltroSeleccionada }}</span>
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Sección de selección de productos (Paso 1) mejorada -->
-        <div *ngIf="!confirmando" class="space-y-8">
+        <div *ngIf="!confirmando" class="space-y-4 sm:space-y-6 lg:space-y-8">
             <!-- Mensaje cuando no hay resultados -->
-            <div *ngIf="categoriasFiltradas.length === 0 && filtroTexto" 
-                 class="text-center py-12 bg-white/60 backdrop-blur-xl rounded-3xl shadow-lg border border-white/20">
-                <div class="mx-auto w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-4">
-                    <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div *ngIf="categoriasFiltradas.length === 0 && (filtroTexto || categoriaFiltroSeleccionada)" 
+                 class="text-center py-8 sm:py-12 bg-white/60 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-lg border border-white/20">
+                <div class="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-3 sm:mb-4">
+                    <svg class="w-6 h-6 sm:w-8 sm:h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold text-gray-700 mb-2">No se encontraron productos</h3>
-                <p class="text-gray-500">Intenta con otros términos de búsqueda</p>
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-700 mb-2">No se encontraron productos</h3>
+                <p class="text-gray-500 text-sm sm:text-base">Intenta con otros términos de búsqueda</p>
             </div>
 
-            <div *ngFor="let categoria of categoriasFiltradas" class="group relative bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-8 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
+            <div *ngFor="let categoria of categoriasFiltradas" class="group relative bg-white/70 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
                 <!-- Efectos de fondo animados -->
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-purple-50/50 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 
                 <div class="relative">
-                    <div class="flex items-start sm:items-center justify-between mb-6 flex-col sm:flex-row">
-                        <div class="flex items-center space-x-3 mb-4 sm:mb-0">
-                            <div class="w-3 h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
-                            <h3 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                                {{ categoria }}
-                                <span class="block sm:inline text-sm font-normal text-gray-500 sm:ml-2">
+                    <!-- Header de la categoría -->
+                    <div class="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6">
+                        <button 
+                            (click)="toggleCategoria(categoria)"
+                            class="flex items-center space-x-3 flex-1 text-left group/header hover:bg-blue-50/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 transition-all duration-300 order-2 sm:order-1">
+                            <div class="w-2 sm:w-3 h-6 sm:h-8 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full flex-shrink-0"></div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent truncate">
+                                    {{ categoria }}
+                                </h3>
+                                <span class="block text-xs sm:text-sm font-normal text-gray-500">
                                     ({{ productosPorCategoriaFiltrados[categoria].length }} producto{{ productosPorCategoriaFiltrados[categoria].length !== 1 ? 's' : '' }})
                                 </span>
-                            </h3>
-                        </div>
+                            </div>
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 transition-transform duration-300 flex-shrink-0" 
+                                 [class.rotate-180]="categoriasExpandidas[categoria]" 
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
                         
-                        <label class="group/toggle relative flex items-center cursor-pointer bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-3 rounded-2xl border border-gray-200/50 hover:from-blue-50 hover:to-purple-50 hover:border-blue-200 transition-all duration-300">
+                        <label class="group/toggle relative flex items-center cursor-pointer bg-gradient-to-r from-gray-50 to-gray-100 px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl border border-gray-200/50 hover:from-blue-50 hover:to-purple-50 hover:border-blue-200 transition-all duration-300 order-1 sm:order-2 w-full sm:w-auto justify-center sm:justify-start">
                             <input 
                               type="checkbox" 
                               [(ngModel)]="aumentarTodaCategoria[categoria]" 
                               (change)="toggleTodos(categoria)" 
                               class="sr-only" />
-                            <div class="relative w-12 h-6 bg-gray-300 rounded-full transition-colors duration-300"
+                            <div class="relative w-10 h-5 sm:w-12 sm:h-6 bg-gray-300 rounded-full transition-colors duration-300"
                               [class.bg-gradient-to-r]="aumentarTodaCategoria[categoria]"
                               [class.from-blue-500]="aumentarTodaCategoria[categoria]"
                               [class.to-purple-600]="aumentarTodaCategoria[categoria]">
-                                <div class="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-lg transform transition-transform duration-300"
+                                <div class="absolute top-0.5 left-0.5 w-4 h-4 sm:w-5 sm:h-5 bg-white rounded-full shadow-lg transform transition-transform duration-300"
+                                     [class.translate-x-5]="aumentarTodaCategoria[categoria] && !aumentarTodaCategoria[categoria]"
                                      [class.translate-x-6]="aumentarTodaCategoria[categoria]">
                                 </div>
                             </div>
-                            <span class="ml-4 text-sm font-semibold text-gray-700 group-hover/toggle:text-blue-700 transition-colors">
-                                Seleccionar toda la categoría
+                            <span class="ml-3 sm:ml-4 text-xs sm:text-sm font-semibold text-gray-700 group-hover/toggle:text-blue-700 transition-colors">
+                                Seleccionar categoría
                             </span>
                         </label>
                     </div>
-                
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                    <!-- Productos (colapsables) -->
+                    <div *ngIf="categoriasExpandidas[categoria]" 
+                         class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 lg:gap-6 animate-fade-in">
                         <label 
                           *ngFor="let producto of productosPorCategoriaFiltrados[categoria]"
-                          class="group/card relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 rounded-2xl p-5 shadow-lg transition-all duration-500 cursor-pointer hover:shadow-xl hover:-translate-y-2 border border-gray-100"
+                          class="group/card relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 shadow-lg transition-all duration-500 cursor-pointer hover:shadow-xl hover:-translate-y-1 sm:hover:-translate-y-2 border border-gray-100"
                           [ngClass]="{ 
-                              'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-purple-50 shadow-blue-100': estaProductoSeleccionado(producto.id, categoria),
-                              'ring-2 ring-red-300 bg-gradient-to-br from-red-50 to-orange-50': aumentarTodaCategoria[categoria] && productosSeleccionados[producto.id] === false
+                              'ring-1 sm:ring-2 ring-blue-500 bg-gradient-to-br from-blue-50 to-purple-50 shadow-blue-100': estaProductoSeleccionado(producto.id, categoria),
+                              'ring-1 sm:ring-2 ring-red-300 bg-gradient-to-br from-red-50 to-orange-50': aumentarTodaCategoria[categoria] && productosSeleccionados[producto.id] === false
                           }">
                             <!-- Efecto de brillo animado -->
                             <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/card:translate-x-full transition-transform duration-1000"></div>
                             
-                            <div class="relative flex items-start space-x-4">
-                                <div class="relative mt-1">
+                            <div class="relative flex items-start space-x-3 sm:space-x-4">
+                                <div class="relative mt-1 flex-shrink-0">
                                     <input 
                                         type="checkbox" 
                                         [checked]="estaProductoSeleccionado(producto.id, categoria)" 
                                         (change)="toggleProducto(producto.id)"
                                         class="sr-only" />
-                                    <div class="w-5 h-5 rounded-lg border-2 border-gray-300 transition-all duration-300 flex items-center justify-center"
+                                    <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-lg border-2 border-gray-300 transition-all duration-300 flex items-center justify-center"
                                          [class.bg-gradient-to-r]="estaProductoSeleccionado(producto.id, categoria)"
                                          [class.from-blue-500]="estaProductoSeleccionado(producto.id, categoria) && productosSeleccionados[producto.id] !== false"
                                          [class.to-purple-600]="estaProductoSeleccionado(producto.id, categoria) && productosSeleccionados[producto.id] !== false"
@@ -159,32 +190,32 @@
                                          [class.from-red-500]="aumentarTodaCategoria[categoria] && productosSeleccionados[producto.id] === false"
                                          [class.to-red-600]="aumentarTodaCategoria[categoria] && productosSeleccionados[producto.id] === false"
                                          [class.border-red-500]="aumentarTodaCategoria[categoria] && productosSeleccionados[producto.id] === false">
-                                        <svg *ngIf="estaProductoSeleccionado(producto.id, categoria) && productosSeleccionados[producto.id] !== false" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg *ngIf="estaProductoSeleccionado(producto.id, categoria) && productosSeleccionados[producto.id] !== false" class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
                                         </svg>
-                                        <svg *ngIf="aumentarTodaCategoria[categoria] && productosSeleccionados[producto.id] === false" class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg *ngIf="aumentarTodaCategoria[categoria] && productosSeleccionados[producto.id] === false" class="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                                         </svg>
                                     </div>
                                 </div>
                                 
                                 <div class="flex-1 min-w-0">
-                                    <h4 class="font-bold text-gray-900 text-base mb-2 truncate group-hover/card:text-blue-900 transition-colors">
+                                    <h4 class="font-bold text-gray-900 text-sm sm:text-base mb-2 truncate group-hover/card:text-blue-900 transition-colors">
                                         {{ producto.nombre }}
                                     </h4>
                                     <div class="space-y-1">
-                                        <p class="text-sm text-gray-600 flex items-center">
-                                            <span class="inline-block w-1.5 h-1.5 bg-blue-400 rounded-full mr-2"></span>
+                                        <p class="text-xs sm:text-sm text-gray-600 flex items-center">
+                                            <span class="inline-block w-1.5 h-1.5 bg-blue-400 rounded-full mr-2 flex-shrink-0"></span>
                                             <span class="font-medium">Talle:</span>
-                                            <span class="ml-1 font-semibold text-gray-800">{{ producto.talle }}</span>
+                                            <span class="ml-1 font-semibold text-gray-800 truncate">{{ producto.talle }}</span>
                                         </p>
-                                        <p class="text-sm text-gray-600 flex items-center">
-                                            <span class="inline-block w-1.5 h-1.5 bg-purple-400 rounded-full mr-2"></span>
+                                        <p class="text-xs sm:text-sm text-gray-600 flex items-center">
+                                            <span class="inline-block w-1.5 h-1.5 bg-purple-400 rounded-full mr-2 flex-shrink-0"></span>
                                             <span class="font-medium">Marca:</span>
-                                            <span class="ml-1 font-semibold text-gray-800">{{ producto.marca }}</span>
+                                            <span class="ml-1 font-semibold text-gray-800 truncate">{{ producto.marca }}</span>
                                         </p>
-                                        <div class="pt-2">
-                                            <span class="inline-flex items-center px-3 py-1.5 rounded-xl text-sm font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200">
+                                        <div class="pt-1 sm:pt-2">
+                                            <span class="inline-flex items-center px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border border-green-200">
                                                 {{ producto.precio | monedaArs }}
                                             </span>
                                         </div>
@@ -194,7 +225,7 @@
 
                             <!-- Indicador de estado cuando toda la categoría está seleccionada -->
                             <div *ngIf="aumentarTodaCategoria[categoria]" 
-                                 class="absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-semibold transition-all duration-300"
+                                 class="absolute top-1 sm:top-2 right-1 sm:right-2 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg text-xs font-semibold transition-all duration-300"
                                  [ngClass]="{
                                     'bg-blue-100 text-blue-800 border border-blue-200': productosSeleccionados[producto.id] !== false,
                                     'bg-red-100 text-red-800 border border-red-200': productosSeleccionados[producto.id] === false
@@ -203,18 +234,27 @@
                             </div>
                         </label>
                     </div>
+
+                    <!-- Mensaje cuando la categoría está colapsada -->
+                    <div *ngIf="!categoriasExpandidas[categoria]" 
+                         class="text-center py-6 sm:py-8 text-gray-500">
+                        <svg class="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                        <p class="font-medium text-sm sm:text-base">Haz clic en la categoría para ver los productos</p>
+                    </div>
                 </div>
             </div>
 
             <div class="flex justify-center pt-4">
                 <button 
                   (click)="pasarAPasoConfirmacion()"
-                  class="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-12 py-4 rounded-2xl shadow-xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none min-w-[200px]"
+                  class="group relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold px-8 sm:px-12 py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-xl transition-all duration-500 transform hover:scale-105 hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none min-w-[160px] sm:min-w-[200px] w-full sm:w-auto"
                   [disabled]="!seSeleccionoAlgo()">
                     <div class="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                     <span class="relative flex items-center justify-center space-x-2">
-                        <span>Continuar</span>
-                        <svg class="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span class="text-sm sm:text-base">Continuar</span>
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
                         </svg>
                     </span>
@@ -225,289 +265,265 @@
     </div>
 </div>
 
-<!-- Modal de confirmación mejorado -->
+<!-- Modal de confirmación mejorado y más compacto -->
 <div *ngIf="confirmando && !isLoading" 
-     class="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+     class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in"
      (click)="cancelarSiClickAfuera($event)">
     
     <!-- Backdrop premium con efecto glassmorphism -->
     <div class="absolute inset-0 bg-gradient-to-br from-blue-900/30 via-purple-900/30 to-indigo-900/30 backdrop-blur-xl transition-all duration-500"></div>
     
-    <!-- Modal content premium -->
-    <div class="relative bg-white/90 backdrop-blur-xl p-8 rounded-3xl shadow-2xl w-full max-w-lg transform transition-all duration-500 scale-100 border border-white/20"
+    <!-- Modal content premium - Más compacto y responsive -->
+    <div class="relative bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[95vh] sm:max-h-[90vh] overflow-y-auto transform transition-all duration-500 scale-100 border border-white/20 custom-scrollbar"
          (click)="$event.stopPropagation()"
          [@slideIn]>
-        
-        <!-- Header del modal -->
-        <div class="text-center mb-6">
-            <div class="mx-auto w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Header del modal - Más compacto -->
+        <div class="text-center mb-5">
+            <div class="mx-auto w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center mb-3">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m-1-12c-1.11 0-2.08-.402-2.599-1"></path>
                 </svg>
             </div>
-            <h3 class="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <h3 class="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
                 Aplicar Aumento
             </h3>
-            <p class="text-gray-600 mt-2">Revisa los detalles antes de confirmar</p>
+            <p class="text-gray-600 text-sm mt-1">Confirma los detalles del aumento</p>
         </div>
 
-        <!-- Lista de productos -->
-        <div class="bg-gray-50/50 backdrop-blur-sm rounded-2xl p-4 mb-6 border border-gray-200/50">
-            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
-                <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                Productos seleccionados:
+        <!-- Resumen compacto de productos -->
+        <div class="bg-gray-50/50 backdrop-blur-sm rounded-xl p-3 mb-4 border border-gray-200/50">
+            <div class="flex items-center justify-between mb-2">
+                <h4 class="font-semibold text-gray-800 text-sm flex items-center">
+                    <span class="inline-block w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                    Productos seleccionados
+                </h4>
+                <span class="text-xs text-gray-600 bg-white/60 px-2 py-1 rounded-lg font-medium">
+                    {{ obtenerCantidadProductosSeleccionados() }} productos
+                </span>
+            </div>
+            
+            <!-- Lista colapsable de productos -->
+            <div class="max-h-24 overflow-y-auto custom-scrollbar">
+                <div class="space-y-1">
+                    <div *ngFor="let item of resumenAumento.slice(0, 3)" 
+                         class="text-xs text-gray-700 bg-white/50 rounded-lg px-2 py-1.5 border border-gray-200/30">
+                        {{ item }}
+                    </div>
+                    <div *ngIf="resumenAumento.length > 3" 
+                         class="text-xs text-gray-500 text-center py-1 italic">
+                        ... y {{ resumenAumento.length - 3 }} más
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tipo de aumento - Layout horizontal más compacto -->
+        <div class="mb-4">
+            <h4 class="font-semibold text-gray-800 mb-3 text-sm flex items-center">
+                <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 002 2z"></path>
+                </svg>
+                Tipo de aumento
             </h4>
-            <ul class="space-y-2 max-h-32 overflow-y-auto">
-                <li *ngFor="let item of resumenAumento" class="text-sm text-gray-700 bg-white/50 rounded-lg px-3 py-2 border border-gray-200/50">
-                    {{ item }}
-                </li>
-                <li *ngIf="resumenAumento.length === 0" class="text-sm text-gray-500 text-center py-4">No hay productos seleccionados.</li>
-            </ul>
-        </div>
-
-        <!-- Tipo de aumento -->
-        <div class="mb-6">
-            <h4 class="font-semibold text-gray-800 mb-4">Tipo de aumento:</h4>
+            
             <div class="grid grid-cols-2 gap-3">
-                <label class="relative cursor-pointer">
+                <label class="relative cursor-pointer group">
                     <input type="radio" name="tipo" [(ngModel)]="tipoAumento" value="precio" class="sr-only" />
-                    <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center transition-all duration-300 hover:bg-gray-100"
-                         [class.bg-gradient-to-br]="tipoAumento === 'precio'"
-                         [class.from-blue-50]="tipoAumento === 'precio'"
-                         [class.to-purple-50]="tipoAumento === 'precio'"
-                         [class.border-blue-500]="tipoAumento === 'precio'">
-                        <div class="text-2xl mb-2">💰</div>
-                        <div class="font-semibold text-gray-800">Monto fijo</div>
-                        <div class="text-xs text-gray-600 mt-1">Pesos ($)</div>
+                    <div class="relative overflow-hidden border-2 rounded-xl p-3 text-center transition-all duration-300 hover:scale-105"
+                         [ngClass]="{
+                             'bg-gradient-to-br from-blue-50 to-purple-50 border-blue-500 shadow-md ring-1 ring-blue-500/20': tipoAumento === 'precio',
+                             'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300': tipoAumento !== 'precio'
+                         }">
+                        
+                        <!-- Checkmark más pequeño -->
+                        <div class="absolute top-1 right-1 transition-all duration-300"
+                             [ngClass]="{
+                                 'opacity-100 scale-100': tipoAumento === 'precio',
+                                 'opacity-0 scale-50': tipoAumento !== 'precio'
+                             }">
+                            <div class="w-4 h-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="text-2xl mb-2">💰</div>
+                            <div class="font-bold text-gray-800 text-sm"
+                                 [ngClass]="{ 'text-blue-700': tipoAumento === 'precio' }">
+                                Monto fijo
+                            </div>
+                            <div class="text-xs text-gray-600 font-medium"
+                                 [ngClass]="{ 'text-blue-600': tipoAumento === 'precio' }">
+                                Pesos ($)
+                            </div>
+                        </div>
                     </div>
                 </label>
                 
-                <label class="relative cursor-pointer">
+                <label class="relative cursor-pointer group">
                     <input type="radio" name="tipo" [(ngModel)]="tipoAumento" value="porcentaje" class="sr-only" />
-                    <div class="bg-gray-50 border-2 border-gray-200 rounded-xl p-4 text-center transition-all duration-300 hover:bg-gray-100"
-                         [class.bg-gradient-to-br]="tipoAumento === 'porcentaje'"
-                         [class.from-blue-50]="tipoAumento === 'porcentaje'"
-                         [class.to-purple-50]="tipoAumento === 'porcentaje'"
-                         [class.border-blue-500]="tipoAumento === 'porcentaje'">
-                        <div class="text-2xl mb-2">📊</div>
-                        <div class="font-semibold text-gray-800">Porcentaje</div>
-                        <div class="text-xs text-gray-600 mt-1">Por ciento (%)</div>
+                    <div class="relative overflow-hidden border-2 rounded-xl p-3 text-center transition-all duration-300 hover:scale-105"
+                         [ngClass]="{
+                             'bg-gradient-to-br from-green-50 to-emerald-50 border-green-500 shadow-md ring-1 ring-green-500/20': tipoAumento === 'porcentaje',
+                             'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300': tipoAumento !== 'porcentaje'
+                         }">
+                        
+                        <!-- Checkmark más pequeño -->
+                        <div class="absolute top-1 right-1 transition-all duration-300"
+                             [ngClass]="{
+                                 'opacity-100 scale-100': tipoAumento === 'porcentaje',
+                                 'opacity-0 scale-50': tipoAumento !== 'porcentaje'
+                             }">
+                            <div class="w-4 h-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                                <svg class="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <div class="relative">
+                            <div class="text-2xl mb-2">📊</div>
+                            <div class="font-bold text-gray-800 text-sm"
+                                 [ngClass]="{ 'text-green-700': tipoAumento === 'porcentaje' }">
+                                Porcentaje
+                            </div>
+                            <div class="text-xs text-gray-600 font-medium"
+                                 [ngClass]="{ 'text-green-600': tipoAumento === 'porcentaje' }">
+                                Por ciento (%)
+                            </div>
+                        </div>
                     </div>
                 </label>
             </div>
         </div>
 
-        <!-- Input de valor -->
-        <div class="mb-6">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Valor del aumento:</label>
+        <!-- Input de valor más compacto -->
+        <div class="mb-4">
+            <label class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                <svg class="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                </svg>
+                Valor del aumento
+            </label>
             <div class="relative">
                 <input 
                   type="number"
-                  class="w-full px-6 py-4 bg-white/50 backdrop-blur-sm border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all duration-300 text-lg font-semibold text-center"
-                  [placeholder]="tipoAumento === 'precio' ? 'Ej: 500' : 'Ej: 10'"
+                  step="0.01"
+                  min="0"
+                  class="w-full px-4 py-3 bg-white/70 backdrop-blur-sm border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 transition-all duration-300 font-semibold text-center pr-10"
+                  [placeholder]="tipoAumento === 'precio' ? 'Ej: 500.00' : 'Ej: 10.5'"
                   [(ngModel)]="valorAumento"
                   (keydown.enter)="aplicarAumento()"
                   (keydown.escape)="cancelar()"
                 />
-                <div class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">
+                <div class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-bold">
                     {{ tipoAumento === 'precio' ? '$' : '%' }}
                 </div>
             </div>
         </div>
 
-        <!-- Error mensaje -->
-        <div *ngIf="errorAumentoInvalido" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+        <!-- Error mensaje compacto -->
+        <div *ngIf="errorAumentoInvalido" class="mb-4 p-3 bg-red-50/80 border border-red-200 rounded-xl">
             <div class="flex items-center space-x-2">
-                <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                 </svg>
-                <span class="text-red-700 font-medium text-sm">
-                    Selecciona el tipo de aumento e ingresa un valor válido.
-                </span>
+                <div>
+                    <p class="text-red-700 text-sm font-medium">
+                        Selecciona el tipo de aumento e ingresa un valor mayor que 0
+                    </p>
+                </div>
             </div>
-            <p class="text-red-700 text-sm mt-2 font-medium">
-                El valor del aumento debe ser mayor que 0.
-            </p>
         </div>
 
+        <!-- Vista previa del aumento compacta -->
+        <div *ngIf="valorAumento && valorAumento > 0 && tipoAumento" 
+             class="mb-5 p-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-xl">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span class="text-blue-700 text-sm font-medium">Vista previa:</span>
+                </div>
+                <div class="text-right">
+                    <div class="text-blue-800 font-bold text-lg">
+                        {{ tipoAumento === 'precio' ? ('$' + valorAumento) : (valorAumento + '%') }}
+                    </div>
+                    <div class="text-blue-600 text-xs">
+                        {{ obtenerCantidadProductosSeleccionados() }} producto(s)
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <!-- Botones de acción -->
-        <div class="flex flex-col-reverse sm:flex-row gap-4">
+        <!-- Botones de acción compactos -->
+        <div class="flex gap-3">
             <button
-              class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold px-6 py-4 rounded-2xl transition-all duration-300 hover:scale-105 border border-gray-200"
+              class="flex-1 relative overflow-hidden bg-gray-100 hover:bg-gradient-to-r hover:from-gray-200 hover:to-gray-300 text-gray-700 font-semibold px-4 py-3 rounded-xl transition-all duration-300 hover:scale-105 border border-gray-200 group"
               (click)="cancelar()">
-                Cancelar
+                <span class="relative flex items-center justify-center space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <span class="text-sm">Cancelar</span>
+                </span>
             </button>
 
             <button
-              class="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold px-6 py-4 rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 hover:-translate-y-1"
+              class="flex-1 relative overflow-hidden bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold px-4 py-3 rounded-xl shadow-lg transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0 group"
+              [disabled]="!valorAumento || valorAumento <= 0 || !tipoAumento"
               (click)="aplicarAumento()">
-                <span class="flex items-center justify-center space-x-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span class="relative flex items-center justify-center space-x-2">
+                    <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    <span>Aplicar Aumento</span>
+                    <span class="text-sm">Aplicar</span>
                 </span>
             </button>
         </div>
     </div>
 </div>
 
-<!-- Toast de notificación premium -->
+<!-- Toast de notificación mejorado -->
 <div *ngIf="toastVisible"
-     class="fixed bottom-8 left-1/2 transform -translate-x-1/2 px-8 py-4 rounded-2xl shadow-2xl z-[60] text-white font-semibold transition-all duration-500 backdrop-blur-xl border border-white/20"
-     [ngClass]="toastColor"
-     [@slideUp]>
+     class="fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-3 rounded-lg shadow-2xl z-[70] text-white font-medium transition-all duration-300 ease-out max-w-sm mx-4"
+     [ngClass]="{
+       'bg-green-600': toastColor === 'bg-green-600',
+       'bg-red-600': toastColor === 'bg-red-600',
+       'bg-blue-600': toastColor === 'bg-blue-600',
+       'bg-yellow-600': toastColor === 'bg-yellow-600',
+       'bg-gray-800': !toastColor || toastColor === 'bg-gray-800'
+     }"
+     style="box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+    
     <div class="flex items-center space-x-3">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-        </svg>
-        <span>{{ toastMensaje }}</span>
+        <!-- Icono dinámico según el tipo -->
+        <div class="flex-shrink-0">
+            <!-- Icono de éxito -->
+            <svg *ngIf="toastColor === 'bg-green-600'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <!-- Icono de error -->
+            <svg *ngIf="toastColor === 'bg-red-600'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <!-- Icono de info -->
+            <svg *ngIf="toastColor === 'bg-blue-600'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <!-- Icono de warning -->
+            <svg *ngIf="toastColor === 'bg-yellow-600'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <!-- Icono por defecto -->
+            <svg *ngIf="!toastColor || toastColor === 'bg-gray-800'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        
+        <span class="text-sm leading-tight">{{ toastMensaje }}</span>
     </div>
 </div>
-
-<style>
-/* Animaciones mejoradas y más fluidas */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9) translateY(-20px) rotateX(10deg);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0) rotateX(0deg);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 100px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1);
-  }
-}
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.98) translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-/* Aplicar animaciones */
-.animate-fade-in-scale {
-  animation: fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Mejoras visuales */
-.backdrop-blur-xl {
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-/* Efectos de hover suaves */
-.group:hover .group-hover\:scale-110 {
-  transform: scale(1.1);
-}
-
-/* Prevenir scroll del body cuando el modal está abierto */
-body.modal-open {
-  overflow: hidden;
-}
-
-/* Spinner mejorado */
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* Efectos de glassmorphism */
-.bg-white\/90 {
-  background-color: rgba(255, 255, 255, 0.9);
-}
-
-.bg-white\/70 {
-  background-color: rgba(255, 255, 255, 0.7);
-}
-
-.bg-white\/80 {
-  background-color: rgba(255, 255, 255, 0.8);
-}
-
-/* Mejoras de accesibilidad */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Efectos de hover mejorados */
-.hover\:shadow-2xl:hover {
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-}
-
-/* Gradientes personalizados */
-.bg-gradient-to-br {
-  background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
-}
-
-/* Z-index personalizado */
-.z-\[60\] {
-  z-index: 60;
-}
-
-/* Estilos para el texto resaltado en búsquedas */
-.highlight {
-  background-color: #fef3c7;
-  padding: 2px 4px;
-  border-radius: 4px;
-  font-weight: 600;
-}
-
-/* Transiciones suaves para el filtro */
-.filter-transition {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Indicadores de estado mejorados */
-.status-indicator {
-  position: relative;
-  overflow: hidden;
-}
-
-.status-indicator::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-  transition: left 0.6s;
-}
-
-.status-indicator:hover::before {
-  left: 100%;
-}
-</style>

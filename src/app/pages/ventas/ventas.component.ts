@@ -193,7 +193,7 @@ export class VentasComponent implements OnInit {
       this.descuentoAplicado = data.porcentaje;
       this.actualizarTotal();
 
-      this.toastMensaje = '✅ Descuento aplicado correctamente.';
+      this.toastMensaje = ' Descuento aplicado correctamente.';
       this.toastColor = 'bg-green-600';
       this.toastVisible = true;
       setTimeout(() => {
@@ -204,7 +204,7 @@ export class VentasComponent implements OnInit {
       this.descuentoAplicado = 0;
       this.codigoDescuento = '';
 
-      this.toastMensaje = '❌ Código de descuento inválido o inactivo.';
+      this.toastMensaje = ' Código de descuento inválido o inactivo.';
       this.toastColor = 'bg-red-600';
       this.toastVisible = true;
       setTimeout(() => {
@@ -268,7 +268,7 @@ export class VentasComponent implements OnInit {
         .eq('id', item.producto.id);
     }
 
-    this.toastMensaje = '✅ Venta confirmada correctamente.';
+    this.toastMensaje = ' Venta confirmada correctamente.';
     this.toastColor = 'bg-green-600';
     this.toastVisible = true;
 

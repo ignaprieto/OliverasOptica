@@ -37,8 +37,15 @@ export class AumentoComponent implements OnInit {
   productos: any[] = [];
   errorAumentoInvalido = false;
 
+  categoriasExpandidas: { [key: string]: boolean } = {};
+  mostrarFiltroCategorias: boolean = false;
+  categoriaFiltroSeleccionada: string | null = null;
+
   // Nueva propiedad para el filtro de búsqueda
   filtroTexto: string = '';
+
+  // Propiedad para manejar timeout del toast
+  private toastTimeout?: any;
 
   constructor(private supabase: SupabaseService) {}
 
@@ -48,6 +55,70 @@ export class AumentoComponent implements OnInit {
     this.isLoading = false;
   }
 
+  // ==================== MÉTODOS DE TOAST MEJORADOS ====================
+  
+  // Método mejorado para mostrar toast
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'info' | 'warning' = 'info', duracion = 3000) {
+    this.toastMensaje = mensaje;
+    
+    // Mapear tipos a las clases CSS que ya usas
+    switch (tipo) {
+      case 'success':
+        this.toastColor = 'bg-green-600';
+        break;
+      case 'error':
+        this.toastColor = 'bg-red-600';
+        break;
+      case 'info':
+        this.toastColor = 'bg-blue-600';
+        break;
+      case 'warning':
+        this.toastColor = 'bg-yellow-600';
+        break;
+      default:
+        this.toastColor = 'bg-gray-800';
+    }
+    
+    this.toastVisible = true;
+
+    // Limpiar timeout anterior si existe
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+    }
+
+    // Auto-ocultar después de la duración especificada
+    this.toastTimeout = setTimeout(() => {
+      this.ocultarToast();
+    }, duracion);
+  }
+
+  // Método para ocultar toast
+  ocultarToast() {
+    this.toastVisible = false;
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
+    }
+  }
+
+  // Métodos específicos para diferentes tipos de toast
+  mostrarExito(mensaje: string) {
+    this.mostrarToast(mensaje, 'success');
+  }
+
+  mostrarError(mensaje: string) {
+    this.mostrarToast(mensaje, 'error', 4000); // Errores duran más tiempo
+  }
+
+  mostrarInfo(mensaje: string) {
+    this.mostrarToast(mensaje, 'info');
+  }
+
+  mostrarAdvertencia(mensaje: string) {
+    this.mostrarToast(mensaje, 'warning');
+  }
+
+  // ==================== MÉTODOS EXISTENTES ====================
+
   toggleSeleccion(id: string) {
     if (this.seleccionados.has(id)) {
       this.seleccionados.delete(id);
@@ -55,6 +126,43 @@ export class AumentoComponent implements OnInit {
       this.seleccionados.add(id);
     }
   }
+
+  toggleCategoria(categoria: string) {
+    this.categoriasExpandidas[categoria] = !this.categoriasExpandidas[categoria];
+  }
+
+  toggleFiltroCategorias() {
+    this.mostrarFiltroCategorias = !this.mostrarFiltroCategorias;
+  }
+
+  filtrarPorCategoria(categoria: string) {
+  this.categoriaFiltroSeleccionada = categoria;
+  this.mostrarFiltroCategorias = false;
+  
+  // Limpiar filtro de texto
+  this.filtroTexto = '';
+  
+  // Mostrar solo la categoría seleccionada
+  this.productosPorCategoriaFiltrados = {
+    [categoria]: this.productosPorCategoria[categoria]
+  };
+  
+  // Expandir automáticamente la categoría filtrada
+  this.categoriasExpandidas[categoria] = true;
+}
+
+  limpiarFiltroCategoria() {
+  this.categoriaFiltroSeleccionada = null;
+  this.mostrarFiltroCategorias = false; // Agregar esta línea para cerrar el dropdown
+  
+  // Si hay filtro de texto activo, aplicar solo ese filtro
+  if (this.filtroTexto.trim()) {
+    this.aplicarFiltro();
+  } else {
+    // Si no hay filtro de texto, restaurar todas las categorías
+    this.productosPorCategoriaFiltrados = { ...this.productosPorCategoria };
+  }
+}
 
   continuar() {
     if (!this.categoriaSeleccionada) return;
@@ -74,6 +182,29 @@ export class AumentoComponent implements OnInit {
 
   // Método mejorado para filtrar productos
   aplicarFiltro() {
+    // Si hay un filtro de categoría activo, mantenerlo
+    if (this.categoriaFiltroSeleccionada) {
+      if (!this.filtroTexto.trim()) {
+        this.productosPorCategoriaFiltrados = {
+          [this.categoriaFiltroSeleccionada]: this.productosPorCategoria[this.categoriaFiltroSeleccionada]
+        };
+        return;
+      }
+      
+      // Filtrar dentro de la categoría seleccionada
+      const textoFiltro = this.filtroTexto.toLowerCase().trim();
+      const productosFiltrados = this.productosPorCategoria[this.categoriaFiltroSeleccionada].filter(producto => 
+        producto.nombre.toLowerCase().includes(textoFiltro) ||
+        producto.marca.toLowerCase().includes(textoFiltro)
+      );
+      
+      this.productosPorCategoriaFiltrados = productosFiltrados.length > 0 
+        ? { [this.categoriaFiltroSeleccionada]: productosFiltrados }
+        : {};
+      return;
+    }
+    
+    // Lógica original cuando no hay filtro de categoría
     if (!this.filtroTexto.trim()) {
       this.productosPorCategoriaFiltrados = { ...this.productosPorCategoria };
       return;
@@ -91,6 +222,8 @@ export class AumentoComponent implements OnInit {
 
       if (productosFiltrados.length > 0) {
         this.productosPorCategoriaFiltrados[categoria] = productosFiltrados;
+        // Auto-expandir categorías que tienen resultados
+        this.categoriasExpandidas[categoria] = true;
       }
     });
   }
@@ -103,7 +236,7 @@ export class AumentoComponent implements OnInit {
   // Método para limpiar el filtro
   limpiarFiltro() {
     this.filtroTexto = '';
-    this.aplicarFiltro();
+    this.limpiarFiltroCategoria();
   }
 
   organizarPorCategoria() {
@@ -130,6 +263,7 @@ export class AumentoComponent implements OnInit {
 
     if (error) {
       console.error('Error al obtener productos', error.message);
+      this.mostrarError('Error al cargar los productos');
       return;
     }
 
@@ -140,11 +274,9 @@ export class AumentoComponent implements OnInit {
   async aplicarAumento() {
     if (!this.tipoAumento || this.valorAumento === null) {
       this.errorAumentoInvalido = true;
-
       setTimeout(() => {
         this.errorAumentoInvalido = false;
       }, 3000);
-
       return;
     }
 
@@ -184,18 +316,14 @@ export class AumentoComponent implements OnInit {
       }
     }
 
+    // Usar los nuevos métodos de toast
     if (productosParaActualizar.length > 0 && !huboError) {
-      this.toastMensaje = 'Aumento aplicado correctamente.';
-      this.toastColor = 'bg-green-600';
+      this.mostrarExito('¡Aumento aplicado correctamente!');
     } else {
-      this.toastMensaje = 'Hubo un error al aplicar el aumento.';
-      this.toastColor = 'bg-red-600';
+      this.mostrarError('Hubo un error al aplicar el aumento');
     }
-    
-    this.toastVisible = true;
 
     setTimeout(() => {
-      this.toastVisible = false;
       this.confirmando = false;
       this.valorAumento = null;
       this.tipoAumento = null;
@@ -295,10 +423,8 @@ export class AumentoComponent implements OnInit {
     if (this.seSeleccionoAlgo()) {
       this.confirmando = true;
     } else {
-      this.toastMensaje = "Selecciona al menos un producto para continuar.";
-      this.toastColor = 'bg-red-600';
-      this.toastVisible = true;
-      setTimeout(() => this.toastVisible = false, 2500);
+      // Usar el nuevo método de toast
+      this.mostrarAdvertencia("Selecciona al menos un producto para continuar");
     }
   }
 
@@ -312,7 +438,7 @@ export class AumentoComponent implements OnInit {
   // Método para manejar clicks fuera del modal
   cancelarSiClickAfuera(event: Event) {
     // Este método se puede implementar si necesitas cerrar el modal al hacer click afuera
-    // Por ahora solo previene la propagación del evento
+    // Por ahora solo previente la propagación del evento
     event.stopPropagation();
   }
 
@@ -324,6 +450,54 @@ export class AumentoComponent implements OnInit {
       return precioBase + this.valorAumento;
     } else {
       return precioBase + (precioBase * (this.valorAumento / 100));
+    }
+  }
+
+  // Métodos para tracking y conteo
+
+  // Método para tracking de categorías en *ngFor
+  trackByCategoria(index: number, categoria: string): string {
+    return categoria;
+  }
+
+  // Método para obtener el total de productos en todas las categorías
+  obtenerTotalProductos(): number {
+    return this.productos.length;
+  }
+
+  // Método para obtener la cantidad de productos en una categoría específica
+  obtenerCantidadProductosCategoria(categoria: string): number {
+    return this.productosPorCategoria[categoria]?.length || 0;
+  }
+
+  // Método para obtener la cantidad de productos seleccionados
+  obtenerCantidadProductosSeleccionados(): number {
+    let contador = 0;
+    
+    for (const categoria of this.categorias) {
+      if (this.aumentarTodaCategoria[categoria]) {
+        // Si toda la categoría está seleccionada, contar los que no están explícitamente deseleccionados
+        const productos = this.productosPorCategoria[categoria];
+        contador += productos.filter(p => this.productosSeleccionados[p.id] !== false).length;
+      } else {
+        // Contar solo los productos explícitamente seleccionados
+        const productos = this.productosPorCategoria[categoria];
+        contador += productos.filter(p => this.productosSeleccionados[p.id] === true).length;
+      }
+    }
+    
+    return contador;
+  }
+
+  // Método para cerrar el filtro de categorías
+  cerrarFiltroCategorias(): void {
+    this.mostrarFiltroCategorias = false;
+  }
+
+  // Método para limpiar timeout al destruir el componente
+  ngOnDestroy() {
+    if (this.toastTimeout) {
+      clearTimeout(this.toastTimeout);
     }
   }
 }

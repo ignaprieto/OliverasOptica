@@ -3,6 +3,7 @@ import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { SupabaseService } from './services/supabase.service';
+import { environment } from '../environments/environment';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -27,7 +28,6 @@ export class AppComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    console.log('App component initializing...');
     await this.initializeApp();
   }
 
@@ -48,10 +48,12 @@ export class AppComponent implements OnInit {
       
       // 4. Marcar app como inicializada
       this.isAppInitialized = true;
-      console.log('App initialized. Auth status:', this.isAuthenticated, 'Route:', this.router.url);
       
     } catch (error) {
-      console.error('Error initializing app:', error);
+      // Solo mostrar errores críticos en desarrollo
+      if (!environment.production) {
+        console.error('Error initializing app:', error);
+      }
       this.isAuthenticated = false;
       this.isAppInitialized = true;
     }
@@ -62,26 +64,24 @@ export class AppComponent implements OnInit {
     try {
       const { data } = await this.supabase.getClient().auth.getSession();
       this.isAuthenticated = !!data.session;
-      console.log('Auth check completed:', this.isAuthenticated);
       // NO HAY NAVEGACIÓN AQUÍ - El authGuard se encarga de todo
     } catch (error) {
-      console.error('Error checking auth:', error);
+      // Silenciar errores de NavigatorLockManager y similares
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!environment.production && !errorMessage.includes('NavigatorLock')) {
+        console.error('Error checking auth:', error);
+      }
       this.isAuthenticated = false;
     }
   }
 
   private setupAuthListener(): void {
-    console.log('Setting up auth listener...');
-    
     this.supabase.getClient().auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change event:', event, 'Has session:', !!session);
-      
       this.isAuthenticated = !!session;
       
       // SOLO redirigir en acciones explícitas del usuario
       if (event === 'SIGNED_OUT') {
         // Usuario cerró sesión explícitamente
-        console.log('User signed out, redirecting to login');
         this.router.navigate(['/login']);
       }
       
@@ -126,12 +126,14 @@ export class AppComponent implements OnInit {
       const haceMs = Date.now() - parseInt(ultimaActividad, 10);
       const horasInactivo = haceMs / (1000 * 60 * 60);
 
-      if (horasInactivo >= 24) {
-        console.log('User inactive for 24+ hours, signing out');
+      if (horasInactivo >= 8) {
         await this.supabase.getClient().auth.signOut();
       }
     } catch (error) {
-      console.error('Error checking inactivity:', error);
+      // Solo mostrar errores críticos en desarrollo
+      if (!environment.production) {
+        console.error('Error checking inactivity:', error);
+      }
     }
   }
 }

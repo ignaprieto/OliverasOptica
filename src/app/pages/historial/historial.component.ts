@@ -33,7 +33,7 @@ interface ProductoRecambio {
 }
 
 interface ItemHistorial {
-  tipo: 'venta' | 'recambio';
+  tipo: 'venta' | 'recambio'| 'ventaEliminada';
   id: string;
   fecha: Date;
   // Campos específicos de venta
@@ -61,6 +61,9 @@ interface ItemHistorial {
   metodo_pago_diferencia?: string;
   descuento_recambio?: number;
   monto_descuento_recambio?: number;
+  eliminado_por?: string;
+  fecha_eliminacion?: Date;
+  motivo_eliminacion?: string;
 }
 
 
@@ -79,7 +82,7 @@ export class HistorialComponent implements OnInit {
   
   // Filtros
   filtro: 'hoy' | '7dias' | '30dias' | 'todos' | 'fechaEspecifica' = 'hoy';
-  tipoFiltro: 'todos' | 'ventas' | 'recambios' = 'todos';
+  tipoFiltro: 'todos' | 'ventas' | 'recambios'| 'ventasEliminadas' = 'todos';
   metodoPagoFiltro: 'todos' | 'efectivo' | 'transferencia' | 'debito' | 'credito' | 'modo' = 'todos';
   fechaEspecifica: string = '';
   
@@ -131,7 +134,7 @@ export class HistorialComponent implements OnInit {
 mostrandoConfirmacionEliminar = false;
 ventaAEliminar: any = null;
 eliminandoVenta = false;
-
+motivoEliminacion = '';
   constructor(private supabase: SupabaseService) {}
 
   async ngOnInit() {
@@ -178,7 +181,7 @@ eliminandoVenta = false;
     await this.cargarDatos();
   }
 
-  async filtrarTipo(tipo: 'todos' | 'ventas' | 'recambios') {
+  async filtrarTipo(tipo: 'todos' | 'ventas' | 'recambios'| 'ventasEliminadas') {
     this.paginaActual = 1;
     this.tipoFiltro = tipo;
     this.aplicarFiltros();
@@ -200,7 +203,8 @@ eliminandoVenta = false;
   async cargarDatos() {
     await Promise.all([
       this.cargarVentas(),
-      this.cargarRecambios()
+      this.cargarRecambios(),
+      this.cargarVentasEliminadas()
     ]);
     this.combinarYOrdenarItems();
     this.aplicarFiltros();
@@ -274,6 +278,41 @@ eliminandoVenta = false;
     this.items = [...this.items.filter(i => i.tipo !== 'recambio'), ...recambiosFormateados];
   }
 
+async cargarVentasEliminadas() {
+  const { data: ventasEliminadas, error } = await this.supabase
+    .getClient()
+    .from('ventas_eliminadas')
+    .select(`
+      *,
+      productos_eliminados:productos_eliminados_json
+    `)
+    .order('fecha_eliminacion', { ascending: false });
+
+  if (error) {
+    console.error('Error al obtener ventas eliminadas:', error.message);
+    return;
+  }
+
+  const ventasEliminadasFormateadas: ItemHistorial[] = (ventasEliminadas || []).map(v => ({
+    tipo: 'ventaEliminada' as const,
+    id: v.id,
+    fecha: new Date(v.fecha_eliminacion), // SIN AJUSTE DE HORAS
+    nombre_usuario: v.nombre_usuario,
+    cliente_nombre: v.cliente_nombre,
+    cliente_email: v.cliente_email,
+    fecha_venta: new Date(v.fecha_venta_original), // SIN AJUSTE DE HORAS
+    productos: v.productos_eliminados,
+    metodo_pago: v.metodo_pago,
+    descuento_aplicado: v.descuento_aplicado,
+    total_final: v.total_final,
+    eliminado_por: v.eliminado_por,
+    fecha_eliminacion: new Date(v.fecha_eliminacion), // SIN AJUSTE DE HORAS
+    motivo_eliminacion: v.motivo_eliminacion || 'Sin motivo especificado'
+  }));
+
+  this.items = [...this.items.filter(i => i.tipo !== 'ventaEliminada'), ...ventasEliminadasFormateadas];
+}
+
   combinarYOrdenarItems() {
     // Ordenar por fecha descendente
     this.items.sort((a, b) => b.fecha.getTime() - a.fecha.getTime());
@@ -322,21 +361,24 @@ eliminandoVenta = false;
 
     // Filtrar por tipo
     switch (this.tipoFiltro) {
-      case 'ventas':
-        itemsFiltrados = itemsFiltrados.filter(item => item.tipo === 'venta');
-        break;
-      case 'recambios':
-        itemsFiltrados = itemsFiltrados.filter(item => item.tipo === 'recambio');
-        break;
-      case 'todos':
-      default:
-        break;
-    }
+  case 'ventas':
+    itemsFiltrados = itemsFiltrados.filter(item => item.tipo === 'venta');
+    break;
+  case 'recambios':
+    itemsFiltrados = itemsFiltrados.filter(item => item.tipo === 'recambio');
+    break;
+  case 'ventasEliminadas': // AGREGAR ESTE CASE
+    itemsFiltrados = itemsFiltrados.filter(item => item.tipo === 'ventaEliminada');
+    break;
+  case 'todos':
+  default:
+    break;
+}
 
     // NUEVO FILTRO POR MÉTODO DE PAGO
     if (this.metodoPagoFiltro !== 'todos') {
       itemsFiltrados = itemsFiltrados.filter(item => {
-        if (item.tipo === 'venta') {
+        if (item.tipo === 'venta' || item.tipo === 'ventaEliminada') {
           return item.metodo_pago === this.metodoPagoFiltro;
         } else if (item.tipo === 'recambio') {
           // Para recambios, filtramos por el método de pago de la diferencia
@@ -690,61 +732,91 @@ iniciarEliminacionVenta(venta: any) {
 cancelarEliminacion() {
   this.mostrandoConfirmacionEliminar = false;
   this.ventaAEliminar = null;
+  this.motivoEliminacion = '';
 }
 
 // Método para confirmar y procesar la eliminación
 async confirmarEliminacion() {
   if (!this.ventaAEliminar || this.eliminandoVenta) return;
   
+ // VALIDAR QUE EL MOTIVO SEA OBLIGATORIO
+  if (!this.motivoEliminacion.trim()) {
+    this.mostrarToast('El motivo de eliminación es obligatorio.', 'bg-red-600');
+    return;
+  }
+
   this.eliminandoVenta = true;
   
   try {
-    const client = this.supabase.getClient();
-    
-    // 1. Restaurar el stock de los productos vendidos
-    for (const producto of this.ventaAEliminar.productos) {
-      const { error: errorStock } = await client.rpc('actualizar_stock', {
-        producto_id: producto.producto_id,
-        cantidad_cambio: producto.cantidad // Devolver el stock
-      });
-      
-      if (errorStock) {
-        throw new Error(`Error al restaurar stock del producto: ${errorStock.message}`);
-      }
-    }
-    
-    // 2. Eliminar registros de detalle_venta
-    const { error: errorDetalle } = await client
-      .from('detalle_venta')
-      .delete()
-      .eq('venta_id', this.ventaAEliminar.id);
-    
-    if (errorDetalle) {
-      throw new Error(`Error al eliminar detalle de venta: ${errorDetalle.message}`);
-    }
-    
-    // 3. Eliminar la venta principal
-    const { error: errorVenta } = await client
-      .from('ventas')
-      .delete()
-      .eq('id', this.ventaAEliminar.id);
-    
-    if (errorVenta) {
-      throw new Error(`Error al eliminar venta: ${errorVenta.message}`);
-    }
-    
-    // 4. Recargar datos y cerrar modal
-    await this.cargarDatos();
-    this.cancelarEliminacion();
-    
-    this.mostrarToast('✅ Venta eliminada exitosamente. El stock ha sido restaurado.', 'bg-green-600');
-    
-  } catch (error: any) {
-    console.error('Error al eliminar venta:', error);
-    this.mostrarToast(`❌ Error al eliminar la venta: ${error.message}`, 'bg-red-600');
-  } finally {
-    this.eliminandoVenta = false;
+  const client = this.supabase.getClient();
+  
+  const usuarioNombre = this.usuarioActual?.user_metadata?.['nombre'] || 'Usuario desconocido';
+  
+  // 1. Guardar la venta en la tabla de ventas eliminadas ANTES de eliminarla
+  const { error: errorVentaEliminada } = await client
+    .from('ventas_eliminadas')
+    .insert({
+      venta_id_original: this.ventaAEliminar.id,
+      cliente_nombre: this.ventaAEliminar.cliente_nombre,
+      cliente_email: this.ventaAEliminar.cliente_email,
+      fecha_venta_original: this.ventaAEliminar.fecha_venta,
+      nombre_usuario: this.ventaAEliminar.nombre_usuario,
+      metodo_pago: this.ventaAEliminar.metodo_pago,
+      descuento_aplicado: this.ventaAEliminar.descuento_aplicado || 0,
+      total_final: this.ventaAEliminar.total_final,
+      productos_eliminados_json: this.ventaAEliminar.productos,
+      eliminado_por: usuarioNombre,
+      motivo_eliminacion: this.motivoEliminacion.trim()
+    });
+  
+  if (errorVentaEliminada) {
+    throw new Error(`Error al guardar venta eliminada: ${errorVentaEliminada.message}`);
   }
+  
+  // 2. Restaurar el stock de los productos vendidos
+  for (const producto of this.ventaAEliminar.productos) {
+    const { error: errorStock } = await client.rpc('actualizar_stock', {
+      producto_id: producto.producto_id,
+      cantidad_cambio: producto.cantidad // Devolver el stock
+    });
+    
+    if (errorStock) {
+      throw new Error(`Error al restaurar stock del producto: ${errorStock.message}`);
+    }
+  }
+  
+  // 3. Eliminar registros de detalle_venta
+  const { error: errorDetalle } = await client
+    .from('detalle_venta')
+    .delete()
+    .eq('venta_id', this.ventaAEliminar.id);
+  
+  if (errorDetalle) {
+    throw new Error(`Error al eliminar detalle de venta: ${errorDetalle.message}`);
+  }
+  
+  // 4. Eliminar la venta principal
+  const { error: errorVenta } = await client
+    .from('ventas')
+    .delete()
+    .eq('id', this.ventaAEliminar.id);
+  
+  if (errorVenta) {
+    throw new Error(`Error al eliminar venta: ${errorVenta.message}`);
+  }
+  
+  // 5. Recargar datos y cerrar modal
+  await this.cargarDatos();
+  this.cancelarEliminacion();
+  
+  this.mostrarToast('✅ Venta eliminada exitosamente. El stock ha sido restaurado.', 'bg-green-600');
+  
+} catch (error: any) {
+  console.error('Error al eliminar venta:', error);
+  this.mostrarToast(`❌ Error al eliminar la venta: ${error.message}`, 'bg-red-600');
+} finally {
+  this.eliminandoVenta = false;
+}
 }
 
 

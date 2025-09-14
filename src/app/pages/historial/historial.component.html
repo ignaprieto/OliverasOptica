@@ -45,6 +45,14 @@
             class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
             Solo Recambios
           </button>
+          <button (click)="filtrarTipo('ventasEliminadas')"
+       [ngClass]="{
+'bg-blue-600 text-white': tipoFiltro === 'ventasEliminadas',
+'bg-gray-200 text-gray-800': tipoFiltro !== 'ventasEliminadas'
+}"
+      class="px-2 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-xs sm:text-sm">
+      Ventas Eliminadas
+    </button>
         </div>
       </div>
 
@@ -217,97 +225,123 @@
     <div class="space-y-6">
       <div *ngFor="let item of itemsPaginados; trackBy: trackByFn" class="bg-white rounded-xl shadow-lg p-6">
         
-        <!-- VENTA -->
-        <div *ngIf="item.tipo === 'venta'">
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center space-x-3">
-              <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold">
-                💰 VENTA
-              </span>
-              <div *ngIf="item.recambio_realizado" class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
-                ✅ Recambio realizado
-              </div>
-            </div>
-            <span class="text-gray-500 text-sm">ID: {{ item.id.slice(-8) || 'N/A' }}</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 mb-4 text-sm">
-            <p class="font-medium text-gray-700"><strong>Usuario:</strong> {{ item.nombre_usuario || 'Sin usuario' }}</p>
-            <p class="text-gray-600"><strong>Cliente:</strong> {{ item.cliente_nombre || 'Sin cliente' }}</p>
-            <p class="text-gray-600"><strong>Fecha:</strong> {{ item.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}</p>
-            <p *ngIf="item.cliente_email" class="text-gray-600"><strong>Email:</strong> {{ item.cliente_email }}</p>
-          </div>
-
-          <div class="mt-4 border-t border-gray-200 pt-4">
-            <p class="font-semibold mb-2 text-sm sm:text-base">Productos vendidos:</p>
-            <ul class="list-disc ml-5 space-y-1 text-sm">
-              <li *ngFor="let p of item.productos || []" class="text-gray-700">
-                {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
-              </li>
-            </ul>
-          </div>
-
-          <div class="mt-4 border-t border-gray-200 pt-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2">
-              <p><strong>Método de pago:</strong> <span class="font-medium">{{ item.metodo_pago || 'No especificado' }}</span></p>
-              <p *ngIf="(item.descuento_aplicado || 0) > 0">
-                <strong>Descuento:</strong> <span class="text-red-600 font-medium">{{ item.descuento_aplicado || 0 }}%</span>
-                <span class="text-sm text-gray-500 ml-2">({{ (((item.total_final || 0) / (1 - (item.descuento_aplicado || 0) / 100)) - (item.total_final || 0)) | monedaArs }} de ahorro)</span>
-              </p>
-            </div>
-            <p class="text-xl font-bold mt-4 text-green-600">
-              Total: {{ (item.total_final || 0) | monedaArs }}
-            </p>
-          </div>
-
-          <div class="mt-6 flex justify-end">
-            <button
-              (click)="iniciarRecambio(item)"
-              [disabled]="!puedeRealizarRecambio(item)"
-              class="px-5 py-2 rounded-full font-medium transition-all"
-              [class.bg-blue-600]="puedeRealizarRecambio(item)"
-              [class.hover:bg-blue-700]="puedeRealizarRecambio(item)"
-              [class.text-white]="puedeRealizarRecambio(item)"
-              [class.bg-gray-200]="!puedeRealizarRecambio(item)"
-              [class.text-gray-500]="!puedeRealizarRecambio(item)">
-              <span *ngIf="puedeRealizarRecambio(item)">Realizar Recambio</span>
-              <span *ngIf="!puedeRealizarRecambio(item) && item.recambio_realizado">Recambio ya realizado</span>
-              <span *ngIf="!puedeRealizarRecambio(item) && !item.recambio_realizado">Fuera de plazo (>10 días)</span>
-            </button>
-          </div>
-        </div>
-
-<!-- Botón mejorado para eliminar venta -->
-<button
-  *ngIf="item.tipo === 'venta'"
-  (click)="iniciarEliminacionVenta(item)"
-  [disabled]="item.recambio_realizado"
-  class="group/btn inline-flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1"
-  [ngClass]="{
-    'bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 border border-red-200': !item.recambio_realizado,
-    'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200': item.recambio_realizado
-  }"
-  [title]="item.recambio_realizado ? 'No se puede eliminar una venta con recambio realizado' : 'Eliminar venta'">
+        <div *ngIf="item.tipo === 'venta' || item.tipo === 'ventaEliminada'" 
+     [class.opacity-50]="item.tipo === 'ventaEliminada'"
+     [class.pointer-events-none]="item.tipo === 'ventaEliminada'"
+     [class.bg-gray-100]="item.tipo === 'ventaEliminada'"
+     [class.bg-white]="item.tipo === 'venta'">
   
-  <!-- Icono SVG para eliminar -->
-  <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
-  </svg>
-  
-  <!-- Texto visible solo en pantallas medianas y grandes -->
-  <span class="hidden sm:inline ml-1.5">Eliminar</span>
-</button>
+  <div class="flex items-start justify-between mb-4">
+    <div class="flex items-center space-x-3">
+      <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+            [class.bg-green-100]="item.tipo === 'venta'"
+            [class.text-green-800]="item.tipo === 'venta'"
+            [class.bg-red-100]="item.tipo === 'ventaEliminada'"
+            [class.text-red-800]="item.tipo === 'ventaEliminada'">
+        <span *ngIf="item.tipo === 'venta'">💰 VENTA</span>
+        <span *ngIf="item.tipo === 'ventaEliminada'">🗑️ VENTA ELIMINADA</span>
+      </span>
+      <div *ngIf="item.recambio_realizado && item.tipo === 'venta'" class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+        ✅ Recambio realizado
+      </div>
+    </div>
+    <span class="text-gray-500 text-sm">ID: {{ item.id.slice(-8) || 'N/A' }}</span>
+  </div>
 
-<!-- Modal de confirmación mejorado -->
+  <!-- NUEVA SECCIÓN: Info de eliminación (solo si es venta eliminada) -->
+  <div *ngIf="item.tipo === 'ventaEliminada'" class="bg-red-50 border-l-4 border-red-400 p-3 mb-4 rounded-r-lg">
+    <p class="text-sm text-red-700">
+      <strong>Eliminado por:</strong> {{ item.eliminado_por || 'Usuario desconocido' }} 
+      <span class="ml-2 text-xs text-red-600">
+        ({{ item.fecha_eliminacion | date: 'dd/MM/yyyy HH:mm' }})
+      </span>
+    </p>
+    <p class="text-xs text-red-600 mt-1">{{ item.motivo_eliminacion || 'Sin motivo especificado' }}</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 mb-4 text-sm">
+    <p class="font-medium text-gray-700"><strong>Usuario:</strong> {{ item.nombre_usuario || 'Sin usuario' }}</p>
+    <p class="text-gray-600"><strong>Cliente:</strong> {{ item.cliente_nombre || 'Sin cliente' }}</p>
+    <p class="text-gray-600"><strong>Fecha:</strong> {{ item.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}</p>
+    <p *ngIf="item.cliente_email" class="text-gray-600"><strong>Email:</strong> {{ item.cliente_email }}</p>
+  </div>
+
+  <div class="mt-4 border-t border-gray-200 pt-4">
+    <p class="font-semibold mb-2 text-sm sm:text-base">Productos vendidos:</p>
+    <ul class="list-disc ml-5 space-y-1 text-sm">
+      <li *ngFor="let p of item.productos || []" class="text-gray-700">
+        {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="mt-4 border-t border-gray-200 pt-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2">
+      <p><strong>Método de pago:</strong> <span class="font-medium">{{ item.metodo_pago || 'No especificado' }}</span></p>
+      <p *ngIf="(item.descuento_aplicado || 0) > 0">
+        <strong>Descuento:</strong> <span class="text-red-600 font-medium">{{ item.descuento_aplicado || 0 }}%</span>
+        <span class="text-sm text-gray-500 ml-2">({{ (((item.total_final || 0) / (1 - (item.descuento_aplicado || 0) / 100)) - (item.total_final || 0)) | monedaArs }} de ahorro)</span>
+      </p>
+    </div>
+    <p class="text-xl font-bold mt-4"
+       [class.text-green-600]="item.tipo === 'venta'"
+       [class.text-gray-500]="item.tipo === 'ventaEliminada'">
+      Total: {{ (item.total_final || 0) | monedaArs }}
+    </p>
+  </div>
+
+  <!-- Botones (solo visibles para ventas normales, no eliminadas) -->
+  <div *ngIf="item.tipo === 'venta'" class="mt-6 flex justify-between">
+    <button
+      (click)="iniciarRecambio(item)"
+      [disabled]="!puedeRealizarRecambio(item)"
+      class="px-5 py-2 rounded-full font-medium transition-all"
+      [class.bg-blue-600]="puedeRealizarRecambio(item)"
+      [class.hover:bg-blue-700]="puedeRealizarRecambio(item)"
+      [class.text-white]="puedeRealizarRecambio(item)"
+      [class.bg-gray-200]="!puedeRealizarRecambio(item)"
+      [class.text-gray-500]="!puedeRealizarRecambio(item)">
+      <span *ngIf="puedeRealizarRecambio(item)">Realizar Recambio</span>
+      <span *ngIf="!puedeRealizarRecambio(item) && item.recambio_realizado">Recambio ya realizado</span>
+      <span *ngIf="!puedeRealizarRecambio(item) && !item.recambio_realizado">Fuera de plazo (>10 días)</span>
+    </button>
+
+    <!-- Botón de eliminar (solo para ventas normales) -->
+    <button
+      (click)="iniciarEliminacionVenta(item)"
+      [disabled]="item.recambio_realizado"
+      class="group/btn inline-flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1"
+      [ngClass]="{
+        'bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 border border-red-200': !item.recambio_realizado,
+        'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200': item.recambio_realizado
+      }"
+      [title]="item.recambio_realizado ? 'No se puede eliminar una venta con recambio realizado' : 'Eliminar venta'">
+      
+      <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
+      </svg>
+      <span class="hidden sm:inline ml-1.5">Eliminar</span>
+    </button>
+  </div>
+</div>
+<!-- Modal de confirmación mejorado con campo de motivo -->
 <div *ngIf="mostrandoConfirmacionEliminar" 
-     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+     class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in-scale"
      (click)="cancelarEliminacion()">
   
-  <div class="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all"
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all duration-300"
        (click)="$event.stopPropagation()">
     
-    <!-- Header con icono -->
-    <div class="px-6 pt-6 pb-4 text-center">
+    <!-- Header con botón de cierre -->
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+      <h3 class="text-xl font-bold text-gray-900">¿Confirmar eliminación?</h3>
+      <button (click)="cancelarEliminacion()" 
+              class="text-gray-400 hover:text-gray-700 text-3xl font-light leading-none transition">&times;</button>
+    </div>
+    
+    <!-- Contenido del modal -->
+    <div class="px-6 py-6">
+      <!-- Icono de advertencia -->
       <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
         <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -316,38 +350,50 @@
         </svg>
       </div>
       
-      <h3 class="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-        ¿Confirmar eliminación?
-      </h3>
+      <div class="text-center mb-6">
+        <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
+          Esta acción eliminará permanentemente la venta y restaurará el stock de los productos. 
+          <span class="font-medium text-gray-800">No se puede deshacer.</span>
+        </p>
+      </div>
       
-      <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
-        Esta acción eliminará permanentemente la venta y restaurará el stock de los productos. 
-        <span class="font-medium text-gray-800">No se puede deshacer.</span>
-      </p>
-    </div>
-    
-    <!-- Información de la venta -->
-    <div *ngIf="ventaAEliminar" class="mx-6 mb-6">
-      <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-red-400">
-        <p class="font-medium text-gray-900 mb-2 text-sm sm:text-base">Venta a eliminar:</p>
-        <div class="space-y-1 text-sm text-gray-700">
-          <p><span class="font-medium">Cliente:</span> {{ ventaAEliminar.cliente_nombre }}</p>
-          <p><span class="font-medium">Fecha:</span> {{ ventaAEliminar.fecha_venta | date:'dd/MM/yyyy HH:mm' }}</p>
-          <p><span class="font-medium">Total:</span> {{ ventaAEliminar.total_final | monedaArs }}</p>
-          <p class="text-xs text-gray-500 pt-1">
-            <span class="inline-flex items-center">
-              <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
-              </svg>
-              {{ ventaAEliminar.productos?.length || 0 }} productos
-            </span>
-          </p>
+      <!-- Información de la venta -->
+      <div *ngIf="ventaAEliminar" class="mb-6">
+        <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-red-400">
+          <p class="font-medium text-gray-900 mb-2 text-sm sm:text-base">Venta a eliminar:</p>
+          <div class="space-y-1 text-sm text-gray-700">
+            <p><span class="font-medium">Cliente:</span> {{ ventaAEliminar.cliente_nombre }}</p>
+            <p><span class="font-medium">Fecha:</span> {{ ventaAEliminar.fecha_venta | date:'dd/MM/yyyy HH:mm' }}</p>
+            <p><span class="font-medium">Total:</span> {{ ventaAEliminar.total_final | monedaArs }}</p>
+            <p class="text-xs text-gray-500 pt-1">
+              <span class="inline-flex items-center">
+                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                </svg>
+                {{ ventaAEliminar.productos?.length || 0 }} productos
+              </span>
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-    
-    <!-- Botones de acción -->
-    <div class="px-6 pb-6">
+      
+      <!-- NUEVO: Campo de motivo obligatorio -->
+      <div class="mb-6">
+        <label for="motivoEliminacion" class="block text-sm font-medium text-gray-900 mb-2">
+          Motivo de eliminación <span class="text-red-500">*</span>
+        </label>
+        <textarea
+          id="motivoEliminacion"
+          [(ngModel)]="motivoEliminacion"
+          placeholder="Describe el motivo por el cual se elimina esta venta..."
+          rows="3"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none text-sm"
+          [class.border-red-500]="!motivoEliminacion.trim() && eliminandoVenta"
+        ></textarea>
+        <p class="text-xs text-gray-500 mt-1">Campo obligatorio para proceder con la eliminación</p>
+      </div>
+      
+      <!-- Botones de acción -->
       <div class="flex flex-col sm:flex-row gap-3">
         <button (click)="cancelarEliminacion()"
                 [disabled]="eliminandoVenta"
@@ -356,10 +402,12 @@
         </button>
         
         <button (click)="confirmarEliminacion()"
-                [disabled]="eliminandoVenta"
-                class="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200">
+                [disabled]="eliminandoVenta || !motivoEliminacion.trim()"
+                class="flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                [class.bg-red-600]="motivoEliminacion.trim()"
+                [class.hover:bg-red-700]="motivoEliminacion.trim()"
+                [class.bg-gray-400]="!motivoEliminacion.trim()">
           <span *ngIf="!eliminandoVenta" class="flex items-center justify-center">
-            <!-- Nuevo ícono SVG en el botón de confirmar -->
             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
             </svg>
@@ -377,8 +425,6 @@
     </div>
   </div>
 </div>
-
-
 
         <!-- RECAMBIO -->
         <div *ngIf="item.tipo === 'recambio'">

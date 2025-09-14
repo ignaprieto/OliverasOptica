@@ -7,4 +7,5 @@ export interface Producto {
   categoria: string;
   precio: number;
   cantidad_stock: number;
+  created_at?: string;
 }

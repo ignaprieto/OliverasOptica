@@ -198,6 +198,18 @@
             </table>
           </div>
         </div>
+        <!-- Mensaje cuando no se encuentran productos -->
+<div *ngIf="productosFiltrados().length === 0" class="text-center py-12">
+  <div class="max-w-sm mx-auto">
+    <div class="w-20 h-20 bg-gradient-to-br from-gray-200 to-gray-300 rounded-full mx-auto mb-6 flex items-center justify-center">
+      <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m13-8l-2-2m0 0l-2 2m2-2v6m-7 1l2 2l-2 2"></path>
+      </svg>
+    </div>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">No se encontraron productos</h3>
+    <p class="text-gray-600 text-sm">Intenta modificar tu búsqueda o agrega nuevos productos al inventario.</p>
+  </div>
+</div>
       </div>
 
       <!-- Sección derecha: carrito - Compacto -->

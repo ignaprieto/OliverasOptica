@@ -43,30 +43,36 @@ idAEliminar: string | null = null;
   }, 3000);
 }
   productosFiltrados(): Producto[] {
-    const termino = this.filtro.toLowerCase();
-    let productos = this.productos.filter(p =>
-      p.codigo.toLowerCase().includes(termino) ||
-      p.nombre.toLowerCase().includes(termino) ||
-      p.marca.toLowerCase().includes(termino) ||
-      p.categoria.toLowerCase().includes(termino)
-    );
+  const termino = this.filtro.toLowerCase();
+  let productos = this.productos.filter(p =>
+    p.codigo.toLowerCase().includes(termino) ||
+    p.nombre.toLowerCase().includes(termino) ||
+    p.marca.toLowerCase().includes(termino) ||
+    p.categoria.toLowerCase().includes(termino)
+  );
 
-    // Aplicar ordenamiento por precio
-    if (this.ordenPrecio === 'asc') {
-      productos = productos.sort((a, b) => a.precio - b.precio);
-    } else if (this.ordenPrecio === 'desc') {
-      productos = productos.sort((a, b) => b.precio - a.precio);
-    }
-
-    // Aplicar ordenamiento por stock
-    if (this.ordenStock === 'asc') {
-      productos = productos.sort((a, b) => a.cantidad_stock - b.cantidad_stock);
-    } else if (this.ordenStock === 'desc') {
-      productos = productos.sort((a, b) => b.cantidad_stock - a.cantidad_stock);
-    }
-
-    return productos;
+  // Solo aplicar ordenamiento personalizado si hay uno activo
+  // Si no, mantener el orden por defecto (created_at desc)
+  
+  // Aplicar ordenamiento por precio
+  if (this.ordenPrecio === 'asc') {
+    productos = productos.sort((a, b) => a.precio - b.precio);
+  } else if (this.ordenPrecio === 'desc') {
+    productos = productos.sort((a, b) => b.precio - a.precio);
   }
+  
+  // Aplicar ordenamiento por stock
+  else if (this.ordenStock === 'asc') {
+    productos = productos.sort((a, b) => a.cantidad_stock - b.cantidad_stock);
+  } else if (this.ordenStock === 'desc') {
+    productos = productos.sort((a, b) => b.cantidad_stock - a.cantidad_stock);
+  }
+  
+  // Si no hay ordenamiento activo, mantener el orden original (por created_at)
+  // No es necesario hacer nada aquí porque ya viene ordenado de la base de datos
+
+  return productos;
+}
 
   // Alternar ordenamiento por precio: none -> desc -> asc -> none
   toggleOrdenPrecio() {
@@ -153,14 +159,18 @@ async eliminarProducto(id: string) {
 }
 
 
-  async obtenerProductos() {
-    const { data, error } = await this.supabase.getClient().from('productos').select('*');
-    if (error) {
-      this.error = 'Error al obtener productos';
-      return;
-    }
-    this.productos = data as Producto[];
+ async obtenerProductos() {
+  const { data, error } = await this.supabase.getClient()
+    .from('productos')
+    .select('*')
+    .order('created_at', { ascending: false }); // Los más recientes primero
+    
+  if (error) {
+    this.error = 'Error al obtener productos';
+    return;
   }
+  this.productos = data as Producto[];
+}
 
  async guardarProducto() {
   this.mensaje = '';

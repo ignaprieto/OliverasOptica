@@ -321,13 +321,13 @@
   </div>
 </div>
 
-<!-- Toast mejorado -->
+<!-- Toast mejorado con colores sólidos -->
 <div *ngIf="toastVisible"
   class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 animate-slide-up">
-  <div class="flex items-center space-x-3 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-sm border text-white font-semibold"
+  <div class="flex items-center space-x-3 px-6 py-4 rounded-2xl shadow-2xl border text-white font-semibold"
     [ngClass]="{
-      'bg-gradient-to-r from-green-600 to-emerald-600 border-green-500/30': toastColor === 'bg-green-600',
-      'bg-gradient-to-r from-red-600 to-red-700 border-red-500/30': toastColor === 'bg-red-600'
+      'bg-green-600 border-green-700': toastColor === 'bg-green-600',
+      'bg-red-600 border-red-700': toastColor === 'bg-red-600'
     }">
     
     <!-- Icono del toast -->
@@ -344,7 +344,7 @@
     <span class="text-sm">{{ toastMensaje }}</span>
     
     <!-- Botón de cerrar -->
-    <button class="flex-shrink-0 ml-2 opacity-70 hover:opacity-100 transition-opacity">
+    <button (click)="cerrarToast()" class="flex-shrink-0 ml-2 opacity-70 hover:opacity-100 transition-opacity">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
       </svg>

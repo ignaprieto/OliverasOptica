@@ -1,15 +1,119 @@
-<nav class="bg-gray-950 text-white px-6 py-4 flex justify-between items-center shadow-lg">
-  <a
-    routerLink="/dashboard"
-    class="text-2xl font-extrabold tracking-tight text-gray-100 transition duration-300 ease-in-out transform hover:scale-105"
-  >
-    Angirû Ventas
-  </a>
+<!-- navbar.component.html -->
+<nav class="bg-gray-950 text-white px-6 py-4 flex justify-between items-center shadow-lg relative">
+  <!-- Logo/Brand - Solo clickeable para admin -->
+  <div class="flex items-center space-x-4">
+    <a 
+      *ngIf="shouldShowMenuItem()"
+      routerLink="/dashboard"
+      class="text-2xl font-extrabold tracking-tight text-gray-100 transition duration-300 ease-in-out transform hover:scale-105"
+    >
+      Ventas
+    </a>
+    
+    <!-- Para vendedores, logo sin link -->
+    <span 
+      *ngIf="!shouldShowMenuItem()"
+      class="text-2xl font-extrabold tracking-tight text-gray-100"
+    >
+      Ventas
+    </span>
 
-  <button
-    (click)="cerrarSesion()"
-    class="bg-red-600 hover:bg-red-700 text-sm text-white font-semibold px-5 py-2 rounded-xl transition duration-300 ease-in-out transform hover:scale-105"
+    <!-- Menú hamburguesa - Solo para admin -->
+    <button 
+      *ngIf="shouldShowMenuItem()"
+      (click)="toggleMenu()"
+      class="ml-4 p-2 rounded-lg hover:bg-gray-800 transition duration-300 ease-in-out transform hover:scale-105"
+    >
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Usuario y cerrar sesión -->
+  <div class="flex items-center space-x-4">
+    <span class="text-sm font-medium text-gray-300">
+      Bienvenido, <span class="text-white font-semibold">{{ userName }}</span>
+    </span>
+    
+    <button
+      (click)="cerrarSesion()"
+      class="bg-red-600 hover:bg-red-700 text-sm text-white font-semibold px-5 py-2 rounded-xl transition duration-300 ease-in-out transform hover:scale-105"
+    >
+      Cerrar sesión
+    </button>
+  </div>
+
+  <!-- Menú desplegable - Solo visible para admin -->
+  <div 
+    *ngIf="mostrarMenu && shouldShowMenuItem()" 
+    class="absolute top-full left-0 w-full bg-gray-900 shadow-xl z-50 border-t border-gray-700"
   >
-    Cerrar sesión
-  </button>
+    <div class="px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-2">
+      <a 
+        routerLink="/dashboard" 
+        routerLinkActive="bg-gray-700 text-blue-400"
+        (click)="closeMenu()"
+        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
+      >
+        📊 Dashboard
+      </a>
+      <a 
+        routerLink="/productos" 
+        routerLinkActive="bg-gray-700 text-blue-400"
+        (click)="closeMenu()"
+        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
+      >
+        📦 Productos
+      </a>
+      <a 
+        routerLink="/stock" 
+        routerLinkActive="bg-gray-700 text-blue-400"
+        (click)="closeMenu()"
+        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
+      >
+        📋 Stock
+      </a>
+      <a 
+        routerLink="/ventas" 
+        routerLinkActive="bg-gray-700 text-blue-400"
+        (click)="closeMenu()"
+        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
+      >
+        💰 Ventas
+      </a>
+      <a 
+        routerLink="/descuentos" 
+        routerLinkActive="bg-gray-700 text-blue-400"
+        (click)="closeMenu()"
+        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
+      >
+        🏷️ Descuentos
+      </a>
+      <a 
+        routerLink="/historial" 
+        routerLinkActive="bg-gray-700 text-blue-400"
+        (click)="closeMenu()"
+        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
+      >
+        📚 Historial
+      </a>
+      <a 
+        routerLink="/aumento" 
+        routerLinkActive="bg-gray-700 text-blue-400"
+        (click)="closeMenu()"
+        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
+      >
+        📈 Aumento
+      </a>
+      <a 
+        routerLink="/finanzas" 
+        routerLinkActive="bg-gray-700 text-blue-400"
+        (click)="closeMenu()"
+        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
+      >
+        💹 Finanzas
+      </a>
+    </div>
+  </div>
 </nav>

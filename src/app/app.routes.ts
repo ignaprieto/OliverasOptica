@@ -1,9 +1,14 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
-  // Ruta raíz redirige a dashboard (si está autenticado) o login (si no lo está)
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  // Ruta raíz redirige según el rol del usuario
+  { 
+    path: '', 
+    redirectTo: 'dashboard', 
+    pathMatch: 'full' 
+  },
 
   // Login (pública)
   {
@@ -12,35 +17,35 @@ export const routes: Routes = [
       import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
 
-  // Dashboard (privado)
+  // Dashboard (privado) - Solo para admin
   {
     path: 'dashboard',
     loadComponent: () =>
       import('./pages/dashboard/dashboard.component').then(
         (m) => m.DashboardComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
   },
 
-  // Stock
+  // Stock - Solo para admin
   {
     path: 'stock',
     loadComponent: () =>
       import('./pages/stock/stock.component').then((m) => m.StockComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
   },
 
-  // Productos
+  // Productos - Solo para admin
   {
     path: 'productos',
     loadComponent: () =>
       import('./pages/productos/productos.component').then(
         (m) => m.ProductosComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
   },
 
-  // Ventas
+  // Ventas - Accesible para todos los roles autenticados
   {
     path: 'ventas',
     loadComponent: () =>
@@ -48,46 +53,46 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
 
-  // Descuentos
+  // Descuentos - Solo para admin
   {
     path: 'descuentos',
     loadComponent: () =>
       import('./pages/descuentos/descuentos.component').then(
         (m) => m.DescuentosComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
   },
 
-  // Historial
+  // Historial - Solo para admin
   {
     path: 'historial',
     loadComponent: () =>
       import('./pages/historial/historial.component').then(
         (m) => m.HistorialComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
   },
 
-  // Aumento
+  // Aumento - Solo para admin
   {
     path: 'aumento',
     loadComponent: () =>
       import('./pages/aumento/aumento.component').then(
         (m) => m.AumentoComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
   },
 
-  // Finanzas
+  // Finanzas - Solo para admin
   {
     path: 'finanzas',
     loadComponent: () =>
       import('./pages/finanzas/finanzas.component').then(
         (m) => m.FinanzasComponent
       ),
-    canActivate: [authGuard],
+    canActivate: [authGuard, roleGuard],
   },
 
-  // Rutas no encontradas redirigen a dashboard (el guard se encargará de redirigir a login si no está autenticado)
+  // Rutas no encontradas redirigen a dashboard
   { path: '**', redirectTo: 'dashboard' },
 ];

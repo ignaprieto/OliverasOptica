@@ -36,19 +36,21 @@ import { CommonModule } from '@angular/common';
     :host {
       display: block;
       position: relative;
+      opacity: 0;
+      animation: fadeIn 0.3s ease-in forwards;
+      animation-delay: 0.1s;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
     }
 
     footer {
       opacity: 1;
       transform: translateY(0);
       transition: none;
-    }
-
-    /* Previene el salto visual */
-    :host::before {
-      content: '';
-      display: block;
-      height: 0;
     }
   `]
 })

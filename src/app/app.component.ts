@@ -21,6 +21,10 @@ export class AppComponent implements OnInit {
   private static authListenerSet = false;
 
   constructor(public router: Router, private supabase: SupabaseService) {
+    // Inicializar la ruta actual inmediatamente
+    this.currentRoute = this.router.url;
+    
+    // Escuchar cambios de navegación
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
@@ -84,8 +88,8 @@ export class AppComponent implements OnInit {
   }
 
   mostrarFooter(): boolean {
-    // Mostrar el footer en todas las páginas excepto login, pero solo cuando la app esté inicializada
-    return this.isAppInitialized && this.currentRoute !== '/login';
+    // NO mostrar el footer en login ni mientras no haya ruta definida
+    return this.currentRoute !== '' && this.currentRoute !== '/login' && this.currentRoute !== '/';
   }
 
   mostrarContenido(): boolean {

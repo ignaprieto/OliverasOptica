@@ -3,10 +3,10 @@ import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
-  // Ruta raíz redirige según el rol del usuario
+  // Ruta raíz - redirige a login (el login manejará la redirección según rol)
   { 
     path: '', 
-    redirectTo: 'dashboard', 
+    redirectTo: 'login', 
     pathMatch: 'full' 
   },
 
@@ -17,7 +17,7 @@ export const routes: Routes = [
       import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
 
-  // Dashboard (privado) - Solo para admin
+  // Dashboard - Solo admin
   {
     path: 'dashboard',
     loadComponent: () =>
@@ -27,7 +27,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Stock - Solo para admin
+  // Stock - Solo admin
   {
     path: 'stock',
     loadComponent: () =>
@@ -35,7 +35,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Productos - Solo para admin
+  // Productos - Solo admin
   {
     path: 'productos',
     loadComponent: () =>
@@ -45,15 +45,15 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Ventas - Accesible para todos los roles autenticados
+  // Ventas - Admin y Vendedor
   {
     path: 'ventas',
     loadComponent: () =>
       import('./pages/ventas/ventas.component').then((m) => m.VentasComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard], // Solo requiere estar autenticado
   },
 
-  // Descuentos - Solo para admin
+  // Descuentos - Solo admin
   {
     path: 'descuentos',
     loadComponent: () =>
@@ -63,7 +63,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Historial - Solo para admin
+  // Historial - Solo admin
   {
     path: 'historial',
     loadComponent: () =>
@@ -73,7 +73,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Aumento - Solo para admin
+  // Aumento - Solo admin
   {
     path: 'aumento',
     loadComponent: () =>
@@ -83,7 +83,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Finanzas - Solo para admin
+  // Finanzas - Solo admin
   {
     path: 'finanzas',
     loadComponent: () =>
@@ -93,6 +93,19 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Rutas no encontradas redirigen a dashboard
-  { path: '**', redirectTo: 'dashboard' },
+  // Empleados - Solo admin
+  {
+    path: 'empleados',
+    loadComponent: () =>
+      import('./pages/empleados/empleados.component').then(
+        (m) => m.EmpleadosComponent
+      ),
+    canActivate: [authGuard, roleGuard],
+  },
+
+  // Rutas no encontradas redirigen a login
+  { 
+    path: '**', 
+    redirectTo: 'login'
+  },
 ];

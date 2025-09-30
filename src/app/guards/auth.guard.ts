@@ -3,28 +3,33 @@ import { inject } from '@angular/core';
 import { SupabaseService } from '../services/supabase.service';
 
 export const authGuard: CanActivateFn = async (route, state) => {
-  const supabase = inject(SupabaseService);
   const router = inject(Router);
+  const supabase = inject(SupabaseService);
 
   try {
-    const { data, error } = await supabase.getClient().auth.getSession();
-
-    if (error) {
-      console.error('Error checking auth session:', error);
-      router.navigate(['/login']);
-      return false;
-    }
-
+    // Verificar si hay sesión de Supabase (admin)
+    const { data } = await supabase.getClient().auth.getSession();
     const session = data.session;
 
-    if (!session || !session.user) {
-      router.navigate(['/login']);
-      return false;
+    if (session && session.user) {
+      
+      return true;
     }
 
-    return true;
+    // Verificar si hay sesión de vendedor en localStorage
+    const vendedor = localStorage.getItem('user');
+    if (vendedor) {
+      
+      return true;
+    }
+
+    // No hay ninguna sesión válida
+    
+    router.navigate(['/login']);
+    return false;
+    
   } catch (error) {
-    console.error('Unexpected error in auth guard:', error);
+    console.error('Error en auth guard:', error);
     router.navigate(['/login']);
     return false;
   }

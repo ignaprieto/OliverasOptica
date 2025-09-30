@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './components/navbar/navbar.component';
+import { FooterComponent } from './components/footer/footer.component';
 import { SupabaseService } from './services/supabase.service';
 import { environment } from '../environments/environment';
 import { filter } from 'rxjs/operators';
@@ -9,13 +10,14 @@ import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, NavbarComponent],
+  imports: [RouterOutlet, CommonModule, NavbarComponent,FooterComponent],
   templateUrl: './app.component.html',
 })
 export class AppComponent implements OnInit {
   isAppInitialized = false;
   isAuthenticated = false;
   currentRoute = '';
+  public title = 'ventas';
   private static authListenerSet = false; // Static para evitar múltiples listeners
 
   constructor(public router: Router, private supabase: SupabaseService) {
@@ -92,10 +94,11 @@ export class AppComponent implements OnInit {
 
   // Método para mostrar el navbar
   mostrarNavbar(): boolean {
-    return this.isAppInitialized && 
-           this.isAuthenticated && 
-           this.currentRoute !== '/login';
-  }
+  // Mostrar siempre para admin o vendedor
+  const user = localStorage.getItem('user');
+  return this.isAppInitialized && (this.isAuthenticated || !!user) && this.currentRoute !== '/login';
+}
+
 
   // Método para mostrar el contenido
   mostrarContenido(): boolean {

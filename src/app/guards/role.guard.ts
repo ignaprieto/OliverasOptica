@@ -3,40 +3,38 @@ import { inject } from '@angular/core';
 import { SupabaseService } from '../services/supabase.service';
 
 export const roleGuard: CanActivateFn = async (route, state) => {
-  const supabase = inject(SupabaseService);
   const router = inject(Router);
+  const supabase = inject(SupabaseService);
 
   try {
-    const { data, error } = await supabase.getClient().auth.getSession();
-
-    if (error) {
-      console.error('Error checking auth session:', error);
-      router.navigate(['/login']);
-      return false;
-    }
-
-    const session = data.session;
-
-    if (!session || !session.user) {
-      router.navigate(['/login']);
-      return false;
-    }
-
-    // Obtener el rol del usuario
     const userRole = await supabase.getCurrentUserRole();
+    
 
-    // Si es vendedor, solo puede acceder a /ventas
+    // ADMIN: Acceso total a todas las rutas protegidas
+    if (userRole === 'admin') {
+      
+      return true;
+    }
+
+    // VENDEDOR: Solo puede acceder a /ventas
     if (userRole === 'vendedor') {
-      const currentPath = state.url;
-      if (currentPath !== '/ventas') {
+      if (state.url === '/ventas' || state.url.startsWith('/ventas')) {
+        
+        return true;
+      } else {
+        
         router.navigate(['/ventas']);
         return false;
       }
     }
 
-    return true;
+    // ROL DESCONOCIDO: Redirigir a login
+    
+    router.navigate(['/login']);
+    return false;
+    
   } catch (error) {
-    console.error('Unexpected error in role guard:', error);
+    console.error('Error en role guard:', error);
     router.navigate(['/login']);
     return false;
   }

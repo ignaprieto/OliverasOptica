@@ -250,16 +250,28 @@
                 </div>
               </div>
               <div class="text-right ml-2">
-                <div class="font-bold text-sm text-gray-900">{{ item.subtotal | monedaArs }}</div>
-                <button
-                  (click)="eliminarDelCarrito(item.producto)"
-                  class="mt-1 p-1 rounded-lg bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
-                  title="Eliminar">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/>
-                  </svg>
-                </button>
-              </div>
+  <div class="font-bold text-sm text-gray-900 mb-2">{{ item.subtotal | monedaArs }}</div>
+  
+  <div class="flex items-center justify-end gap-1">
+    <button 
+      (click)="quitarUnidad(item.producto)"
+      class="w-5 h-5 flex items-center justify-center bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-md transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+      title="Quitar una unidad">
+      <span class="text-xs font-bold">−</span>
+    </button>
+    
+    <span class="px-2 text-xs font-semibold text-gray-700">{{ item.cantidad }}</span>
+    
+    <button
+      (click)="eliminarDelCarrito(item.producto)"
+      class="w-5 h-5 flex items-center justify-center bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-md transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
+      title="Eliminar del carrito">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/>
+      </svg>
+    </button>
+  </div>
+</div>
             </div>
           </li>
         </ul>
@@ -269,7 +281,7 @@
         <div class="space-y-3">
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Método de pago</label>
-            <select [(ngModel)]="metodoPago" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white text-sm">
+            <select [(ngModel)]="metodoPago" (ngModelChange)="onMetodoPagoChange()" class="w-full px-3 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white text-sm">
               <option value="efectivo">💰 Efectivo</option>
               <option value="transferencia">🏦 Transferencia</option>
               <option value="debito">💳 Débito</option>
@@ -278,6 +290,39 @@
             </select>
           </div>
       
+
+<!-- Campos adicionales para efectivo -->
+<div *ngIf="metodoPago === 'efectivo'" class="mb-4 bg-gray-50 p-4 rounded-lg">
+  <label class="block text-gray-700 font-semibold mb-2">Monto Entregado</label>
+  <input 
+    type="number" 
+    [(ngModel)]="montoEntregado"
+    (ngModelChange)="onMontoEntregadoChange()"
+    [min]="0"
+    step="0.01"
+    class="w-full border border-gray-300 rounded-lg px-4 py-2 mb-3"
+    placeholder="Ingrese el monto entregado">
+  
+  <div class="flex justify-between items-center">
+    <span class="text-gray-700 font-semibold">Total a Pagar:</span>
+    <span class="text-lg font-bold">{{ totalFinal | monedaArs }}</span>
+  </div>
+  
+  <div *ngIf="montoEntregado > 0" class="flex justify-between items-center mt-2 pt-2 border-t">
+    <span class="text-gray-700 font-semibold">Vuelto:</span>
+    <span 
+      class="text-lg font-bold"
+      [class.text-red-600]="vuelto < 0"
+      [class.text-green-600]="vuelto >= 0">
+      {{ vuelto | monedaArs }}
+    </span>
+  </div>
+  
+  <div *ngIf="vuelto < 0" class="mt-2 text-red-600 text-sm">
+    ⚠️ El monto entregado es insuficiente
+  </div>
+</div>
+
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Código de descuento</label>
             <div class="flex gap-1">

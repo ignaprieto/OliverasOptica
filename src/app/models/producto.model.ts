@@ -7,5 +7,6 @@ export interface Producto {
   categoria: string;
   precio: number;
   cantidad_stock: number;
+  activo?: boolean;
   created_at?: string;
 }

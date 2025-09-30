@@ -1,6 +1,6 @@
-<div class="bg-gray-100 min-h-screen p-4 sm:p-8 md:p-12 flex justify-center items-center animate-fade-in-scale">
-  <div class="w-full max-w-6xl mx-auto">
-    <!-- Título principal y descripción -->
+<div class="bg-gray-100 min-h-screen p-4 sm:p-8 md:p-12 animate-fade-in-scale">
+  <div class="w-full max-w-7xl mx-auto">
+    <!-- Título principal -->
     <header class="text-center mb-10 md:mb-16">
       <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-2">
         Panel de Control Administrativo
@@ -10,23 +10,101 @@
       </p>
     </header>
 
-    <!-- Contenedor de las tarjetas de navegación -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Sección de estadísticas del día -->
+    <div class="mb-10">
+      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        Estadísticas de Hoy
+      </h2>
 
-      <!-- Tarjeta para Stock -->
-      <a routerLink="/stock" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
-        <div class="flex items-start">
-          <div class="bg-indigo-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
-            <i class="fas fa-box-open text-xl"></i>
-          </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">Stock</h3>
-            <p class="text-sm text-gray-500">Agrega productos y actualiza el stock disponible.</p>
-          </div>
+      <!-- Loader mientras carga -->
+      <div *ngIf="cargando" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div *ngFor="let item of [1,2,3,4]" class="bg-white rounded-xl p-6 shadow-md animate-pulse">
+          <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+          <div class="h-8 bg-gray-200 rounded w-1/2"></div>
         </div>
-      </a>
+      </div>
 
-      <!-- Tarjeta para Ventas -->
+      <!-- Tarjetas de estadísticas -->
+      <div *ngIf="!cargando" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Ventas Hoy -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Ventas Hoy</h3>
+            <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+            </svg>
+          </div>
+          <p class="text-4xl font-bold">{{ estadisticas.ventasHoy }}</p>
+          <p class="text-xs mt-2 opacity-80">Transacciones completadas</p>
+        </div>
+
+        <!-- Total Recaudado -->
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Recaudado</h3>
+            <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+          <p class="text-4xl font-bold">${{ estadisticas.totalRecaudado.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</p>
+          <p class="text-xs mt-2 opacity-80">Promedio: ${{ estadisticas.ventaPromedio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</p>
+        </div>
+
+        <!-- Productos Vendidos -->
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Unidades</h3>
+            <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+            </svg>
+          </div>
+          <p class="text-4xl font-bold">{{ estadisticas.productosVendidos }}</p>
+          <p class="text-xs mt-2 opacity-80">Productos vendidos</p>
+        </div>
+
+        <!-- Alertas de Stock -->
+         
+        <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Alertas</h3>
+            <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+          </div>
+          <div class="flex items-baseline gap-2">
+            <p class="text-4xl font-bold">{{ estadisticas.stockBajo + estadisticas.sinStock }}</p>
+          </div>
+          <p class="text-xs mt-2 opacity-80">
+            {{ estadisticas.stockBajo }} bajo stock · {{ estadisticas.sinStock }} sin stock
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Sección de navegación (tu código existente) -->
+    <div>
+      <h2 class="text-2xl font-bold text-gray-800 mb-6">Accesos Rápidos</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Tus tarjetas existentes... -->
+        <a routerLink="/stock" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+          <div class="flex items-start">
+            <div class="bg-indigo-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+              <i class="fas fa-box-open text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 mb-1">Stock</h3>
+              <p class="text-sm text-gray-500">Agrega productos y actualiza el stock disponible.</p>
+            </div>
+          </div>
+        </a>
+
+<!-- Tarjeta para Ventas -->
       <a routerLink="/ventas" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
         <div class="flex items-start">
           <div class="bg-green-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
@@ -103,6 +181,21 @@
           </div>
         </div>
       </a>
+
+      <!-- Tarjeta para Finanzas -->
+      <a routerLink="/empleados" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <div class="flex items-start">
+          <div class="bg-blue-700 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <i class="fas fa-dollar-sign text-xl"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-1">Empleados</h3>
+            <p class="text-sm text-gray-500">Gestión de vendedores.</p>
+          </div>
+        </div>
+      </a>
+      </div>
     </div>
+
   </div>
 </div>

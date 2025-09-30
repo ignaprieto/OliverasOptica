@@ -17,13 +17,14 @@ export class LoginComponent implements OnInit {
   error: string | null = null;
   isLoading: boolean = false;
   showPassword: boolean = false;
+  dni: string = '';
 
   constructor(private supabase: SupabaseService, private router: Router) {}
 
   async ngOnInit() {
     // Verificar si ya está logueado al cargar el componente
-    const user = await this.supabase.getCurrentUser();
-    if (user) {
+    const currentAppUser = await this.supabase.getCurrentAppUser();
+    if (currentAppUser) {
       // Si ya está autenticado, redirigir según el rol
       await this.redirectByRole();
     }
@@ -52,6 +53,7 @@ export class LoginComponent implements OnInit {
       await this.redirectByRole();
       
     } catch (error: any) {
+      console.error('❌ Error en login:', error);
       if (error.message?.includes('Invalid login credentials')) {
         this.error = 'Credenciales incorrectas';
       } else {
@@ -66,19 +68,66 @@ export class LoginComponent implements OnInit {
     try {
       const userRole = await this.supabase.getCurrentUserRole();
 
-      // Redirigir según el tipo de rol
-      if (userRole === 'vendedor') {
-        // Los vendedores van directo a ventas y no pueden salir de allí
+      if (userRole === 'admin') {
+        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      } else if (userRole === 'vendedor') {
         this.router.navigate(['/ventas'], { replaceUrl: true });
       } else {
-        // Para admin u otros roles, ir al dashboard
+        // Fallback: si no se reconoce el rol, ir a dashboard
         this.router.navigate(['/dashboard'], { replaceUrl: true });
       }
 
     } catch (error) {
       console.error('Error en redirectByRole:', error);
-      // Por defecto ir al dashboard (el guard se encargará de redirigir si no tiene permisos)
+      // Por defecto ir al dashboard
       this.router.navigate(['/dashboard'], { replaceUrl: true });
+    }
+  }
+
+  async loginVendedorPorDni(dni: string) {
+    this.error = null;
+    this.isLoading = true;
+
+    if (!dni) {
+      this.error = 'El DNI es obligatorio';
+      this.isLoading = false;
+      return;
+    }
+
+    try {
+      const { data, error } = await this.supabase.getClient()
+        .from('vendedores')
+        .select('*')
+        .eq('dni', dni)
+        .eq('activo', true)
+        .single();
+
+      if (error || !data) {
+        this.error = 'DNI no encontrado o vendedor inactivo';
+        return;
+      }
+
+
+      // Crear sesión de vendedor en localStorage
+      const vendedorSession = {
+        id: data.id,
+        rol: 'vendedor',
+        nombre: data.nombre,
+        dni: data.dni
+      };
+      localStorage.setItem('user', JSON.stringify(vendedorSession));
+
+      // Marcar en el servicio
+      this.supabase.setVendedorTemp(vendedorSession);
+
+      // Redirigir a ventas
+      this.router.navigate(['/ventas'], { replaceUrl: true });
+
+    } catch (e) {
+      this.error = 'Error al intentar ingresar como vendedor';
+      console.error('Error en loginVendedorPorDni:', e);
+    } finally {
+      this.isLoading = false;
     }
   }
 }

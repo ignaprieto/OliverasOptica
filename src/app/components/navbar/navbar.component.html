@@ -1,7 +1,7 @@
-<!-- navbar.component.html -->
 <nav class="bg-gray-950 text-white px-6 py-4 flex justify-between items-center shadow-lg relative">
-  <!-- Logo/Brand - Solo clickeable para admin -->
+  <!-- Logo / Nombre de la tienda -->
   <div class="flex items-center space-x-4">
+    <!-- Admin: logo clickeable -->
     <a 
       *ngIf="shouldShowMenuItem()"
       routerLink="/dashboard"
@@ -10,7 +10,7 @@
       Ventas
     </a>
     
-    <!-- Para vendedores, logo sin link -->
+    <!-- Vendedor: logo solo texto -->
     <span 
       *ngIf="!shouldShowMenuItem()"
       class="text-2xl font-extrabold tracking-tight text-gray-100"
@@ -18,7 +18,7 @@
       Ventas
     </span>
 
-    <!-- Menú hamburguesa - Solo para admin -->
+    <!-- Botón hamburguesa solo admin -->
     <button 
       *ngIf="shouldShowMenuItem()"
       (click)="toggleMenu()"
@@ -30,7 +30,7 @@
     </button>
   </div>
 
-  <!-- Usuario y cerrar sesión -->
+  <!-- Usuario y cerrar sesión (siempre visible) -->
   <div class="flex items-center space-x-4">
     <span class="text-sm font-medium text-gray-300">
       Bienvenido, <span class="text-white font-semibold">{{ userName }}</span>
@@ -44,76 +44,21 @@
     </button>
   </div>
 
-  <!-- Menú desplegable - Solo visible para admin -->
+  <!-- Menú desplegable solo admin -->
   <div 
     *ngIf="mostrarMenu && shouldShowMenuItem()" 
     class="absolute top-full left-0 w-full bg-gray-900 shadow-xl z-50 border-t border-gray-700"
   >
     <div class="px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-2">
-      <a 
-        routerLink="/dashboard" 
-        routerLinkActive="bg-gray-700 text-blue-400"
-        (click)="closeMenu()"
-        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
-      >
-        📊 Dashboard
-      </a>
-      <a 
-        routerLink="/productos" 
-        routerLinkActive="bg-gray-700 text-blue-400"
-        (click)="closeMenu()"
-        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
-      >
-        📦 Productos
-      </a>
-      <a 
-        routerLink="/stock" 
-        routerLinkActive="bg-gray-700 text-blue-400"
-        (click)="closeMenu()"
-        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
-      >
-        📋 Stock
-      </a>
-      <a 
-        routerLink="/ventas" 
-        routerLinkActive="bg-gray-700 text-blue-400"
-        (click)="closeMenu()"
-        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
-      >
-        💰 Ventas
-      </a>
-      <a 
-        routerLink="/descuentos" 
-        routerLinkActive="bg-gray-700 text-blue-400"
-        (click)="closeMenu()"
-        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
-      >
-        🏷️ Descuentos
-      </a>
-      <a 
-        routerLink="/historial" 
-        routerLinkActive="bg-gray-700 text-blue-400"
-        (click)="closeMenu()"
-        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
-      >
-        📚 Historial
-      </a>
-      <a 
-        routerLink="/aumento" 
-        routerLinkActive="bg-gray-700 text-blue-400"
-        (click)="closeMenu()"
-        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
-      >
-        📈 Aumento
-      </a>
-      <a 
-        routerLink="/finanzas" 
-        routerLinkActive="bg-gray-700 text-blue-400"
-        (click)="closeMenu()"
-        class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium"
-      >
-        💹 Finanzas
-      </a>
+      <a routerLink="/dashboard" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">📊 Menu Principal</a>
+      <a routerLink="/productos" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">📦 Productos</a>
+      <a routerLink="/stock" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">📋 Stock</a>
+      <a routerLink="/ventas" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">💰 Ventas</a>
+      <a routerLink="/descuentos" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">🏷️ Descuentos</a>
+      <a routerLink="/historial" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">📚 Historial</a>
+      <a routerLink="/aumento" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">📈 Aumento</a>
+      <a routerLink="/finanzas" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">💹 Finanzas</a>
+      <a routerLink="/empleados" routerLinkActive="bg-gray-700 text-blue-400" (click)="closeMenu()" class="block px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition duration-300 ease-in-out transform hover:scale-105 text-center font-medium">💁‍♂️ Empleados</a>
     </div>
   </div>
 </nav>

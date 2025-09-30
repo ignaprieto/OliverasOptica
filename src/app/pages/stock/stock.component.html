@@ -16,10 +16,10 @@
     </div>
 
     <!-- Layout principal: Formulario a la izquierda, Tabla a la derecha -->
-    <div class="grid grid-cols-1 xl:grid-cols-5 gap-8">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
       
       <!-- COLUMNA IZQUIERDA: Formularios -->
-      <div class="xl:col-span-2 space-y-6">
+      <div class="xl:col-span-4 space-y-6">
         
         <!-- Tabs para Agregar/Editar -->
         <div class="flex space-x-4">
@@ -215,7 +215,7 @@
       </div>
 
       <!-- COLUMNA DERECHA: Tabla de productos -->
-      <div class="xl:col-span-3 space-y-6">
+      <div class="xl:col-span-8 space-y-6">
         
         <!-- Header de la sección -->
         <div class="bg-white rounded-xl shadow-lg p-6">
@@ -225,38 +225,87 @@
           </h3>
           
           <!-- Filtro y contador -->
-          <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div class="flex-1 max-w-md">
-              <div class="relative">
-                <input
-                  [(ngModel)]="filtro"
-                  type="text"
-                  placeholder="Buscar productos..."
-                  class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                />
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            
-            <ng-container *ngIf="productosFiltrados() as filtrados">
-              <div class="bg-green-50 px-4 py-2 rounded-lg border border-green-200">
-                <p class="text-sm font-semibold text-green-700">
-                  {{ filtrados.length }} de {{ productos.length }} producto{{ filtrados.length === 1 ? '' : 's' }}
-                </p>
-              </div>
-            </ng-container>
-          </div>
+<div class="space-y-4">
+  <!-- Filtro de texto -->
+  <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+    <div class="flex-1 max-w-md">
+      <div class="relative">
+        <input
+          [(ngModel)]="filtro"
+          type="text"
+          placeholder="Buscar productos..."
+          class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+        />
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
         </div>
+      </div>
+    </div>
+    
+    <ng-container *ngIf="productosFiltrados() as filtrados">
+      <div class="bg-green-50 px-4 py-2 rounded-lg border border-green-200">
+        <p class="text-sm font-semibold text-green-700">
+          {{ filtrados.length }} de {{ productos.length }} producto{{ filtrados.length === 1 ? '' : 's' }}
+        </p>
+      </div>
+    </ng-container>
+  </div>
+
+  <!-- Filtro por estado -->
+<div>
+  <label class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
+    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+    </svg>
+    <span>Filtrar por estado</span>
+  </label>
+  <div class="inline-flex bg-gradient-to-r from-gray-50 to-gray-100 p-1.5 rounded-2xl shadow-inner border border-gray-200">
+    <button 
+      (click)="filtroEstado = 'activos'" 
+      [class]="filtroEstado === 'activos' 
+        ? 'bg-gradient-to-br from-emerald-400 to-green-500 text-white shadow-lg shadow-green-500/40 scale-105' 
+        : 'text-gray-600 hover:bg-white/60'"
+      class="px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 transform flex items-center gap-2 min-w-[120px] justify-center">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span>Activos</span>
+    </button>
+    
+    <button 
+      (click)="filtroEstado = 'desactivados'" 
+      [class]="filtroEstado === 'desactivados' 
+        ? 'bg-gradient-to-br from-rose-400 to-red-500 text-white shadow-lg shadow-red-500/40 scale-105' 
+        : 'text-gray-600 hover:bg-white/60'"
+      class="px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 transform flex items-center gap-2 min-w-[140px] justify-center">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+      <span>Desactivados</span>
+    </button>
+    
+    <button 
+      (click)="filtroEstado = 'todos'" 
+      [class]="filtroEstado === 'todos' 
+        ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-lg shadow-blue-500/40 scale-105' 
+        : 'text-gray-600 hover:bg-white/60'"
+      class="px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 transform flex items-center gap-2 min-w-[120px] justify-center">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+      <span>Todos</span>
+    </button>
+  </div>
+</div>
+</div>
 
         <!-- Tabla de productos -->
         <ng-container *ngIf="productosFiltrados() as filtrados">
           <div *ngIf="filtrados.length > 0; else sinResultados"
       class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-  <div class="max-h-[500px] overflow-y-auto">
+  <div class="max-h-[500px] overflow-y-auto overflow-x-auto xl:overflow-x-visible">
     <table class="w-full text-sm text-left border-collapse">
       <thead class="sticky top-0 z-10 bg-gradient-to-r from-gray-800 to-gray-900 text-white">
         <tr>
@@ -309,6 +358,7 @@
               </div>
             </div>
           </th>
+          <th class="px-4 py-4 font-semibold text-center">Estado</th>
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-100">
@@ -347,6 +397,17 @@
               {{ prod.cantidad_stock }}
             </span>
           </td>
+          <td class="px-4 py-4 text-center" (click)="$event.stopPropagation()">
+  <button
+    (click)="toggleEstadoProducto(prod)"
+    [class.bg-green-500]="prod.activo"
+    [class.hover:bg-green-600]="prod.activo"
+    [class.bg-red-500]="!prod.activo"
+    [class.hover:bg-red-600]="!prod.activo"
+    class="px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
+    {{ prod.activo ? '✓ Activo' : '✗ Inactivo' }}
+  </button>
+</td>
         </tr>
       </tbody>
     </table>

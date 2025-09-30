@@ -28,6 +28,9 @@ idAEliminar: string | null = null;
   ordenPrecio: 'asc' | 'desc' | 'none' = 'none';
   ordenStock: 'asc' | 'desc' | 'none' = 'none';
 
+
+  filtroEstado: 'todos' | 'activos' | 'desactivados' = 'activos';
+
   constructor(private supabase: SupabaseService) {}
 
   ngOnInit() {
@@ -42,18 +45,21 @@ idAEliminar: string | null = null;
     this.mostrarToast = false;
   }, 3000);
 }
+
   productosFiltrados(): Producto[] {
   const termino = this.filtro.toLowerCase();
-  let productos = this.productos.filter(p =>
-    p.codigo.toLowerCase().includes(termino) ||
-    p.nombre.toLowerCase().includes(termino) ||
-    p.marca.toLowerCase().includes(termino) ||
-    p.categoria.toLowerCase().includes(termino)
-  );
+  let productos = this.productos.filter(p => {
+    // Filtro por estado (activo/desactivado)
+    if (this.filtroEstado === 'activos' && !p.activo) return false;
+    if (this.filtroEstado === 'desactivados' && p.activo) return false;
+    
+    // Filtro por texto
+    return p.codigo.toLowerCase().includes(termino) ||
+      p.nombre.toLowerCase().includes(termino) ||
+      p.marca.toLowerCase().includes(termino) ||
+      p.categoria.toLowerCase().includes(termino);
+  });
 
-  // Solo aplicar ordenamiento personalizado si hay uno activo
-  // Si no, mantener el orden por defecto (created_at desc)
-  
   // Aplicar ordenamiento por precio
   if (this.ordenPrecio === 'asc') {
     productos = productos.sort((a, b) => a.precio - b.precio);
@@ -67,9 +73,6 @@ idAEliminar: string | null = null;
   } else if (this.ordenStock === 'desc') {
     productos = productos.sort((a, b) => b.cantidad_stock - a.cantidad_stock);
   }
-  
-  // Si no hay ordenamiento activo, mantener el orden original (por created_at)
-  // No es necesario hacer nada aquí porque ya viene ordenado de la base de datos
 
   return productos;
 }
@@ -102,6 +105,29 @@ idAEliminar: string | null = null;
     }
   }
 
+// Método para alternar estado activo/desactivado
+async toggleEstadoProducto(producto: Producto) {
+  const nuevoEstado = !producto.activo;
+  
+  const { error } = await this.supabase.getClient()
+    .from('productos')
+    .update({ activo: nuevoEstado })
+    .eq('id', producto.id);
+
+  if (error) {
+    this.error = 'Error al cambiar el estado del producto';
+    this.mostrarToast = true;
+    setTimeout(() => {
+      this.mostrarToast = false;
+      this.error = '';
+    }, 3000);
+    return;
+  }
+
+  this.mostrarMensaje(`Producto ${nuevoEstado ? 'activado' : 'desactivado'} correctamente`);
+  await this.obtenerProductos();
+}
+
   // Limpiar todos los filtros de ordenamiento
   limpiarFiltros() {
     this.ordenPrecio = 'none';
@@ -117,6 +143,7 @@ nuevoProducto(): Producto {
     categoria: '',
     precio: undefined as any,
     cantidad_stock: undefined as any,
+    activo: true,
   } as Producto; // No incluye "id"
 }
 

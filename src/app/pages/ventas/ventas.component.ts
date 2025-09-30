@@ -6,6 +6,14 @@ import { Producto } from '../../models/producto.model';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
 
+// Move type declaration OUTSIDE the class
+type VendedorTemp = {
+  id: string;
+  rol: string;
+  nombre: string;
+  dni: string;
+};
+
 @Component({
   selector: 'app-ventas',
   imports: [FormsModule, CommonModule, RouterModule, MonedaArsPipe],
@@ -26,6 +34,10 @@ export class VentasComponent implements OnInit {
   codigoDescuento = '';
   descuentoAplicado = 0;
   totalFinal = 0;
+
+  // Nuevas propiedades para el cálculo de vuelto
+  montoEntregado: number = 0;
+  vuelto: number = 0;
 
   clienteNombre = '';
   clienteEmail = '';
@@ -176,6 +188,31 @@ export class VentasComponent implements OnInit {
   actualizarTotal() {
     const totalSinDescuento = this.carrito.reduce((acc, item) => acc + item.subtotal, 0);
     this.totalFinal = totalSinDescuento * (1 - this.descuentoAplicado / 100);
+    this.calcularVuelto();
+  }
+
+  // Nuevo método para calcular el vuelto
+  calcularVuelto() {
+    if (this.metodoPago === 'efectivo' && this.montoEntregado > 0) {
+      this.vuelto = this.montoEntregado - this.totalFinal;
+    } else {
+      this.vuelto = 0;
+    }
+  }
+
+  // Método que se ejecuta cuando cambia el monto entregado
+  onMontoEntregadoChange() {
+    this.calcularVuelto();
+  }
+
+  // Método que se ejecuta cuando cambia el método de pago
+  onMetodoPagoChange() {
+    if (this.metodoPago !== 'efectivo') {
+      this.montoEntregado = 0;
+      this.vuelto = 0;
+    } else {
+      this.calcularVuelto();
+    }
   }
 
   async aplicarDescuento() {
@@ -218,13 +255,31 @@ export class VentasComponent implements OnInit {
 
   async confirmarVenta() {
     if (this.procesandoVenta) return;
+
+    // Validar que si es efectivo, el monto entregado sea suficiente
+    if (this.metodoPago === 'efectivo' && this.montoEntregado < this.totalFinal) {
+      this.toastMensaje = 'El monto entregado es insuficiente.';
+      this.toastColor = 'bg-red-600';
+      this.toastVisible = true;
+      setTimeout(() => {
+        this.toastVisible = false;
+        this.toastColor = 'bg-green-600';
+      }, 2500);
+      return;
+    }
+
     this.procesandoVenta = true;
 
     const totalSinDesc = this.carrito.reduce((acc, item) => acc + item.subtotal, 0);
     const totalFinal = this.totalFinal;
 
-    const { data: sessionData, error: sessionError } = await this.supabase.getClient().auth.getSession();
-    const usuario = sessionData.session?.user;
+    // Obtener usuario real de Supabase
+    let usuario = await this.supabase.getCurrentUser();
+
+    // Si no hay sesión real, tomar vendedor temporal
+    if (!usuario) {
+      usuario = this.supabase.getVendedorTemp() || JSON.parse(localStorage.getItem('user') || '{}');
+    }
 
     if (!usuario) {
       alert('No se pudo obtener el usuario.');
@@ -232,9 +287,22 @@ export class VentasComponent implements OnInit {
       return;
     }
 
-    const usuario_id = usuario.id;
-    const usuario_nombre = usuario.user_metadata?.['nombre'] || 'Desconocido';
+    // Type-guard para diferenciar User de Supabase y VendedorTemp
+    let usuario_id: string;
+    let usuario_nombre: string;
 
+    if ('user_metadata' in usuario) {
+      // Usuario Supabase
+      usuario_id = usuario.id;
+      usuario_nombre = usuario.user_metadata?.['nombre'] || 'Desconocido';
+    } else {
+      // Vendedor temporal
+      const vendedor = usuario as VendedorTemp;
+      usuario_id = vendedor.id;
+      usuario_nombre = vendedor.nombre || 'Desconocido';
+    }
+
+    // Insertar venta
     const { data: venta, error } = await this.supabase.getClient().from('ventas').insert({
       usuario_id,
       usuario_nombre,
@@ -252,6 +320,7 @@ export class VentasComponent implements OnInit {
       return;
     }
 
+    // Insertar detalle de venta y actualizar stock
     for (const item of this.carrito) {
       await this.supabase.getClient().from('detalle_venta').insert({
         venta_id: venta.id,
@@ -289,6 +358,8 @@ export class VentasComponent implements OnInit {
     this.descuentoAplicado = 0;
     this.totalFinal = 0;
     this.cantidades = {};
+    this.montoEntregado = 0;
+    this.vuelto = 0;
   }
 
   quitarDescuento() {

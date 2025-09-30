@@ -10,7 +10,7 @@ import { filter } from 'rxjs/operators';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule, NavbarComponent,FooterComponent],
+  imports: [RouterOutlet, CommonModule, NavbarComponent, FooterComponent],
   templateUrl: './app.component.html',
 })
 export class AppComponent implements OnInit {
@@ -18,10 +18,9 @@ export class AppComponent implements OnInit {
   isAuthenticated = false;
   currentRoute = '';
   public title = 'ventas';
-  private static authListenerSet = false; // Static para evitar múltiples listeners
+  private static authListenerSet = false;
 
   constructor(public router: Router, private supabase: SupabaseService) {
-    // Escuchar cambios de navegación
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
@@ -35,24 +34,19 @@ export class AppComponent implements OnInit {
 
   private async initializeApp(): Promise<void> {
     try {
-      // 1. Solo verificar estado de auth - NUNCA redirigir
       await this.checkAuthStatusOnly();
       
-      // 2. Configurar listener SOLO si no se ha configurado antes
       if (!AppComponent.authListenerSet) {
         this.setupAuthListener();
         AppComponent.authListenerSet = true;
       }
       
-      // 3. Verificar inactividad y registrar actividad
       this.verificarInactividad();
       this.registrarActividad();
       
-      // 4. Marcar app como inicializada
       this.isAppInitialized = true;
       
     } catch (error) {
-      // Solo mostrar errores críticos en desarrollo
       if (!environment.production) {
         console.error('Error initializing app:', error);
       }
@@ -61,14 +55,11 @@ export class AppComponent implements OnInit {
     }
   }
 
-  // SOLO verificar estado - NUNCA navegar desde aquí
   private async checkAuthStatusOnly(): Promise<void> {
     try {
       const { data } = await this.supabase.getClient().auth.getSession();
       this.isAuthenticated = !!data.session;
-      // NO HAY NAVEGACIÓN AQUÍ - El authGuard se encarga de todo
     } catch (error) {
-      // Silenciar errores de NavigatorLockManager y similares
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (!environment.production && !errorMessage.includes('NavigatorLock')) {
         console.error('Error checking auth:', error);
@@ -81,26 +72,22 @@ export class AppComponent implements OnInit {
     this.supabase.getClient().auth.onAuthStateChange((event, session) => {
       this.isAuthenticated = !!session;
       
-      // SOLO redirigir en acciones explícitas del usuario
       if (event === 'SIGNED_OUT') {
-        // Usuario cerró sesión explícitamente
         this.router.navigate(['/login']);
       }
-      
-      // NO redirigir en SIGNED_IN ni INITIAL_SESSION
-      // El login component y el authGuard manejan estas redirecciones
     });
   }
 
-  // Método para mostrar el navbar
   mostrarNavbar(): boolean {
-  // Mostrar siempre para admin o vendedor
-  const user = localStorage.getItem('user');
-  return this.isAppInitialized && (this.isAuthenticated || !!user) && this.currentRoute !== '/login';
-}
+    const user = localStorage.getItem('user');
+    return this.isAppInitialized && (this.isAuthenticated || !!user) && this.currentRoute !== '/login';
+  }
 
+  mostrarFooter(): boolean {
+    // Mostrar el footer en todas las páginas excepto login, pero solo cuando la app esté inicializada
+    return this.isAppInitialized && this.currentRoute !== '/login';
+  }
 
-  // Método para mostrar el contenido
   mostrarContenido(): boolean {
     return this.isAppInitialized;
   }
@@ -112,7 +99,6 @@ export class AppComponent implements OnInit {
     };
 
     eventos.forEach(e => window.addEventListener(e, actualizarActividad));
-    // Registrar inmediatamente al entrar
     actualizarActividad();
   }
 
@@ -133,7 +119,6 @@ export class AppComponent implements OnInit {
         await this.supabase.getClient().auth.signOut();
       }
     } catch (error) {
-      // Solo mostrar errores críticos en desarrollo
       if (!environment.production) {
         console.error('Error checking inactivity:', error);
       }

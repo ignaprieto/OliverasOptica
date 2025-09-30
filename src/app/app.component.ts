@@ -88,8 +88,8 @@ export class AppComponent implements OnInit {
   }
 
   mostrarFooter(): boolean {
-    // NO mostrar el footer en login ni mientras no haya ruta definida
-    return this.currentRoute !== '' && this.currentRoute !== '/login' && this.currentRoute !== '/';
+    // Mostrar footer cuando la ruta esté definida (incluyendo login)
+    return this.currentRoute !== '';
   }
 
   mostrarContenido(): boolean {

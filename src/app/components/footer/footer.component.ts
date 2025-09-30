@@ -35,6 +35,20 @@ import { CommonModule } from '@angular/common';
   styles: [`
     :host {
       display: block;
+      position: relative;
+    }
+
+    footer {
+      opacity: 1;
+      transform: translateY(0);
+      transition: none;
+    }
+
+    /* Previene el salto visual */
+    :host::before {
+      content: '';
+      display: block;
+      height: 0;
     }
   `]
 })

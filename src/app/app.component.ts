@@ -17,6 +17,7 @@ export class AppComponent implements OnInit {
   isAppInitialized = false;
   isAuthenticated = false;
   currentRoute = '';
+  showFooter = false; // Nueva propiedad para controlar la visibilidad del footer
   public title = 'ventas';
   private static authListenerSet = false;
 
@@ -29,11 +30,20 @@ export class AppComponent implements OnInit {
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       this.currentRoute = event.url;
+      // Mostrar el footer después de que la navegación termine
+      this.showFooter = false;
+      setTimeout(() => {
+        this.showFooter = true;
+      }, 50);
     });
   }
 
   async ngOnInit(): Promise<void> {
     await this.initializeApp();
+    // Mostrar el footer después de que todo esté inicializado
+    setTimeout(() => {
+      this.showFooter = true;
+    }, 100);
   }
 
   private async initializeApp(): Promise<void> {
@@ -88,8 +98,8 @@ export class AppComponent implements OnInit {
   }
 
   mostrarFooter(): boolean {
-    // Mostrar footer cuando la ruta esté definida (incluyendo login)
-    return this.currentRoute !== '';
+    // Mostrar footer cuando la ruta esté definida Y showFooter sea true
+    return this.showFooter && this.currentRoute !== '';
   }
 
   mostrarContenido(): boolean {

@@ -30,20 +30,12 @@ export class AppComponent implements OnInit {
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
       this.currentRoute = event.url;
-      // Mostrar el footer después de que la navegación termine
-      this.showFooter = false;
-      setTimeout(() => {
-        this.showFooter = true;
-      }, 50);
     });
   }
 
   async ngOnInit(): Promise<void> {
     await this.initializeApp();
-    // Mostrar el footer después de que todo esté inicializado
-    setTimeout(() => {
-      this.showFooter = true;
-    }, 100);
+    this.showFooter = true;
   }
 
   private async initializeApp(): Promise<void> {

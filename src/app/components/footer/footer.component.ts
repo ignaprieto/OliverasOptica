@@ -1,5 +1,5 @@
 // footer.component.ts
-import { Component } from '@angular/core';
+import { Component, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -36,6 +36,11 @@ import { CommonModule } from '@angular/common';
     :host {
       display: block;
       position: relative;
+      visibility: hidden;
+    }
+
+    :host(.footer-ready) {
+      visibility: visible;
     }
 
     footer {
@@ -44,6 +49,15 @@ import { CommonModule } from '@angular/common';
     }
   `]
 })
-export class FooterComponent {
+export class FooterComponent implements AfterViewInit {
   currentYear = new Date().getFullYear();
+
+  constructor(private elementRef: ElementRef) {}
+
+  ngAfterViewInit() {
+    // Esperar a que el DOM esté completamente renderizado
+    setTimeout(() => {
+      this.elementRef.nativeElement.classList.add('footer-ready');
+    }, 150);
+  }
 }

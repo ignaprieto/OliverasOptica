@@ -5,6 +5,7 @@ import { Producto } from '../../models/producto.model';
 import { SupabaseService } from '../../services/supabase.service';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-productos',
@@ -20,7 +21,7 @@ export class ProductosComponent implements OnInit {
   ordenPrecio: 'asc' | 'desc' | 'none' = 'none';
   ordenStock: 'asc' | 'desc' | 'none' = 'none';
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService, public themeService: ThemeService) {}
 
   async ngOnInit() {
     const { data, error } = await this.supabase.getClient().from('productos').select('*');

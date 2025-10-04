@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
+import { ThemeService } from '../../services/theme.service';
 
 interface ProductoOriginal {
   producto_id: string;
@@ -135,7 +136,7 @@ mostrandoConfirmacionEliminar = false;
 ventaAEliminar: any = null;
 eliminandoVenta = false;
 motivoEliminacion = '';
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService, public themeService: ThemeService) {}
 
   async ngOnInit() {
     await this.obtenerUsuarioActual();

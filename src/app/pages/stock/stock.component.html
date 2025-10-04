@@ -1,11 +1,16 @@
-<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 animate-fade-in-scale">
+<div class="min-h-screen p-4 sm:p-8 animate-fade-in-scale transition-colors duration-300"
+     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-800'">
   <div class="w-full max-w-7xl mx-auto space-y-8">
     
     <!-- Header y botón de volver -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-      <h2 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Gestión de Stock</h2>
+      <h2 class="text-3xl font-bold mb-4 sm:mb-0"
+          [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'">Gestión de Stock</h2>
       <button routerLink="/dashboard"
-        class="group bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800 px-6 py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+        class="group px-6 py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+        [ngClass]="themeService.theme() === 'dark' 
+          ? 'bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-gray-100' 
+          : 'bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800'">
         <span class="flex items-center space-x-2">
           <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -27,8 +32,7 @@
             (click)="modo = 'agregar'"
             [class.bg-blue-600]="modo === 'agregar'"
             [class.text-white]="modo === 'agregar'"
-            [class.bg-gray-200]="modo !== 'agregar'"
-            [class.text-gray-800]="modo !== 'agregar'"
+            [ngClass]="modo !== 'agregar' ? (themeService.theme() === 'dark' ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-800') : null"
             class="px-5 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-md flex-1"
           >
             Agregar Producto
@@ -37,8 +41,7 @@
             (click)="modo = 'editar'"
             [class.bg-blue-600]="modo === 'editar'"
             [class.text-white]="modo === 'editar'"
-            [class.bg-gray-200]="modo !== 'editar'"
-            [class.text-gray-800]="modo !== 'editar'"
+            [ngClass]="modo !== 'editar' ? (themeService.theme() === 'dark' ? 'bg-gray-700 text-gray-200' : 'bg-gray-200 text-gray-800') : null"
             class="px-5 py-2 rounded-lg text-sm font-medium transition-all hover:shadow-md flex-1"
           >
             Editar Producto
@@ -46,66 +49,159 @@
         </div>
 
         <!-- Formulario Agregar -->
-        <div class="bg-white rounded-xl shadow-lg p-6" *ngIf="modo === 'agregar'">
-          <h3 class="text-xl font-semibold mb-6 text-gray-900 flex items-center">
+        <div class="rounded-xl shadow-lg p-6 transition-colors duration-300"
+             [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
+             *ngIf="modo === 'agregar'">
+          <h3 class="text-xl font-semibold mb-6 flex items-center"
+              [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
             <span class="w-2 h-2 bg-blue-600 rounded-full mr-3"></span>
             Agregar Producto
           </h3>
           <div class="space-y-4">
             <div>
-              <label class="text-sm font-medium mb-2 block text-gray-700">Código</label>
-              <input type="text" 
-                class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
-                [(ngModel)]="producto.codigo" 
-                placeholder="Ej: ABC123" />
+              <label class="text-sm font-medium mb-2 block"
+                     [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Código</label>
+              <div class="relative">
+                <input type="text" 
+                  class="input w-full px-4 py-3 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"
+                  [(ngModel)]="producto.codigo" 
+                  placeholder="Ej: ABC123" />
+                <button
+                  type="button"
+                  (click)="generarCodigoBarras()"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all hover:bg-blue-500 hover:text-white"
+                  [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300 hover:bg-blue-600' : 'text-gray-600'"
+                  title="Generar código de barras">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
             <div>
-              <label class="text-sm font-medium mb-2 block text-gray-700">Nombre</label>
+              <label class="text-sm font-medium mb-2 block"
+                     [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Nombre</label>
               <input type="text" 
-                class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                class="input w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                [ngClass]="themeService.theme() === 'dark' 
+                  ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"
                 [(ngModel)]="producto.nombre" 
                 placeholder="Nombre del producto" />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="text-sm font-medium mb-2 block text-gray-700">Marca</label>
+                <label class="text-sm font-medium mb-2 block"
+                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Marca</label>
                 <input type="text" 
-                  class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  class="input w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"
                   [(ngModel)]="producto.marca" 
                   placeholder="Marca" />
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block text-gray-700">Talle</label>
+                <label class="text-sm font-medium mb-2 block"
+                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Talle</label>
                 <input type="text" 
-                  class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  class="input w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"
                   [(ngModel)]="producto.talle" 
                   placeholder="S, M, L, XL..." />
               </div>
             </div>
             <div>
-              <label class="text-sm font-medium mb-2 block text-gray-700">Categoría</label>
+              <label class="text-sm font-medium mb-2 block"
+                     [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Categoría</label>
               <input type="text" 
-                class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                class="input w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                [ngClass]="themeService.theme() === 'dark' 
+                  ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"
                 [(ngModel)]="producto.categoria" 
                 placeholder="Ej: Remeras, Pantalones..." />
             </div>
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="text-sm font-medium mb-2 block text-gray-700">Precio</label>
+                <label class="text-sm font-medium mb-2 block"
+                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Precio</label>
                 <input type="number" 
-                  class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  class="input w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"
                   [(ngModel)]="producto.precio" 
                   placeholder="0.00" />
               </div>
               <div>
-                <label class="text-sm font-medium mb-2 block text-gray-700">Stock</label>
+                <label class="text-sm font-medium mb-2 block"
+                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Stock</label>
                 <input type="number" 
-                  class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  class="input w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all" 
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"
                   [(ngModel)]="producto.cantidad_stock" 
                   placeholder="0" />
               </div>
             </div>
           </div>
+
+          <!-- Visualización del Código de Barras -->
+          <div *ngIf="mostrarCodigoBarras" 
+               class="mt-6 p-4 rounded-xl border transition-all"
+               [ngClass]="themeService.theme() === 'dark' 
+                 ? 'bg-gray-700 border-gray-600' 
+                 : 'bg-gray-50 border-gray-200'">
+            <h4 class="text-sm font-semibold mb-3 flex items-center"
+                [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-700'">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+              </svg>
+              Código de Barras Generado
+            </h4>
+            
+            <div class="flex flex-col items-center space-y-4">
+              <div class="p-4 bg-white rounded-lg shadow-inner">
+                <canvas #barcodeCanvas></canvas>
+              </div>
+              
+              <div class="flex gap-3 w-full">
+                <button
+                  type="button"
+                  (click)="descargarCodigoBarras()"
+                  class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : 'bg-blue-500 hover:bg-blue-600 text-white'">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                  </svg>
+                  Descargar
+                </button>
+                
+                <button
+                  type="button"
+                  (click)="imprimirCodigoBarras()"
+                  class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                    : 'bg-green-500 hover:bg-green-600 text-white'">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                  </svg>
+                  Imprimir
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="flex flex-col gap-4 mt-6">
             <button (click)="guardarProducto()" 
               class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5">
@@ -122,356 +218,485 @@
           </div>
         </div>
 
-        <!-- Formulario Editar -->
-        <div class="bg-white rounded-xl shadow-lg p-6" *ngIf="modo === 'editar'">
-          <h3 class="text-xl font-semibold mb-4 text-gray-900 flex items-center">
-            <span class="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
-            Editar Producto
-          </h3>
-          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
-            <p class="text-sm text-blue-700 font-medium">💡 Selecciona un producto de la tabla para editarlo</p>
+       <!-- Formulario Editar -->
+<div class="rounded-xl shadow-lg p-6 transition-colors duration-300"
+     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
+     *ngIf="modo === 'editar'">
+  <h3 class="text-xl font-semibold mb-4 flex items-center"
+      [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
+    <span class="w-2 h-2 bg-orange-500 rounded-full mr-3"></span>
+    Editar Producto
+  </h3>
+  <div class="rounded-lg p-3 mb-6"
+       [ngClass]="themeService.theme() === 'dark' 
+         ? 'bg-blue-900/30 border border-blue-800' 
+         : 'bg-blue-50 border border-blue-200'">
+    <p class="text-sm font-medium"
+       [ngClass]="themeService.theme() === 'dark' ? 'text-blue-300' : 'text-blue-700'">💡 Selecciona un producto de la tabla para editarlo</p>
+  </div>
+  <div class="space-y-4">
+    <div>
+      <label class="text-sm font-medium mb-2 block"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Código</label>
+      <div class="relative">
+        <input type="text" 
+          class="input w-full px-4 py-3 pr-12 border rounded-lg cursor-not-allowed" 
+          [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-400' : 'bg-gray-100 border-gray-300 text-gray-600'"
+          [(ngModel)]="producto.codigo" 
+          [readonly]="true" />
+        <button
+          type="button"
+          (click)="generarImagenCodigoBarras(producto.codigo)"
+          class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all hover:bg-orange-500 hover:text-white"
+          [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400 hover:bg-orange-600' : 'text-gray-500'"
+          title="Ver código de barras">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div>
+      <label class="text-sm font-medium mb-2 block"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Nombre</label>
+      <input type="text" 
+        class="input w-full px-4 py-3 border rounded-lg cursor-not-allowed" 
+        [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-400' : 'bg-gray-100 border-gray-300 text-gray-600'"
+        [(ngModel)]="producto.nombre" 
+        [readonly]="true" />
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm font-medium mb-2 block"
+               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Marca</label>
+        <input type="text" 
+          class="input w-full px-4 py-3 border rounded-lg cursor-not-allowed" 
+          [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-400' : 'bg-gray-100 border-gray-300 text-gray-600'"
+          [(ngModel)]="producto.marca" 
+          [readonly]="true" />
+      </div>
+      <div>
+        <label class="text-sm font-medium mb-2 block"
+               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Talle</label>
+        <input type="text" 
+          class="input w-full px-4 py-3 border rounded-lg cursor-not-allowed" 
+          [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-400' : 'bg-gray-100 border-gray-300 text-gray-600'"
+          [(ngModel)]="producto.talle" 
+          [readonly]="true" />
+      </div>
+    </div>
+    <div>
+      <label class="text-sm font-medium mb-2 block"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Categoría</label>
+      <input type="text" 
+        class="input w-full px-4 py-3 border rounded-lg cursor-not-allowed" 
+        [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-400' : 'bg-gray-100 border-gray-300 text-gray-600'"
+        [(ngModel)]="producto.categoria" 
+        [readonly]="true" />
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label class="text-sm font-medium mb-2 block"
+               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Precio</label>
+        <input type="number" 
+          class="input w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all" 
+          [ngClass]="themeService.theme() === 'dark' 
+            ? 'bg-gray-700 border-gray-600 text-gray-100' 
+            : 'bg-white border-gray-300 text-gray-900'"
+          [(ngModel)]="producto.precio" />
+      </div>
+      <div>
+        <label class="text-sm font-medium mb-2 block"
+               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Stock</label>
+        <input type="number" 
+          class="input w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all" 
+          [ngClass]="themeService.theme() === 'dark' 
+            ? 'bg-gray-700 border-gray-600 text-gray-100' 
+            : 'bg-white border-gray-300 text-gray-900'"
+          [(ngModel)]="producto.cantidad_stock" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Visualización del Código de Barras en Modo Editar -->
+  <div *ngIf="mostrarCodigoBarras && modo === 'editar'" 
+       class="mt-6 p-4 rounded-xl border transition-all"
+       [ngClass]="themeService.theme() === 'dark' 
+         ? 'bg-gray-700 border-gray-600' 
+         : 'bg-gray-50 border-gray-200'">
+    <h4 class="text-sm font-semibold mb-3 flex items-center"
+        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-700'">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+      </svg>
+      Código de Barras
+    </h4>
+    
+    <div class="flex flex-col items-center space-y-4">
+      <div class="p-4 bg-white rounded-lg shadow-inner">
+        <canvas #barcodeCanvas></canvas>
+      </div>
+      
+      <div class="flex gap-3 w-full">
+        <button
+          type="button"
+          (click)="descargarCodigoBarras()"
+          class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+          [ngClass]="themeService.theme() === 'dark' 
+            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+            : 'bg-blue-500 hover:bg-blue-600 text-white'">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          Descargar
+        </button>
+        
+        <button
+          type="button"
+          (click)="imprimirCodigoBarras()"
+          class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5"
+          [ngClass]="themeService.theme() === 'dark' 
+            ? 'bg-green-600 hover:bg-green-700 text-white' 
+            : 'bg-green-500 hover:bg-green-600 text-white'">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+          </svg>
+          Imprimir
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-col gap-3 mt-6">
+    <button (click)="guardarProducto()" 
+      class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5">
+      <span class="flex items-center justify-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+        </svg>
+        Actualizar Producto
+      </span>
+    </button>
+    <div class="grid grid-cols-2 gap-3">
+      <button (click)="cancelarEdicion()" 
+        class="font-medium py-3 px-4 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5"
+        [ngClass]="themeService.theme() === 'dark' 
+          ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+          : 'bg-gray-300 hover:bg-gray-400 text-gray-800'">
+        Cancelar
+      </button>
+      <button 
+        *ngIf="producto.id" 
+        (click)="eliminarProducto(producto.id)" 
+        class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5">
+        Eliminar
+      </button>
+    </div>
+    <p *ngIf="error && modo === 'editar'" class="text-red-600 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-200">
+      {{ error }}
+    </p>
+  </div>
+</div>
+
+</div>
+
+<!-- COLUMNA DERECHA: Tabla de productos -->
+<div class="xl:col-span-8 space-y-6">
+  
+  <!-- Header de la sección -->
+  <div class="rounded-xl shadow-lg p-6 transition-colors duration-300"
+       [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
+    <h3 class="text-xl font-semibold mb-4 flex items-center"
+        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
+      <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
+      Inventario de Productos
+    </h3>
+    
+    <!-- Filtro y contador -->
+    <div class="space-y-4">
+      <!-- Filtro de texto -->
+      <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div class="flex-1 max-w-md">
+          <div class="relative">
+            <input
+              [(ngModel)]="filtro"
+              type="text"
+              placeholder="Buscar productos..."
+              class="w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+              [ngClass]="themeService.theme() === 'dark' 
+                ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"
+            />
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
           </div>
-          <div class="space-y-4">
-            <div>
-              <label class="text-sm font-medium mb-2 block text-gray-700">Código</label>
-              <input type="text" 
-                class="input w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
-                [(ngModel)]="producto.codigo" 
-                [readonly]="true" />
-            </div>
-            <div>
-              <label class="text-sm font-medium mb-2 block text-gray-700">Nombre</label>
-              <input type="text" 
-                class="input w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
-                [(ngModel)]="producto.nombre" 
-                [readonly]="true" />
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="text-sm font-medium mb-2 block text-gray-700">Marca</label>
-                <input type="text" 
-                  class="input w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
-                  [(ngModel)]="producto.marca" 
-                  [readonly]="true" />
-              </div>
-              <div>
-                <label class="text-sm font-medium mb-2 block text-gray-700">Talle</label>
-                <input type="text" 
-                  class="input w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
-                  [(ngModel)]="producto.talle" 
-                  [readonly]="true" />
-              </div>
-            </div>
-            <div>
-              <label class="text-sm font-medium mb-2 block text-gray-700">Categoría</label>
-              <input type="text" 
-                class="input w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed" 
-                [(ngModel)]="producto.categoria" 
-                [readonly]="true" />
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="text-sm font-medium mb-2 block text-gray-700">Precio</label>
-                <input type="number" 
-                  class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all" 
-                  [(ngModel)]="producto.precio" />
-              </div>
-              <div>
-                <label class="text-sm font-medium mb-2 block text-gray-700">Stock</label>
-                <input type="number" 
-                  class="input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all" 
-                  [(ngModel)]="producto.cantidad_stock" />
-              </div>
-            </div>
-          </div>
-          <div class="flex flex-col gap-3 mt-6">
-            <button (click)="guardarProducto()" 
-              class="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5">
-              <span class="flex items-center justify-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                </svg>
-                Actualizar Producto
-              </span>
-            </button>
-            <div class="grid grid-cols-2 gap-3">
-              <button (click)="cancelarEdicion()" 
-                class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-3 px-4 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5">
-                Cancelar
-              </button>
-              <button 
-                *ngIf="producto.id" 
-                (click)="eliminarProducto(producto.id)" 
-                class="bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5">
-                Eliminar
-              </button>
-            </div>
-            <p *ngIf="error && modo === 'editar'" class="text-red-600 text-sm font-medium bg-red-50 p-3 rounded-lg border border-red-200">
-              {{ error }}
+        </div>
+        
+        <ng-container *ngIf="productosFiltrados() as filtrados">
+          <div class="px-4 py-2 rounded-lg border"
+               [ngClass]="themeService.theme() === 'dark' 
+                 ? 'bg-green-900/30 border-green-800' 
+                 : 'bg-green-50 border-green-200'">
+            <p class="text-sm font-semibold"
+               [ngClass]="themeService.theme() === 'dark' ? 'text-green-300' : 'text-green-700'">
+              {{ filtrados.length }} de {{ productos.length }} producto{{ filtrados.length === 1 ? '' : 's' }}
             </p>
           </div>
-        </div>
-
-      </div>
-
-      <!-- COLUMNA DERECHA: Tabla de productos -->
-      <div class="xl:col-span-8 space-y-6">
-        
-        <!-- Header de la sección -->
-        <div class="bg-white rounded-xl shadow-lg p-6">
-          <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-            <span class="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
-            Inventario de Productos
-          </h3>
-          
-          <!-- Filtro y contador -->
-<div class="space-y-4">
-  <!-- Filtro de texto -->
-  <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-    <div class="flex-1 max-w-md">
-      <div class="relative">
-        <input
-          [(ngModel)]="filtro"
-          type="text"
-          placeholder="Buscar productos..."
-          class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-        />
-        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-        </div>
-      </div>
-    </div>
-    
-    <ng-container *ngIf="productosFiltrados() as filtrados">
-      <div class="bg-green-50 px-4 py-2 rounded-lg border border-green-200">
-        <p class="text-sm font-semibold text-green-700">
-          {{ filtrados.length }} de {{ productos.length }} producto{{ filtrados.length === 1 ? '' : 's' }}
-        </p>
-      </div>
-    </ng-container>
-  </div>
-
-  <!-- Filtro por estado -->
-<div>
-  <label class="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
-    <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
-    </svg>
-    <span>Filtrar por estado</span>
-  </label>
-  <div class="inline-flex bg-gradient-to-r from-gray-50 to-gray-100 p-1.5 rounded-2xl shadow-inner border border-gray-200">
-    <button 
-      (click)="filtroEstado = 'activos'" 
-      [class]="filtroEstado === 'activos' 
-        ? 'bg-gradient-to-br from-emerald-400 to-green-500 text-white shadow-lg shadow-green-500/40 scale-105' 
-        : 'text-gray-600 hover:bg-white/60'"
-      class="px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 transform flex items-center gap-2 min-w-[120px] justify-center">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
-      </svg>
-      <span>Activos</span>
-    </button>
-    
-    <button 
-      (click)="filtroEstado = 'desactivados'" 
-      [class]="filtroEstado === 'desactivados' 
-        ? 'bg-gradient-to-br from-rose-400 to-red-500 text-white shadow-lg shadow-red-500/40 scale-105' 
-        : 'text-gray-600 hover:bg-white/60'"
-      class="px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 transform flex items-center gap-2 min-w-[140px] justify-center">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
-      </svg>
-      <span>Desactivados</span>
-    </button>
-    
-    <button 
-      (click)="filtroEstado = 'todos'" 
-      [class]="filtroEstado === 'todos' 
-        ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-lg shadow-blue-500/40 scale-105' 
-        : 'text-gray-600 hover:bg-white/60'"
-      class="px-6 py-2.5 rounded-xl font-semibold transition-all duration-300 transform flex items-center gap-2 min-w-[120px] justify-center">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-      </svg>
-      <span>Todos</span>
-    </button>
-  </div>
-</div>
-</div>
-
-        <!-- Tabla de productos -->
-        <ng-container *ngIf="productosFiltrados() as filtrados">
-          <div *ngIf="filtrados.length > 0; else sinResultados"
-      class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-  <div class="max-h-[500px] overflow-y-auto overflow-x-auto xl:overflow-x-visible">
-    <table class="w-full text-sm text-left border-collapse">
-      <thead class="sticky top-0 z-10 bg-gradient-to-r from-gray-800 to-gray-900 text-white">
-        <tr>
-          <th class="px-4 py-4 font-semibold">Código</th>
-          <th class="px-4 py-4 font-semibold">Producto</th>
-          <th class="px-4 py-4 font-semibold">Marca</th>
-          <th class="px-4 py-4 font-semibold">Talle</th>
-          <th class="px-4 py-4 font-semibold">Categoría</th>
-
-          <th class="px-4 py-4 font-semibold text-right cursor-pointer hover:bg-gray-700 transition-colors rounded-lg select-none"
-              (click)="toggleOrdenPrecio()"
-              title="Click para ordenar por precio">
-            <div class="flex items-center justify-end space-x-2 px-2 py-1">
-              <span>Precio</span>
-              <div class="flex flex-col">
-                <svg class="w-3 h-3 transition-colors"
-                     [class.text-blue-400]="ordenPrecio === 'desc'"
-                     [class.text-gray-400]="ordenPrecio !== 'desc'"
-                     fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                </svg>
-                <svg class="w-3 h-3 -mt-1 transition-colors"
-                     [class.text-blue-400]="ordenPrecio === 'asc'"
-                     [class.text-gray-400]="ordenPrecio !== 'asc'"
-                     fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </th>
-
-          <th class="px-4 py-4 font-semibold text-center cursor-pointer hover:bg-gray-700 transition-colors rounded-lg select-none"
-              (click)="toggleOrdenStock()"
-              title="Click para ordenar por stock">
-            <div class="flex items-center justify-center space-x-2 px-2 py-1">
-              <span>Stock</span>
-              <div class="flex flex-col">
-                <svg class="w-3 h-3 transition-colors"
-                     [class.text-green-400]="ordenStock === 'desc'"
-                     [class.text-gray-400]="ordenStock !== 'desc'"
-                     fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
-                </svg>
-                <svg class="w-3 h-3 -mt-1 transition-colors"
-                     [class.text-green-400]="ordenStock === 'asc'"
-                     [class.text-gray-400]="ordenStock !== 'asc'"
-                     fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                </svg>
-              </div>
-            </div>
-          </th>
-          <th class="px-4 py-4 font-semibold text-center">Estado</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-100">
-        <tr
-          *ngFor="let prod of filtrados; let i = index"
-          class="hover:bg-blue-50 cursor-pointer transition-all duration-200 hover:shadow-sm"
-          [class.bg-blue-50]="producto.id === prod.id"
-          (click)="seleccionarProducto(prod)"
-        >
-          <td class="px-4 py-4 font-mono text-xs bg-gray-50">
-            <span class="bg-gray-200 px-2 py-1 rounded">{{ prod.codigo }}</span>
-          </td>
-          <td class="px-4 py-4 font-medium text-gray-900">{{ prod.nombre }}</td>
-          <td class="px-4 py-4 text-gray-600">{{ prod.marca }}</td>
-          <td class="px-4 py-4">
-            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-              {{ prod.talle }}
-            </span>
-          </td>
-          <td class="px-4 py-4">
-            <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
-              {{ prod.categoria }}
-            </span>
-          </td>
-          <td class="px-4 py-4 font-semibold text-green-600 text-right">{{ prod.precio | monedaArs }}</td>
-          <td class="px-4 py-4 text-center">
-            <span
-              class="px-2 py-1 rounded-full text-xs font-bold"
-              [class.bg-red-100]="prod.cantidad_stock < 5"
-              [class.text-red-800]="prod.cantidad_stock < 5"
-              [class.bg-yellow-100]="prod.cantidad_stock >= 5 && prod.cantidad_stock <= 20"
-              [class.text-yellow-800]="prod.cantidad_stock >= 5 && prod.cantidad_stock <= 20"
-              [class.bg-green-100]=" prod.cantidad_stock >= 20"
-              [class.text-green-800]=" prod.cantidad_stock >= 20"
-            >
-              {{ prod.cantidad_stock }}
-            </span>
-          </td>
-          <td class="px-4 py-4 text-center" (click)="$event.stopPropagation()">
-  <button
-    (click)="toggleEstadoProducto(prod)"
-    [class.bg-green-500]="prod.activo"
-    [class.hover:bg-green-600]="prod.activo"
-    [class.bg-red-500]="!prod.activo"
-    [class.hover:bg-red-600]="!prod.activo"
-    class="px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
-    {{ prod.activo ? '✓ Activo' : '✗ Inactivo' }}
-  </button>
-</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-          <!-- Template cuando no hay resultados -->
-          <ng-template #sinResultados>
-            <div class="bg-white rounded-xl shadow-lg p-8 text-center border border-gray-200">
-              <div class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
-                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                </svg>
-              </div>
-              <h4 class="text-lg font-semibold text-gray-900 mb-2">No se encontraron productos</h4>
-              <p class="text-gray-500">Intenta modificar tu búsqueda o agrega nuevos productos al inventario.</p>
-            </div>
-          </ng-template>
         </ng-container>
-
       </div>
-    </div>
 
+      <!-- Filtro por estado -->
+      <div class="w-full">
+        <label class="text-sm font-medium mb-3 flex items-center gap-2"
+               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
+          <svg class="w-4 h-4"
+               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+          </svg>
+          <span>Filtrar por estado</span>
+        </label>
+        
+        <!-- Contenedor responsivo -->
+        <div class="inline-flex flex-wrap sm:flex-nowrap p-1.5 rounded-2xl shadow-inner border gap-1 w-full sm:w-auto"
+             [ngClass]="themeService.theme() === 'dark' 
+               ? 'bg-gray-700 border-gray-600' 
+               : 'bg-gradient-to-r from-gray-50 to-gray-100 border-gray-200'">
+          <button
+            (click)="filtroEstado = 'activos'"
+            [class]="filtroEstado === 'activos'
+              ? 'bg-gradient-to-br from-emerald-400 to-green-500 text-white shadow-lg shadow-green-500/40 translate-y-[-2px]'
+              : (themeService.theme() === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-white/60') + ' hover:translate-y-[-1px]'"
+            class="px-4 sm:px-5 py-2 rounded-xl font-semibold transition-all duration-500 ease-out transform flex items-center gap-2 flex-1 sm:flex-initial sm:min-w-[110px] justify-center text-sm">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Activos</span>
+          </button>
+         
+          <button
+            (click)="filtroEstado = 'desactivados'"
+            [class]="filtroEstado === 'desactivados'
+              ? 'bg-gradient-to-br from-rose-400 to-red-500 text-white shadow-lg shadow-red-500/40 translate-y-[-2px]'
+              : (themeService.theme() === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-white/60') + ' hover:translate-y-[-1px]'"
+            class="px-4 sm:px-5 py-2 rounded-xl font-semibold transition-all duration-500 ease-out transform flex items-center gap-2 flex-1 sm:flex-initial sm:min-w-[130px] justify-center text-sm">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            <span>Desactivados</span>
+          </button>
+         
+          <button
+            (click)="filtroEstado = 'todos'"
+            [class]="filtroEstado === 'todos'
+              ? 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-lg shadow-blue-500/40 translate-y-[-2px]'
+              : (themeService.theme() === 'dark' ? 'text-gray-300 hover:bg-gray-600' : 'text-gray-600 hover:bg-white/60') + ' hover:translate-y-[-1px]'"
+            class="px-4 sm:px-5 py-2 rounded-xl font-semibold transition-all duration-500 ease-out transform flex items-center gap-2 flex-1 sm:flex-initial sm:min-w-[110px] justify-center text-sm">
+            <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <span>Todos</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabla de productos -->
+      <ng-container *ngIf="productosFiltrados() as filtrados">
+        <div *ngIf="filtrados.length > 0; else sinResultados"
+             [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
+             class="rounded-xl shadow-lg border overflow-hidden">
+          <div class="max-h-[500px] overflow-y-auto">
+            <table class="w-full text-sm text-left border-collapse">
+              <thead class="sticky top-0 z-10 bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                <tr>
+                  <th class="px-3 py-4 font-semibold whitespace-nowrap">Código</th>
+                  <th class="px-3 py-4 font-semibold whitespace-nowrap">Producto</th>
+                  <th class="px-3 py-4 font-semibold whitespace-nowrap">Marca</th>
+                  <th class="px-3 py-4 font-semibold whitespace-nowrap">Talle</th>
+                  <th class="px-3 py-4 font-semibold whitespace-nowrap">Categoría</th>
+                  <th class="px-3 py-4 font-semibold text-right cursor-pointer hover:bg-gray-700 transition-colors rounded-lg select-none whitespace-nowrap"
+                      (click)="toggleOrdenPrecio()"
+                      title="Click para ordenar por precio">
+                    <div class="flex items-center justify-end space-x-2 px-2 py-1">
+                      <span>Precio</span>
+                      <div class="flex flex-col">
+                        <svg class="w-3 h-3 transition-colors"
+                             [class.text-blue-400]="ordenPrecio === 'desc'"
+                             [class.text-gray-400]="ordenPrecio !== 'desc'"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        <svg class="w-3 h-3 -mt-1 transition-colors"
+                             [class.text-blue-400]="ordenPrecio === 'asc'"
+                             [class.text-gray-400]="ordenPrecio !== 'asc'"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  </th>
+                  <th class="px-3 py-4 font-semibold text-center cursor-pointer hover:bg-gray-700 transition-colors rounded-lg select-none whitespace-nowrap"
+                      (click)="toggleOrdenStock()"
+                      title="Click para ordenar por stock">
+                    <div class="flex items-center justify-center space-x-2 px-2 py-1">
+                      <span>Stock</span>
+                      <div class="flex flex-col">
+                        <svg class="w-3 h-3 transition-colors"
+                             [class.text-green-400]="ordenStock === 'desc'"
+                             [class.text-gray-400]="ordenStock !== 'desc'"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
+                        </svg>
+                        <svg class="w-3 h-3 -mt-1 transition-colors"
+                             [class.text-green-400]="ordenStock === 'asc'"
+                             [class.text-gray-400]="ordenStock !== 'asc'"
+                             fill="currentColor" viewBox="0 0 20 20">
+                          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  </th>
+                  <th class="px-3 py-4 font-semibold text-center whitespace-nowrap">Estado</th>
+                </tr>
+              </thead>
+              <tbody [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-100'" class="divide-y">
+                <tr
+                  *ngFor="let prod of filtrados; let i = index"
+                  [ngClass]="{
+                    'hover:bg-blue-900/30': themeService.theme() === 'dark',
+                    'hover:bg-blue-50': themeService.theme() === 'light',
+                    'bg-blue-900/50': themeService.theme() === 'dark' && producto.id === prod.id,
+                    'bg-blue-50': themeService.theme() === 'light' && producto.id === prod.id
+                  }"
+                  class="cursor-pointer transition-all duration-200 hover:shadow-sm"
+                  (click)="seleccionarProducto(prod)"
+                >
+                  <td class="px-3 py-4 font-mono text-xs whitespace-nowrap"
+                      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700' : 'bg-gray-50'">
+                    <span [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-600 text-gray-200' : 'bg-gray-200 text-gray-900'"
+                          class="px-2 py-1 rounded">{{ prod.codigo }}</span>
+                  </td>
+                  <td class="px-3 py-4 font-medium whitespace-nowrap"
+                      [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">{{ prod.nombre }}</td>
+                  <td class="px-3 py-4 whitespace-nowrap"
+                      [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">{{ prod.marca }}</td>
+                  <td class="px-3 py-4 whitespace-nowrap">
+                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {{ prod.talle }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-4 whitespace-nowrap">
+                    <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {{ prod.categoria }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-4 font-semibold text-green-600 text-right whitespace-nowrap">{{ prod.precio | monedaArs }}</td>
+                  <td class="px-3 py-4 text-center whitespace-nowrap">
+                    <span
+                      class="px-2 py-1 rounded-full text-xs font-bold"
+                      [class.bg-red-100]="prod.cantidad_stock < 5"
+                      [class.text-red-800]="prod.cantidad_stock < 5"
+                      [class.bg-yellow-100]="prod.cantidad_stock >= 5 && prod.cantidad_stock <= 20"
+                      [class.text-yellow-800]="prod.cantidad_stock >= 5 && prod.cantidad_stock <= 20"
+                      [class.bg-green-100]="prod.cantidad_stock >= 20"
+                      [class.text-green-800]="prod.cantidad_stock >= 20"
+                    >
+                      {{ prod.cantidad_stock }}
+                    </span>
+                  </td>
+                  <td class="px-3 py-4 text-center whitespace-nowrap" (click)="$event.stopPropagation()">
+                    <button
+                      (click)="toggleEstadoProducto(prod)"
+                      [class.bg-green-500]="prod.activo"
+                      [class.hover:bg-green-600]="prod.activo"
+                      [class.bg-red-500]="!prod.activo"
+                      [class.hover:bg-red-600]="!prod.activo"
+                      class="px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition-all shadow-sm hover:shadow-md transform hover:-translate-y-0.5">
+                      {{ prod.activo ? '✓ Activo' : '✗ Inactivo' }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Template cuando no hay resultados -->
+        <ng-template #sinResultados>
+          <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
+               class="rounded-xl shadow-lg p-8 text-center border">
+            <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700' : 'bg-gray-100'"
+                 class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center">
+              <svg [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-400'"
+                   class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+              </svg>
+            </div>
+            <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
+                class="text-lg font-semibold mb-2">No se encontraron productos</h4>
+            <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+              Intenta modificar tu búsqueda o agrega nuevos productos al inventario.
+            </p>
+          </div>
+        </ng-template>
+      </ng-container>
+
+    </div>
   </div>
 
-  <!-- Modal de confirmación - MOVIDO FUERA DEL CONTAINER PRINCIPAL -->
-  <div *ngIf="mostrarConfirmacion" 
-       class="fixed inset-0 z-50 flex items-center justify-center p-4"
-       (click)="cancelarEliminar()">
-    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
-    <div class="relative bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center animate-fade-in-scale"
-         (click)="$event.stopPropagation()">
-      <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
-        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-        </svg>
-      </div>
-      <h3 class="text-xl font-bold mb-3 text-gray-900">¿Eliminar producto?</h3>
-      <p class="text-gray-600 mb-6">Esta acción no se puede deshacer. El producto será eliminado permanentemente del inventario.</p>
-      <div class="flex justify-center gap-4">
-        <button
-          class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5 font-medium"
-          (click)="confirmarEliminar()"
-        >
-          Sí, eliminar
-        </button>
-        <button
-          class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5 font-medium"
-          (click)="cancelarEliminar()"
-        >
-          Cancelar
-        </button>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Toast de notificación - MOVIDO FUERA DEL CONTAINER PRINCIPAL -->
-  <div *ngIf="mostrarToast"
-    class="fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-xl z-50 text-white font-medium animate-slide-up bg-gradient-to-r from-green-500 to-green-600 border border-green-400">
-    <div class="flex items-center">
-      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+</div>
+
+</div>
+
+<!-- Modal de confirmación -->
+<div *ngIf="mostrarConfirmacion" 
+     class="fixed inset-0 z-50 flex items-center justify-center p-4"
+     (click)="cancelarEliminar()">
+  <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+  <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
+       class="relative p-8 rounded-2xl shadow-2xl max-w-md w-full text-center animate-fade-in-scale"
+       (click)="$event.stopPropagation()">
+    <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+      <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
       </svg>
-      {{ mensaje }}
+    </div>
+    <h3 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
+        class="text-xl font-bold mb-3">¿Eliminar producto?</h3>
+    <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'"
+       class="mb-6">Esta acción no se puede deshacer. El producto será eliminado permanentemente del inventario.</p>
+    <div class="flex justify-center gap-4">
+      <button
+        class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5 font-medium"
+        (click)="confirmarEliminar()"
+      >
+        Sí, eliminar
+      </button>
+      <button
+        [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-600 hover:bg-gray-700 text-gray-200' : 'bg-gray-300 hover:bg-gray-400 text-gray-800'"
+        class="px-6 py-3 rounded-lg shadow-md transition-all hover:shadow-lg transform hover:-translate-y-0.5 font-medium"
+        (click)="cancelarEliminar()"
+      >
+        Cancelar
+      </button>
     </div>
   </div>
+</div>
+
+<!-- Toast de notificación -->
+<div *ngIf="mostrarToast"
+  class="fixed bottom-6 right-6 px-6 py-4 rounded-xl shadow-xl z-50 text-white font-medium animate-slide-up bg-gradient-to-r from-green-500 to-green-600 border border-green-400">
+  <div class="flex items-center">
+    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    {{ mensaje }}
+  </div>
+</div>
+
+</div>
 </div>

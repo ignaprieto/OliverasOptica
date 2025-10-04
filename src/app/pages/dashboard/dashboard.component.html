@@ -1,19 +1,19 @@
-<div class="bg-gray-100 min-h-screen p-4 sm:p-8 md:p-12 animate-fade-in-scale">
+<div class="min-h-screen p-4 sm:p-8 md:p-12 animate-fade-in-scale transition-colors duration-300" [ngClass]="themeService.isDark() ? 'bg-gray-900' : 'bg-gray-100'">
   <div class="w-full max-w-7xl mx-auto">
     <!-- Título principal -->
     <header class="text-center mb-10 md:mb-16">
-      <h1 class="text-3xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-2">
+      <h1 class="text-3xl md:text-5xl font-extrabold leading-tight mb-2 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">
         Panel de Control Administrativo
       </h1>
-      <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">
+      <p class="text-base md:text-lg max-w-2xl mx-auto transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-600'">
         Accede rápidamente a las funcionalidades clave de tu sistema de gestión.
       </p>
     </header>
 
     <!-- Sección de estadísticas del día -->
     <div class="mb-10">
-      <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <h2 class="text-2xl font-bold mb-6 flex items-center transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-200' : 'text-gray-800'">
+        <svg class="w-6 h-6 mr-2" [ngClass]="themeService.isDark() ? 'text-blue-400' : 'text-blue-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
         </svg>
         Estadísticas de Hoy
@@ -21,9 +21,9 @@
 
       <!-- Loader mientras carga -->
       <div *ngIf="cargando" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div *ngFor="let item of [1,2,3,4]" class="bg-white rounded-xl p-6 shadow-md animate-pulse">
-          <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-          <div class="h-8 bg-gray-200 rounded w-1/2"></div>
+        <div *ngFor="let item of [1,2,3,4]" class="rounded-xl p-6 shadow-md animate-pulse transition-colors duration-300" [ngClass]="themeService.isDark() ? 'bg-gray-800' : 'bg-white'">
+          <div class="h-4 rounded w-3/4 mb-4" [ngClass]="themeService.isDark() ? 'bg-gray-700' : 'bg-gray-200'"></div>
+          <div class="h-8 rounded w-1/2" [ngClass]="themeService.isDark() ? 'bg-gray-700' : 'bg-gray-200'"></div>
         </div>
       </div>
 
@@ -31,7 +31,7 @@
       <div *ngIf="!cargando" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
         <!-- Ventas Hoy -->
-        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
+        <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-gradient-to-br from-blue-500 to-blue-600'">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Ventas Hoy</h3>
             <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,7 +43,7 @@
         </div>
 
         <!-- Total Recaudado -->
-        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
+        <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-green-600 to-green-700' : 'bg-gradient-to-br from-green-500 to-green-600'">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Recaudado</h3>
             <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@
         </div>
 
         <!-- Productos Vendidos -->
-        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
+        <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-purple-600 to-purple-700' : 'bg-gradient-to-br from-purple-500 to-purple-600'">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Unidades</h3>
             <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,8 +67,7 @@
         </div>
 
         <!-- Alertas de Stock -->
-         
-        <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
+        <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-orange-600 to-red-600' : 'bg-gradient-to-br from-orange-500 to-red-500'">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Alertas</h3>
             <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,114 +85,128 @@
       </div>
     </div>
 
-    <!-- Sección de navegación (tu código existente) -->
+    <!-- Sección de navegación -->
     <div>
-      <h2 class="text-2xl font-bold text-gray-800 mb-6">Accesos Rápidos</h2>
+      <h2 class="text-2xl font-bold mb-6 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-200' : 'text-gray-800'">Accesos Rápidos</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        <!-- Tus tarjetas existentes... -->
-        <a routerLink="/stock" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
+        <!-- Stock -->
+        <a routerLink="/stock" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
-            <div class="bg-indigo-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-indigo-600' : 'bg-indigo-500'">
               <i class="fas fa-box-open text-xl"></i>
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-gray-900 mb-1">Stock</h3>
-              <p class="text-sm text-gray-500">Agrega productos y actualiza el stock disponible.</p>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Stock</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Agrega productos y actualiza el stock disponible.</p>
             </div>
           </div>
         </a>
 
-<!-- Tarjeta para Ventas -->
-      <a routerLink="/ventas" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
-        <div class="flex items-start">
-          <div class="bg-green-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
-            <i class="fas fa-cash-register text-xl"></i>
+        <!-- Ventas -->
+        <a routerLink="/ventas" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-green-600' : 'bg-green-500'">
+              <i class="fas fa-cash-register text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Ventas</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Gestión y registro de ventas.</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">Ventas</h3>
-            <p class="text-sm text-gray-500">Gestión y registro de ventas.</p>
-          </div>
-        </div>
-      </a>
+        </a>
 
-      <!-- Tarjeta para Historial -->
-      <a routerLink="/historial" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
-        <div class="flex items-start">
-          <div class="bg-rose-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
-            <i class="fas fa-history text-xl"></i>
+        <!-- Historial -->
+        <a routerLink="/historial" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-rose-600' : 'bg-rose-500'">
+              <i class="fas fa-history text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Historial</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Consulta historial de ventas y movimientos.</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">Historial</h3>
-            <p class="text-sm text-gray-500">Consulta historial de ventas y movimientos.</p>
-          </div>
-        </div>
-      </a>
+        </a>
 
-      <!-- Tarjeta para Productos -->
-      <a routerLink="/productos" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
-        <div class="flex items-start">
-          <div class="bg-yellow-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
-            <i class="fas fa-tags text-xl"></i>
+        <!-- Productos -->
+        <a routerLink="/productos" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-yellow-600' : 'bg-yellow-500'">
+              <i class="fas fa-tags text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Productos</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Ver productos disponibles.</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">Productos</h3>
-            <p class="text-sm text-gray-500">Ver productos disponibles.</p>
-          </div>
-        </div>
-      </a>
+        </a>
 
-      <!-- Tarjeta para Aumento -->
-      <a routerLink="/aumento" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
-        <div class="flex items-start">
-          <div class="bg-orange-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
-            <i class="fas fa-arrow-up text-xl"></i>
+        <!-- Aumento -->
+        <a routerLink="/aumento" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-orange-600' : 'bg-orange-500'">
+              <i class="fas fa-arrow-up text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Aumento</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Aplica aumentos por categoría o individual.</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">Aumento</h3>
-            <p class="text-sm text-gray-500">Aplica aumentos por categoría o individual.</p>
-          </div>
-        </div>
-      </a>
+        </a>
 
-      <!-- Tarjeta para Descuentos -->
-      <a routerLink="/descuentos" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
-        <div class="flex items-start">
-          <div class="bg-teal-500 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
-            <i class="fas fa-percent text-xl"></i>
+        <!-- Descuentos -->
+        <a routerLink="/descuentos" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-teal-600' : 'bg-teal-500'">
+              <i class="fas fa-percent text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Descuentos</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Gestiona descuentos en productos.</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">Descuentos</h3>
-            <p class="text-sm text-gray-500">Gestiona descuentos en productos.</p>
-          </div>
-        </div>
-      </a>
+        </a>
 
-      <!-- Tarjeta para Finanzas -->
-      <a routerLink="/finanzas" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
-        <div class="flex items-start">
-          <div class="bg-green-700 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
-            <i class="fas fa-dollar-sign text-xl"></i>
+        <!-- Finanzas -->
+        <a routerLink="/finanzas" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-green-800' : 'bg-green-700'">
+              <i class="fas fa-dollar-sign text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Finanzas</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Gestión de gastos y finanzas.</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">Finanzas</h3>
-            <p class="text-sm text-gray-500">Gestión de gastos y finanzas.</p>
-          </div>
-        </div>
-      </a>
+        </a>
 
-      <!-- Tarjeta para Finanzas -->
-      <a routerLink="/empleados" class="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border border-gray-200">
-        <div class="flex items-start">
-          <div class="bg-blue-700 text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm">
-            <i class="fas fa-dollar-sign text-xl"></i>
+        <!-- Empleados -->
+        <a routerLink="/empleados" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-blue-800' : 'bg-blue-700'">
+              <i class="fas fa-user-tie text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Empleados</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Gestión de vendedores.</p>
+            </div>
           </div>
-          <div>
-            <h3 class="text-lg font-semibold text-gray-900 mb-1">Empleados</h3>
-            <p class="text-sm text-gray-500">Gestión de vendedores.</p>
+        </a>
+
+        <!-- Configuración -->
+        <a routerLink="/configuracion" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-gray-600' : 'bg-gray-500'">
+              <i class="fas fa-cogs text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Configuración</h3>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Configura opciones del sistema.</p>
+            </div>
           </div>
-        </div>
-      </a>
+        </a>
+
       </div>
     </div>
 

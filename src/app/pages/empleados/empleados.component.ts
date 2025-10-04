@@ -3,6 +3,7 @@ import { Router, RouterModule } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-empleados',
@@ -31,7 +32,7 @@ export class EmpleadosComponent implements OnInit {
   showDeleteModal: boolean = false;
   vendedorAEliminar: any = null;
 
-  constructor(private supabase: SupabaseService, private router: Router) {}
+  constructor(private supabase: SupabaseService, private router: Router, public themeService: ThemeService) {}
 
   async ngOnInit() {
     await this.cargarVendedores();

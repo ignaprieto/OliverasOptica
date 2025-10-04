@@ -5,8 +5,9 @@ import { SupabaseService } from '../../services/supabase.service';
 import { Producto } from '../../models/producto.model';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
+import { ThemeService } from '../../services/theme.service';
 
-// Move type declaration OUTSIDE the class
+
 type VendedorTemp = {
   id: string;
   rol: string;
@@ -48,7 +49,7 @@ export class VentasComponent implements OnInit {
   procesandoVenta: boolean = false;
   toastColor = 'bg-green-600';
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService, public themeService: ThemeService) {}
 
   async ngOnInit() {
     await this.obtenerProductos();
@@ -60,44 +61,45 @@ export class VentasComponent implements OnInit {
   }
 
   productosFiltrados() {
-    const filtro = this.filtroGeneral.toLowerCase().trim();
+  const filtro = this.filtroGeneral.toLowerCase().trim();
 
-    let productos = this.productos.filter(prod => {
-      const enCarrito = this.carrito.find(c => c.producto.id === prod.id)?.cantidad || 0;
-      const disponible = prod.cantidad_stock - enCarrito;
+  let productos = this.productos.filter(prod => {
+    const enCarrito = this.carrito.find(c => c.producto.id === prod.id)?.cantidad || 0;
+    const disponible = prod.cantidad_stock - enCarrito;
 
-      return disponible > 0 && (
-        prod.codigo?.toString().includes(filtro) ||
-        prod.nombre?.toLowerCase().includes(filtro) ||
-        prod.marca?.toLowerCase().includes(filtro) ||
-        prod.categoria?.toLowerCase().includes(filtro)
-      );
-    });
+    // Agregar filtro para productos activos
+    return prod.activo && disponible > 0 && (
+      prod.codigo?.toString().includes(filtro) ||
+      prod.nombre?.toLowerCase().includes(filtro) ||
+      prod.marca?.toLowerCase().includes(filtro) ||
+      prod.categoria?.toLowerCase().includes(filtro)
+    );
+  });
 
-    // Aplicar ordenamiento por precio
-    if (this.ordenPrecio === 'asc') {
-      productos = productos.sort((a, b) => a.precio - b.precio);
-    } else if (this.ordenPrecio === 'desc') {
-      productos = productos.sort((a, b) => b.precio - a.precio);
-    }
-
-    // Aplicar ordenamiento por stock
-    if (this.ordenStock === 'asc') {
-      productos = productos.sort((a, b) => {
-        const stockA = a.cantidad_stock - (this.carrito.find(c => c.producto.id === a.id)?.cantidad || 0);
-        const stockB = b.cantidad_stock - (this.carrito.find(c => c.producto.id === b.id)?.cantidad || 0);
-        return stockA - stockB;
-      });
-    } else if (this.ordenStock === 'desc') {
-      productos = productos.sort((a, b) => {
-        const stockA = a.cantidad_stock - (this.carrito.find(c => c.producto.id === a.id)?.cantidad || 0);
-        const stockB = b.cantidad_stock - (this.carrito.find(c => c.producto.id === b.id)?.cantidad || 0);
-        return stockB - stockA;
-      });
-    }
-
-    return productos;
+  // Aplicar ordenamiento por precio
+  if (this.ordenPrecio === 'asc') {
+    productos = productos.sort((a, b) => a.precio - b.precio);
+  } else if (this.ordenPrecio === 'desc') {
+    productos = productos.sort((a, b) => b.precio - a.precio);
   }
+
+  // Aplicar ordenamiento por stock
+  if (this.ordenStock === 'asc') {
+    productos = productos.sort((a, b) => {
+      const stockA = a.cantidad_stock - (this.carrito.find(c => c.producto.id === a.id)?.cantidad || 0);
+      const stockB = b.cantidad_stock - (this.carrito.find(c => c.producto.id === b.id)?.cantidad || 0);
+      return stockA - stockB;
+    });
+  } else if (this.ordenStock === 'desc') {
+    productos = productos.sort((a, b) => {
+      const stockA = a.cantidad_stock - (this.carrito.find(c => c.producto.id === a.id)?.cantidad || 0);
+      const stockB = b.cantidad_stock - (this.carrito.find(c => c.producto.id === b.id)?.cantidad || 0);
+      return stockB - stockA;
+    });
+  }
+
+  return productos;
+}
 
   // Alternar ordenamiento por precio: none -> desc -> asc -> none
   toggleOrdenPrecio() {

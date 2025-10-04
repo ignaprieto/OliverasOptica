@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-finanzas',
@@ -50,7 +51,7 @@ export class FinanzasComponent implements OnInit {
   toastTipo: 'success' | 'error' = 'success';
   toastTimeout: any = null;
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService, public themeService: ThemeService) {}
 
   async ngOnInit() {
     await this.cargarDatos();

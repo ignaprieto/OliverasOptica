@@ -1,5 +1,33 @@
 @import "tailwindcss";
 
+/* Configuración de modo oscuro para Tailwind 4 */
+@theme {
+  --color-scheme: light dark;
+}
+
+/* Estilos base con soporte para modo oscuro */
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  html {
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  body {
+    @apply bg-white text-gray-900;
+  }
+
+  .dark body {
+    @apply bg-gray-900 text-white;
+  }
+}
+
 @layer utilities {
   .animate-fade-in-scale {
     animation: fadeInScale 0.4s ease-in-out;
@@ -21,6 +49,10 @@
   .input {
     @apply border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition;
   }
+
+  .dark .input {
+    @apply border-gray-600 bg-gray-800 text-white;
+  }
 }
 
 @keyframes fade-in-out {
@@ -35,7 +67,7 @@
 
 .input.destacar {
   animation: resaltarInput 1s ease-in-out 0s 2;
-  border-color: #0f8cd5; /* naranja ámbar */
+  border-color: #0f8cd5;
   box-shadow: 0 0 10px #0f8cd5;
 }
 

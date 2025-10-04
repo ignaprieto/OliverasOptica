@@ -1,11 +1,18 @@
-<div class="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8 flex justify-center animate-fade-in-scale">
+<div class="min-h-screen p-4 sm:p-8 flex justify-center animate-fade-in-scale"
+     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-800'">
   <div class="w-full max-w-7xl space-y-8">
 
     <!-- Header y botón de volver -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-      <h2 class="text-3xl font-bold text-gray-900 mb-4 sm:mb-0">Historial de Ventas y Recambios</h2>
+      <h2 class="text-3xl font-bold mb-4 sm:mb-0"
+          [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
+        Historial de Ventas y Recambios
+      </h2>
       <button routerLink="/dashboard"
-        class="group bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800 px-6 py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+        class="group px-6 py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+        [ngClass]="themeService.theme() === 'dark' 
+          ? 'bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-gray-100'
+          : 'bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800'">
         <span class="flex items-center space-x-2">
           <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -18,39 +25,47 @@
     <!-- Filtros de tipo , metodo de pago y fecha -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Filtros de Tipo -->
-      <div class="bg-white rounded-xl shadow-lg p-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-3">Filtrar por Tipo</h3>
+      <div class="rounded-xl shadow-lg p-4"
+           [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
+        <h3 class="text-lg font-semibold mb-3"
+            [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-800'">
+          Filtrar por Tipo
+        </h3>
         <div class="grid grid-cols-3 gap-3">
           <button (click)="filtrarTipo('todos')"
            [ngClass]="{
-    'bg-blue-600 text-white': tipoFiltro === 'todos',
-    'bg-gray-200 text-gray-800': tipoFiltro !== 'todos'
-  }"
-            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+             'bg-blue-600 text-white': tipoFiltro === 'todos',
+             'bg-gray-200 text-gray-800': tipoFiltro !== 'todos' && themeService.theme() === 'light',
+             'bg-gray-700 text-gray-300': tipoFiltro !== 'todos' && themeService.theme() === 'dark'
+           }"
+            class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
             Todos
           </button>
           <button (click)="filtrarTipo('ventas')"
              [ngClass]="{
-    'bg-blue-600 text-white': tipoFiltro === 'ventas',
-    'bg-gray-200 text-gray-800': tipoFiltro !== 'ventas'
-  }"
-            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+               'bg-blue-600 text-white': tipoFiltro === 'ventas',
+               'bg-gray-200 text-gray-800': tipoFiltro !== 'ventas' && themeService.theme() === 'light',
+               'bg-gray-700 text-gray-300': tipoFiltro !== 'ventas' && themeService.theme() === 'dark'
+             }"
+            class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
             Solo Ventas
           </button>
           <button (click)="filtrarTipo('recambios')"
              [ngClass]="{
-    'bg-blue-600 text-white': tipoFiltro === 'recambios',
-    'bg-gray-200 text-gray-800': tipoFiltro !== 'recambios'
-  }"
-            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+               'bg-blue-600 text-white': tipoFiltro === 'recambios',
+               'bg-gray-200 text-gray-800': tipoFiltro !== 'recambios' && themeService.theme() === 'light',
+               'bg-gray-700 text-gray-300': tipoFiltro !== 'recambios' && themeService.theme() === 'dark'
+             }"
+            class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
             Solo Recambios
           </button>
           <button (click)="filtrarTipo('ventasEliminadas')"
        [ngClass]="{
-'bg-blue-600 text-white': tipoFiltro === 'ventasEliminadas',
-'bg-gray-200 text-gray-800': tipoFiltro !== 'ventasEliminadas'
-}"
-      class="px-2 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-xs sm:text-sm">
+         'bg-blue-600 text-white': tipoFiltro === 'ventasEliminadas',
+         'bg-gray-200 text-gray-800': tipoFiltro !== 'ventasEliminadas' && themeService.theme() === 'light',
+         'bg-gray-700 text-gray-300': tipoFiltro !== 'ventasEliminadas' && themeService.theme() === 'dark'
+       }"
+      class="px-2 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-xs sm:text-sm">
       Ventas Eliminadas
     </button>
         </div>
@@ -59,110 +74,136 @@
 
       
 <!-- Filtro por Método de Pago -->
-<div class="bg-white rounded-xl shadow-lg p-4">
-  <h3 class="text-lg font-semibold text-gray-800 mb-3">Filtrar por Método de Pago</h3>
+<div class="rounded-xl shadow-lg p-4"
+     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
+  <h3 class="text-lg font-semibold mb-3"
+      [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-800'">
+    Filtrar por Método de Pago
+  </h3>
   <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
     <button (click)="filtrarMetodoPago('todos')"
       [ngClass]="{
         'bg-blue-600 text-white': metodoPagoFiltro === 'todos',
-        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'todos'
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'todos' && themeService.theme() === 'light',
+        'bg-gray-700 text-gray-300': metodoPagoFiltro !== 'todos' && themeService.theme() === 'dark'
       }"
-      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
       Todos
     </button>
     
     <button (click)="filtrarMetodoPago('efectivo')"
       [ngClass]="{
         'bg-blue-600 text-white': metodoPagoFiltro === 'efectivo',
-        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'efectivo'
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'efectivo' && themeService.theme() === 'light',
+        'bg-gray-700 text-gray-300': metodoPagoFiltro !== 'efectivo' && themeService.theme() === 'dark'
       }"
-      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
       💵 Efectivo
     </button>
     
     <button (click)="filtrarMetodoPago('transferencia')"
       [ngClass]="{
         'bg-blue-600 text-white': metodoPagoFiltro === 'transferencia',
-        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'transferencia'
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'transferencia' && themeService.theme() === 'light',
+        'bg-gray-700 text-gray-300': metodoPagoFiltro !== 'transferencia' && themeService.theme() === 'dark'
       }"
-      class="px-2 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-xs sm:text-sm">
+      class="px-2 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-xs sm:text-sm">
       🏦 Transfer.
     </button>
     
     <button (click)="filtrarMetodoPago('debito')"
       [ngClass]="{
         'bg-blue-600 text-white': metodoPagoFiltro === 'debito',
-        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'debito'
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'debito' && themeService.theme() === 'light',
+        'bg-gray-700 text-gray-300': metodoPagoFiltro !== 'debito' && themeService.theme() === 'dark'
       }"
-      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
       💳 Débito
     </button>
     
     <button (click)="filtrarMetodoPago('credito')"
       [ngClass]="{
         'bg-blue-600 text-white': metodoPagoFiltro === 'credito',
-        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'credito'
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'credito' && themeService.theme() === 'light',
+        'bg-gray-700 text-gray-300': metodoPagoFiltro !== 'credito' && themeService.theme() === 'dark'
       }"
-      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
       💳 Crédito
     </button>
     
     <button (click)="filtrarMetodoPago('modo')"
       [ngClass]="{
         'bg-blue-600 text-white': metodoPagoFiltro === 'modo',
-        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'modo'
+        'bg-gray-200 text-gray-800': metodoPagoFiltro !== 'modo' && themeService.theme() === 'light',
+        'bg-gray-700 text-gray-300': metodoPagoFiltro !== 'modo' && themeService.theme() === 'dark'
       }"
-      class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
+      class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">
       📱 Modo
     </button>
   </div>
 </div>
       
       <!-- Filtros de Fecha -->
-      <div class="bg-white rounded-xl shadow-lg p-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-3">Filtrar por Período</h3>
+      <div class="rounded-xl shadow-lg p-4"
+           [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
+        <h3 class="text-lg font-semibold mb-3"
+            [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-800'">
+          Filtrar por Período
+        </h3>
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
           <button (click)="filtrar('hoy')"
              [ngClass]="{
-    'bg-blue-600 text-white': filtro === 'hoy',
-    'bg-gray-200 text-gray-800': filtro !== 'hoy'
-  }"
-            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Hoy</button>
+               'bg-blue-600 text-white': filtro === 'hoy',
+               'bg-gray-200 text-gray-800': filtro !== 'hoy' && themeService.theme() === 'light',
+               'bg-gray-700 text-gray-300': filtro !== 'hoy' && themeService.theme() === 'dark'
+             }"
+            class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Hoy</button>
           <button (click)="filtrar('7dias')"
             [ngClass]="{
-    'bg-blue-600 text-white': filtro === '7dias',
-    'bg-gray-200 text-gray-800': filtro !== '7dias'
-  }"
-            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Últimos 7 días</button>
+              'bg-blue-600 text-white': filtro === '7dias',
+              'bg-gray-200 text-gray-800': filtro !== '7dias' && themeService.theme() === 'light',
+              'bg-gray-700 text-gray-300': filtro !== '7dias' && themeService.theme() === 'dark'
+            }"
+            class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Últimos 7 días</button>
           <button (click)="filtrar('30dias')"
             [ngClass]="{
-    'bg-blue-600 text-white': filtro === '30dias',
-    'bg-gray-200 text-gray-800': filtro !== '30dias'
-  }"
-            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Últimos 30 días</button>
+              'bg-blue-600 text-white': filtro === '30dias',
+              'bg-gray-200 text-gray-800': filtro !== '30dias' && themeService.theme() === 'light',
+              'bg-gray-700 text-gray-300': filtro !== '30dias' && themeService.theme() === 'dark'
+            }"
+            class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Últimos 30 días</button>
           <button (click)="filtrar('todos')"
             [ngClass]="{
-    'bg-blue-600 text-white': filtro === 'todos',
-    'bg-gray-200 text-gray-800': filtro !== 'todos'
-  }"
-            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Historial Completo</button>
+              'bg-blue-600 text-white': filtro === 'todos',
+              'bg-gray-200 text-gray-800': filtro !== 'todos' && themeService.theme() === 'light',
+              'bg-gray-700 text-gray-300': filtro !== 'todos' && themeService.theme() === 'dark'
+            }"
+            class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors text-sm sm:text-base">Historial Completo</button>
           <button (click)="filtrar('fechaEspecifica')"
             [ngClass]="{
-    'bg-blue-600 text-white': filtro === 'fechaEspecifica',
-    'bg-gray-200 text-gray-800': filtro !== 'fechaEspecifica'
-  }"
-            class="px-3 py-2 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition-colors col-span-2 lg:col-span-1 text-sm sm:text-base">Fecha Específica</button>
+              'bg-blue-600 text-white': filtro === 'fechaEspecifica',
+              'bg-gray-200 text-gray-800': filtro !== 'fechaEspecifica' && themeService.theme() === 'light',
+              'bg-gray-700 text-gray-300': filtro !== 'fechaEspecifica' && themeService.theme() === 'dark'
+            }"
+            class="px-3 py-2 rounded-lg font-medium hover:bg-blue-500 hover:text-white transition-colors col-span-2 lg:col-span-1 text-sm sm:text-base">Fecha Específica</button>
         </div>
       </div>
     </div>
 
     <!-- Fecha específica -->
-    <div class="bg-white rounded-xl shadow-lg p-6" *ngIf="filtro === 'fechaEspecifica'">
-      <label for="fecha-especifica" class="text-gray-700 font-medium mb-2 sm:mb-0 text-sm sm:text-base block">Selecciona una fecha:</label>
+    <div class="rounded-xl shadow-lg p-6" *ngIf="filtro === 'fechaEspecifica'"
+         [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
+      <label for="fecha-especifica" class="font-medium mb-2 sm:mb-0 text-sm sm:text-base block"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-700'">
+        Selecciona una fecha:
+      </label>
       <input
         type="date"
         id="fecha-especifica"
-        class="border border-gray-300 rounded-lg p-2 mt-2 w-full sm:w-auto focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base"
+        class="rounded-lg p-2 mt-2 w-full sm:w-auto focus:ring-2 focus:ring-blue-500 focus:border-transparent transition text-sm sm:text-base"
+        [ngClass]="themeService.theme() === 'dark' 
+          ? 'bg-gray-700 border-gray-600 text-gray-100'
+          : 'bg-white border-gray-300 text-gray-900'"
         [(ngModel)]="fechaEspecifica"
         (change)="cargarDatos()"
       />
@@ -170,25 +211,33 @@
 
     <!-- Totales acumulados -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div class="bg-white rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-green-500">
+      <div class="rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-green-500"
+           [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
         <div class="bg-green-100 text-green-700 p-3 rounded-full flex-shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2z" />
           </svg>
         </div>
         <div>
-          <p class="text-gray-500 font-medium text-sm">Total Ventas</p>
+          <p class="font-medium text-sm"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-500'">
+            Total Ventas
+          </p>
           <p class="text-green-600 font-bold text-2xl">{{ totalVentas | monedaArs }}</p>
         </div>
       </div>
-      <div class="bg-white rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-orange-500">
+      <div class="rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-orange-500"
+           [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
         <div class="bg-orange-100 text-orange-700 p-3 rounded-full flex-shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-4-4v12m-4-8h8m-4-4v12m-4-8h8m-4-4v12M3 13h18M3 17h18" />
           </svg>
         </div>
         <div>
-          <p class="text-gray-500 font-medium text-sm">Total Recambios</p>
+          <p class="font-medium text-sm"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-500'">
+            Total Recambios
+          </p>
           <p class="text-orange-600 font-bold text-2xl">{{ totalRecambios | monedaArs }}</p>
         </div>
       </div>
@@ -197,7 +246,10 @@
     <!-- Paginación -->
     <div class="flex items-center justify-center gap-2 overflow-x-auto py-4">
       <button
-        class="px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 text-sm font-medium transition"
+        class="px-3 py-1 rounded-full text-sm font-medium transition hover:bg-gray-300"
+        [ngClass]="themeService.theme() === 'dark' 
+          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'"
         [disabled]="paginaActual === 1"
         (click)="cambiarPagina(paginaActual - 1)">
         ← Anterior
@@ -208,13 +260,19 @@
           (click)="cambiarPagina(i + 1)"
           [class.bg-blue-600]="paginaActual === i + 1"
           [class.text-white]="paginaActual === i + 1"
-          class="w-8 h-8 rounded-full bg-gray-200 text-gray-800 font-medium hover:bg-blue-500 hover:text-white transition text-sm">
+          class="w-8 h-8 rounded-full font-medium hover:bg-blue-500 hover:text-white transition text-sm"
+          [ngClass]="paginaActual !== i + 1 ? (themeService.theme() === 'dark' 
+            ? 'bg-gray-700 text-gray-300'
+            : 'bg-gray-200 text-gray-800') : ''">
           {{ i + 1 }}
         </button>
       </ng-container>
 
       <button
-        class="px-3 py-1 rounded-full bg-gray-200 hover:bg-gray-300 text-sm font-medium transition"
+        class="px-3 py-1 rounded-full text-sm font-medium transition"
+        [ngClass]="themeService.theme() === 'dark' 
+          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+          : 'bg-gray-200 text-gray-800 hover:bg-gray-300'"
         [disabled]="paginaActual === totalPaginas"
         (click)="cambiarPagina(paginaActual + 1)">
         Siguiente →
@@ -222,289 +280,371 @@
     </div>
 
     <!-- Lista de transacciones -->
-    <div class="space-y-6">
-      <div *ngFor="let item of itemsPaginados; trackBy: trackByFn" class="bg-white rounded-xl shadow-lg p-6">
-        
-        <div *ngIf="item.tipo === 'venta' || item.tipo === 'ventaEliminada'" 
-     [class.opacity-50]="item.tipo === 'ventaEliminada'"
-     [class.pointer-events-none]="item.tipo === 'ventaEliminada'"
-     [class.bg-gray-100]="item.tipo === 'ventaEliminada'"
-     [class.bg-white]="item.tipo === 'venta'">
-  
-  <div class="flex items-start justify-between mb-4">
-    <div class="flex items-center space-x-3">
-      <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold"
-            [class.bg-green-100]="item.tipo === 'venta'"
-            [class.text-green-800]="item.tipo === 'venta'"
-            [class.bg-red-100]="item.tipo === 'ventaEliminada'"
-            [class.text-red-800]="item.tipo === 'ventaEliminada'">
-        <span *ngIf="item.tipo === 'venta'">💰 VENTA</span>
-        <span *ngIf="item.tipo === 'ventaEliminada'">🗑️ VENTA ELIMINADA</span>
-      </span>
-      <div *ngIf="item.recambio_realizado && item.tipo === 'venta'" class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
-        ✅ Recambio realizado
-      </div>
-    </div>
-    <span class="text-gray-500 text-sm">ID: {{ item.id.slice(-8) || 'N/A' }}</span>
-  </div>
-
-  <!-- NUEVA SECCIÓN: Info de eliminación (solo si es venta eliminada) -->
-  <div *ngIf="item.tipo === 'ventaEliminada'" class="bg-red-50 border-l-4 border-red-400 p-3 mb-4 rounded-r-lg">
-    <p class="text-sm text-red-700">
-      <strong>Eliminado por:</strong> {{ item.eliminado_por || 'Usuario desconocido' }} 
-      <span class="ml-2 text-xs text-red-600">
-        ({{ item.fecha_eliminacion | date: 'dd/MM/yyyy HH:mm' }})
-      </span>
-    </p>
-    <p class="text-xs text-red-600 mt-1">{{ item.motivo_eliminacion || 'Sin motivo especificado' }}</p>
-  </div>
-
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 mb-4 text-sm">
-    <p class="font-medium text-gray-700"><strong>Usuario:</strong> {{ item.nombre_usuario || 'Sin usuario' }}</p>
-    <p class="text-gray-600"><strong>Cliente:</strong> {{ item.cliente_nombre || 'Sin cliente' }}</p>
-    <p class="text-gray-600"><strong>Fecha:</strong> {{ item.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}</p>
-    <p *ngIf="item.cliente_email" class="text-gray-600"><strong>Email:</strong> {{ item.cliente_email }}</p>
-  </div>
-
-  <div class="mt-4 border-t border-gray-200 pt-4">
-    <p class="font-semibold mb-2 text-sm sm:text-base">Productos vendidos:</p>
-    <ul class="list-disc ml-5 space-y-1 text-sm">
-      <li *ngFor="let p of item.productos || []" class="text-gray-700">
-        {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
-      </li>
-    </ul>
-  </div>
-
-  <div class="mt-4 border-t border-gray-200 pt-4">
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2">
-      <p><strong>Método de pago:</strong> <span class="font-medium">{{ item.metodo_pago || 'No especificado' }}</span></p>
-      <p *ngIf="(item.descuento_aplicado || 0) > 0">
-        <strong>Descuento:</strong> <span class="text-red-600 font-medium">{{ item.descuento_aplicado || 0 }}%</span>
-        <span class="text-sm text-gray-500 ml-2">({{ (((item.total_final || 0) / (1 - (item.descuento_aplicado || 0) / 100)) - (item.total_final || 0)) | monedaArs }} de ahorro)</span>
-      </p>
-    </div>
-    <p class="text-xl font-bold mt-4"
-       [class.text-green-600]="item.tipo === 'venta'"
-       [class.text-gray-500]="item.tipo === 'ventaEliminada'">
-      Total: {{ (item.total_final || 0) | monedaArs }}
-    </p>
-  </div>
-
-  <!-- Botones (solo visibles para ventas normales, no eliminadas) -->
-  <div *ngIf="item.tipo === 'venta'" class="mt-6 flex justify-between">
-    <button
-      (click)="iniciarRecambio(item)"
-      [disabled]="!puedeRealizarRecambio(item)"
-      class="px-5 py-2 rounded-full font-medium transition-all"
-      [class.bg-blue-600]="puedeRealizarRecambio(item)"
-      [class.hover:bg-blue-700]="puedeRealizarRecambio(item)"
-      [class.text-white]="puedeRealizarRecambio(item)"
-      [class.bg-gray-200]="!puedeRealizarRecambio(item)"
-      [class.text-gray-500]="!puedeRealizarRecambio(item)">
-      <span *ngIf="puedeRealizarRecambio(item)">Realizar Recambio</span>
-      <span *ngIf="!puedeRealizarRecambio(item) && item.recambio_realizado">Recambio ya realizado</span>
-      <span *ngIf="!puedeRealizarRecambio(item) && !item.recambio_realizado">Fuera de plazo (>10 días)</span>
-    </button>
-
-    <!-- Botón de eliminar (solo para ventas normales) -->
-    <button
-      (click)="iniciarEliminacionVenta(item)"
-      [disabled]="item.recambio_realizado"
-      class="group/btn inline-flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1"
-      [ngClass]="{
-        'bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 border border-red-200': !item.recambio_realizado,
-        'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200': item.recambio_realizado
-      }"
-      [title]="item.recambio_realizado ? 'No se puede eliminar una venta con recambio realizado' : 'Eliminar venta'">
-      
-      <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
-      </svg>
-      <span class="hidden sm:inline ml-1.5">Eliminar</span>
-    </button>
-  </div>
-</div>
-<!-- Modal de confirmación mejorado con campo de motivo -->
-<div *ngIf="mostrandoConfirmacionEliminar" 
-     class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in-scale"
-     (click)="cancelarEliminacion()">
-  
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all duration-300"
-       (click)="$event.stopPropagation()">
+<div class="space-y-6">
+  <div *ngFor="let item of itemsPaginados; trackBy: trackByFn" 
+       class="rounded-xl shadow-lg p-6"
+       [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
     
-    <!-- Header con botón de cierre -->
-    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-      <h3 class="text-xl font-bold text-gray-900">¿Confirmar eliminación?</h3>
-      <button (click)="cancelarEliminacion()" 
-              class="text-gray-400 hover:text-gray-700 text-3xl font-light leading-none transition">&times;</button>
-    </div>
-    
-    <!-- Contenido del modal -->
-    <div class="px-6 py-6">
-      <!-- Icono de advertencia -->
-      <div class="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 rounded-full">
-        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z">
-          </path>
-        </svg>
+    <!-- ============================================ -->
+    <!-- BLOQUE DE VENTAS (NORMALES Y ELIMINADAS) -->
+    <!-- ============================================ -->
+    <div *ngIf="item.tipo === 'venta' || item.tipo === 'ventaEliminada'" 
+         [class.opacity-50]="item.tipo === 'ventaEliminada'"
+         [class.pointer-events-none]="item.tipo === 'ventaEliminada'"
+         [class.bg-gray-100]="item.tipo === 'ventaEliminada' && themeService.theme() === 'light'"
+         [class.bg-gray-900]="item.tipo === 'ventaEliminada' && themeService.theme() === 'dark'"
+         [class.bg-white]="item.tipo === 'venta' && themeService.theme() === 'light'"
+         [class.bg-gray-800]="item.tipo === 'venta' && themeService.theme() === 'dark'">
+  
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex items-center space-x-3">
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                [class.bg-green-100]="item.tipo === 'venta'"
+                [class.text-green-800]="item.tipo === 'venta'"
+                [class.bg-red-100]="item.tipo === 'ventaEliminada'"
+                [class.text-red-800]="item.tipo === 'ventaEliminada'">
+            <span *ngIf="item.tipo === 'venta'">💰 VENTA</span>
+            <span *ngIf="item.tipo === 'ventaEliminada'">🗑️ VENTA ELIMINADA</span>
+          </span>
+          <div *ngIf="item.recambio_realizado && item.tipo === 'venta'" class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold">
+            ✅ Recambio realizado
+          </div>
+        </div>
+        <span class="text-sm"
+              [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+          ID: {{ item.id.slice(-8) || 'N/A' }}
+        </span>
       </div>
-      
-      <div class="text-center mb-6">
-        <p class="text-sm sm:text-base text-gray-600 leading-relaxed">
-          Esta acción eliminará permanentemente la venta y restaurará el stock de los productos. 
-          <span class="font-medium text-gray-800">No se puede deshacer.</span>
+
+      <!-- Info de eliminación (solo si es venta eliminada) -->
+      <div *ngIf="item.tipo === 'ventaEliminada'" class="bg-red-50 border-l-4 border-red-400 p-3 mb-4 rounded-r-lg">
+        <p class="text-sm text-red-700">
+          <strong>Eliminado por:</strong> {{ item.eliminado_por || 'Usuario desconocido' }} 
+          <span class="ml-2 text-xs text-red-600">
+            ({{ item.fecha_eliminacion | date: 'dd/MM/yyyy HH:mm' }})
+          </span>
+        </p>
+        <p class="text-xs text-red-600 mt-1">{{ item.motivo_eliminacion || 'Sin motivo especificado' }}</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 mb-4 text-sm">
+        <p class="font-medium"
+           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-700'">
+          <strong>Usuario:</strong> {{ item.nombre_usuario || 'Sin usuario' }}
+        </p>
+        <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">
+          <strong>Cliente:</strong> {{ item.cliente_nombre || 'Sin cliente' }}
+        </p>
+        <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">
+          <strong>Fecha:</strong> {{ item.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}
+        </p>
+        <p *ngIf="item.cliente_email"
+           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">
+          <strong>Email:</strong> {{ item.cliente_email }}
         </p>
       </div>
-      
-      <!-- Información de la venta -->
-      <div *ngIf="ventaAEliminar" class="mb-6">
-        <div class="bg-gray-50 rounded-lg p-4 border-l-4 border-red-400">
-          <p class="font-medium text-gray-900 mb-2 text-sm sm:text-base">Venta a eliminar:</p>
-          <div class="space-y-1 text-sm text-gray-700">
-            <p><span class="font-medium">Cliente:</span> {{ ventaAEliminar.cliente_nombre }}</p>
-            <p><span class="font-medium">Fecha:</span> {{ ventaAEliminar.fecha_venta | date:'dd/MM/yyyy HH:mm' }}</p>
-            <p><span class="font-medium">Total:</span> {{ ventaAEliminar.total_final | monedaArs }}</p>
-            <p class="text-xs text-gray-500 pt-1">
-              <span class="inline-flex items-center">
-                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
-                </svg>
-                {{ ventaAEliminar.productos?.length || 0 }} productos
-              </span>
-            </p>
-          </div>
+
+      <div class="mt-4 pt-4"
+           [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'"
+           style="border-top-width: 1px;">
+        <p class="font-semibold mb-2 text-sm sm:text-base"
+           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+          Productos vendidos:
+        </p>
+        <ul class="list-disc ml-5 space-y-1 text-sm">
+          <li *ngFor="let p of item.productos || []"
+              [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
+            {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="mt-4 pt-4"
+           [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'"
+           style="border-top-width: 1px;">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-2">
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+            <strong>Método de pago:</strong> <span class="font-medium">{{ item.metodo_pago || 'No especificado' }}</span>
+          </p>
+          <p *ngIf="(item.descuento_aplicado || 0) > 0"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+            <strong>Descuento:</strong> <span class="text-red-600 font-medium">{{ item.descuento_aplicado || 0 }}%</span>
+            <span class="text-sm ml-2"
+                  [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+              ({{ (((item.total_final || 0) / (1 - (item.descuento_aplicado || 0) / 100)) - (item.total_final || 0)) | monedaArs }} de ahorro)
+            </span>
+          </p>
         </div>
+        <p class="text-xl font-bold mt-4"
+           [class.text-green-600]="item.tipo === 'venta'"
+           [class.text-gray-500]="item.tipo === 'ventaEliminada'">
+          Total: {{ (item.total_final || 0) | monedaArs }}
+        </p>
       </div>
-      
-      <!-- NUEVO: Campo de motivo obligatorio -->
-      <div class="mb-6">
-        <label for="motivoEliminacion" class="block text-sm font-medium text-gray-900 mb-2">
-          Motivo de eliminación <span class="text-red-500">*</span>
-        </label>
-        <textarea
-          id="motivoEliminacion"
-          [(ngModel)]="motivoEliminacion"
-          placeholder="Describe el motivo por el cual se elimina esta venta..."
-          rows="3"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none text-sm"
-          [class.border-red-500]="!motivoEliminacion.trim() && eliminandoVenta"
-        ></textarea>
-        <p class="text-xs text-gray-500 mt-1">Campo obligatorio para proceder con la eliminación</p>
-      </div>
-      
-      <!-- Botones de acción -->
-      <div class="flex flex-col sm:flex-row gap-3">
-        <button (click)="cancelarEliminacion()"
-                [disabled]="eliminandoVenta"
-                class="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-colors duration-200">
-          Cancelar
+
+      <!-- Botones (solo visibles para ventas normales, no eliminadas) -->
+      <div *ngIf="item.tipo === 'venta'" class="mt-6 flex justify-between">
+        <button
+          (click)="iniciarRecambio(item)"
+          [disabled]="!puedeRealizarRecambio(item)"
+          class="px-5 py-2 rounded-full font-medium transition-all"
+          [class.bg-blue-600]="puedeRealizarRecambio(item)"
+          [class.hover:bg-blue-700]="puedeRealizarRecambio(item)"
+          [class.text-white]="puedeRealizarRecambio(item)"
+          [ngClass]="!puedeRealizarRecambio(item) ? (themeService.theme() === 'dark' 
+            ? 'bg-gray-700 text-gray-400'
+            : 'bg-gray-200 text-gray-500') : ''">
+          <span *ngIf="puedeRealizarRecambio(item)">Realizar Recambio</span>
+          <span *ngIf="!puedeRealizarRecambio(item) && item.recambio_realizado">Recambio ya realizado</span>
+          <span *ngIf="!puedeRealizarRecambio(item) && !item.recambio_realizado">Fuera de plazo (>10 días)</span>
         </button>
         
-        <button (click)="confirmarEliminacion()"
-                [disabled]="eliminandoVenta || !motivoEliminacion.trim()"
-                class="flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                [class.bg-red-600]="motivoEliminacion.trim()"
-                [class.hover:bg-red-700]="motivoEliminacion.trim()"
-                [class.bg-gray-400]="!motivoEliminacion.trim()">
-          <span *ngIf="!eliminandoVenta" class="flex items-center justify-center">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
-            </svg>
-            Eliminar venta
-          </span>
-          <span *ngIf="eliminandoVenta" class="flex items-center justify-center">
-            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Eliminando...
-          </span>
+        <!-- Botón de eliminar -->
+        <button
+          (click)="iniciarEliminacionVenta(item)"
+          [disabled]="item.recambio_realizado"
+          class="group/btn inline-flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1"
+          [ngClass]="{
+            'bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 dark:border-red-800': !item.recambio_realizado,
+            'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200 dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700': item.recambio_realizado
+          }"
+          [title]="item.recambio_realizado ? 'No se puede eliminar una venta con recambio realizado' : 'Eliminar venta'">
+          
+          <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
+          </svg>
+          <span class="hidden sm:inline ml-1.5">Eliminar</span>
         </button>
       </div>
-    </div>
-  </div>
-</div>
 
-        <!-- RECAMBIO -->
-        <div *ngIf="item.tipo === 'recambio'">
-          <div class="flex items-start justify-between mb-4">
-            <div class="flex items-center space-x-3">
-              <span class="inline-block bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold">
-                🔄 RECAMBIO
-              </span>
-            </div>
-            <span class="text-gray-500 text-sm">ID: {{ item.id.slice(-8) || 'N/A' }}</span>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 mb-4 text-sm">
-            <p class="font-medium text-gray-700"><strong>Realizado por:</strong> {{ item.realizado_por || 'Sin especificar' }}</p>
-            <p class="text-gray-600"><strong>Cliente:</strong> {{ item.cliente_nombre || 'Sin cliente' }}</p>
-            <p class="text-gray-600"><strong>Fecha:</strong> {{ item.fecha_recambio | date: 'dd/MM/yyyy HH:mm' }}</p>
-            <p class="text-gray-600"><strong>ID Venta original:</strong> {{ item.venta_id?.slice(-8) || 'N/A' }}</p>
-          </div>
-
-          <div class="mt-4 border-t border-gray-200 pt-4 space-y-4">
-            <div>
-              <p class="font-semibold mb-2 text-sm text-red-700">Productos devueltos:</p>
-              <ul class="list-disc ml-5 space-y-1 text-sm">
-                <li *ngFor="let p of item.productos_devueltos || []" class="text-gray-700">
-                  {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <p class="font-semibold mb-2 text-sm text-green-700">Productos de recambio:</p>
-              <ul class="list-disc ml-5 space-y-1 text-sm">
-                <li *ngFor="let p of item.productos_recambio || []" class="text-gray-700">
-                  {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
-                </li>
-              </ul>
-            </div>
+      <!-- Modal de confirmación de eliminación -->
+      <div *ngIf="mostrandoConfirmacionEliminar" 
+           class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in-scale"
+           (click)="cancelarEliminacion()">
+        
+        <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 text-gray-100' : 'bg-white text-gray-900'"
+             class="rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all duration-300"
+             (click)="$event.stopPropagation()">
+          
+          <!-- Header con botón de cierre -->
+          <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
+               class="sticky top-0 border-b px-6 py-4 flex justify-between items-center">
+            <h3 class="text-xl font-bold">¿Confirmar eliminación?</h3>
+            <button (click)="cancelarEliminacion()" 
+                    [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-700'"
+                    class="text-3xl font-light leading-none transition">&times;</button>
           </div>
           
-          <div class="mt-4 border-t border-gray-200 pt-4 space-y-2">
-            <p class="text-lg font-bold text-orange-600">
-              Diferencia: {{ ((item.total_recambio || 0) - (item.total_devuelto || 0)) | monedaArs }}
-            </p>
-            <p *ngIf="(item.diferencia_abonada || 0) > 0">
-              <strong>Diferencia abonada:</strong> <span class="font-medium">{{ (item.diferencia_abonada || 0) | monedaArs }}</span>
-              <span class="text-sm ml-2">({{ item.metodo_pago_diferencia || 'No especificado' }})</span>
-            </p>
-            <div *ngIf="item.motivo" class="mt-3 bg-gray-50 rounded-lg p-3 text-sm">
-              <p class="font-semibold text-gray-700 mb-1">Motivo del recambio:</p>
-              <p class="text-gray-600">{{ item.motivo }}</p>
+          <!-- Contenido del modal -->
+          <div class="px-6 py-6">
+            <!-- Icono de advertencia -->
+            <div [ngClass]="themeService.theme() === 'dark' ? 'bg-red-900/30' : 'bg-red-100'"
+                 class="flex items-center justify-center w-12 h-12 mx-auto mb-4 rounded-full">
+              <svg [ngClass]="themeService.theme() === 'dark' ? 'text-red-400' : 'text-red-600'"
+                   class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z">
+                </path>
+              </svg>
             </div>
-            <div *ngIf="item.observaciones" class="mt-3 bg-gray-50 rounded-lg p-3 text-sm">
-              <p class="font-semibold text-gray-700 mb-1">Observaciones:</p>
-              <p class="text-gray-600">{{ item.observaciones }}</p>
+            
+            <div class="text-center mb-6">
+              <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'"
+                 class="text-sm sm:text-base leading-relaxed">
+                Esta acción eliminará permanentemente la venta y restaurará el stock de los productos. 
+                <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-800'"
+                      class="font-medium">No se puede deshacer.</span>
+              </p>
+            </div>
+            
+            <!-- Información de la venta -->
+            <div *ngIf="ventaAEliminar" class="mb-6">
+              <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50 border-red-500' : 'bg-gray-50 border-red-400'"
+                   class="rounded-lg p-4 border-l-4">
+                <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
+                   class="font-medium mb-2 text-sm sm:text-base">Venta a eliminar:</p>
+                <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'"
+                     class="space-y-1 text-sm">
+                  <p><span class="font-medium">Cliente:</span> {{ ventaAEliminar.cliente_nombre }}</p>
+                  <p><span class="font-medium">Fecha:</span> {{ ventaAEliminar.fecha_venta | date:'dd/MM/yyyy HH:mm' }}</p>
+                  <p><span class="font-medium">Total:</span> {{ ventaAEliminar.total_final | monedaArs }}</p>
+                  <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'"
+                     class="text-xs pt-1">
+                    <span class="inline-flex items-center">
+                      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"></path>
+                      </svg>
+                      {{ ventaAEliminar.productos?.length || 0 }} productos
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Campo de motivo obligatorio -->
+            <div class="mb-6">
+              <label for="motivoEliminacion" 
+                     [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'"
+                     class="block text-sm font-medium mb-2">
+                Motivo de eliminación <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                id="motivoEliminacion"
+                [(ngModel)]="motivoEliminacion"
+                placeholder="Describe el motivo por el cual se elimina esta venta..."
+                rows="3"
+                [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-red-500 focus:border-red-500' : 'bg-white border-gray-300 text-gray-900 focus:ring-red-500 focus:border-red-500'"
+                class="w-full px-3 py-2 border rounded-lg focus:ring-2 resize-none text-sm"
+                [class.border-red-500]="!motivoEliminacion.trim() && eliminandoVenta"
+              ></textarea>
+              <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'"
+                 class="text-xs mt-1">Campo obligatorio para proceder con la eliminación</p>
+            </div>
+            
+            <!-- Botones de acción -->
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button (click)="cancelarEliminacion()"
+                      [disabled]="eliminandoVenta"
+                      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'"
+                      class="flex-1 px-4 py-2.5 text-sm font-medium border rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 transition-colors duration-200">
+                Cancelar
+              </button>
+              
+              <button (click)="confirmarEliminacion()"
+                      [disabled]="eliminandoVenta || !motivoEliminacion.trim()"
+                      class="flex-1 px-4 py-2.5 text-sm font-medium text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                      [class.bg-red-600]="motivoEliminacion.trim()"
+                      [class.hover:bg-red-700]="motivoEliminacion.trim()"
+                      [class.bg-gray-400]="!motivoEliminacion.trim()">
+                <span *ngIf="!eliminandoVenta" class="flex items-center justify-center">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
+                  </svg>
+                  Eliminar venta
+                </span>
+                <span *ngIf="eliminandoVenta" class="flex items-center justify-center">
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Eliminando...
+                </span>
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+    </div>
+    <!-- ⚠️ CIERRE CRÍTICO: Aquí termina el bloque de VENTAS -->
+
+    <!-- ============================================ -->
+    <!-- BLOQUE DE RECAMBIO (AL MISMO NIVEL QUE VENTAS) -->
+    <!-- ============================================ -->
+    <div *ngIf="item.tipo === 'recambio'">
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex items-center space-x-3">
+          <span [ngClass]="themeService.theme() === 'dark' ? 'bg-orange-900/30 text-orange-400' : 'bg-orange-100 text-orange-800'"
+                class="inline-block px-3 py-1 rounded-full text-xs font-semibold">
+            🔄 RECAMBIO
+          </span>
+        </div>
+        <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'"
+              class="text-sm">ID: {{ item.id.slice(-8) || 'N/A' }}</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 mb-4 text-sm">
+        <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'"
+           class="font-medium"><strong>Realizado por:</strong> {{ item.realizado_por || 'Sin especificar' }}</p>
+        <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+          <strong>Cliente:</strong> {{ item.cliente_nombre || 'Sin cliente' }}</p>
+        <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+          <strong>Fecha:</strong> {{ item.fecha_recambio | date: 'dd/MM/yyyy HH:mm' }}</p>
+        <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+          <strong>ID Venta original:</strong> {{ item.venta_id?.slice(-8) || 'N/A' }}</p>
+      </div>
+
+      <div [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'"
+           class="mt-4 border-t pt-4 space-y-4">
+        <div>
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-red-400' : 'text-red-700'"
+             class="font-semibold mb-2 text-sm">Productos devueltos:</p>
+          <ul class="list-disc ml-5 space-y-1 text-sm">
+            <li *ngFor="let p of item.productos_devueltos || []" 
+                [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
+              {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-700'"
+             class="font-semibold mb-2 text-sm">Productos de recambio:</p>
+          <ul class="list-disc ml-5 space-y-1 text-sm">
+            <li *ngFor="let p of item.productos_recambio || []" 
+                [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
+              {{ p.nombre }} — Talle: {{ p.talle }} — Cant: {{ p.cantidad }} — {{ (p.precio_unitario || 0) | monedaArs }} c/u — Subtotal: <span class="font-medium">{{ (p.subtotal || 0) | monedaArs }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      
+      <div [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'"
+           class="mt-4 border-t pt-4 space-y-2">
+        <p [ngClass]="themeService.theme() === 'dark' ? 'text-orange-400' : 'text-orange-600'"
+           class="text-lg font-bold">
+          Diferencia: {{ ((item.total_recambio || 0) - (item.total_devuelto || 0)) | monedaArs }}
+        </p>
+        <p *ngIf="(item.diferencia_abonada || 0) > 0">
+          <strong>Diferencia abonada:</strong> <span class="font-medium">{{ (item.diferencia_abonada || 0) | monedaArs }}</span>
+          <span class="text-sm ml-2">({{ item.metodo_pago_diferencia || 'No especificado' }})</span>
+        </p>
+        <div *ngIf="item.motivo" 
+             [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'"
+             class="mt-3 rounded-lg p-3 text-sm">
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-700'"
+             class="font-semibold mb-1">Motivo del recambio:</p>
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">{{ item.motivo }}</p>
+        </div>
+        <div *ngIf="item.observaciones" 
+             [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'"
+             class="mt-3 rounded-lg p-3 text-sm">
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-700'"
+             class="font-semibold mb-1">Observaciones:</p>
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">{{ item.observaciones }}</p>
+        </div>
+      </div>
     </div>
 
-    <!-- Mensaje cuando no hay datos -->
-    <div *ngIf="itemsPaginados.length === 0" class="text-center py-12 bg-white rounded-xl shadow-lg">
-      <div class="text-gray-400 text-6xl mb-4">📋</div>
-      <h3 class="text-xl font-semibold text-gray-600 mb-2">No hay registros</h3>
-      <p class="text-gray-500">No se encontraron {{ tipoFiltro === 'todos' ? 'transacciones' : tipoFiltro }} para el período seleccionado.</p>
-    </div>
-  </div>
+<!-- Mensaje cuando no hay datos -->
+<div *ngIf="itemsPaginados.length === 0" 
+     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
+     class="text-center py-12 rounded-xl shadow-lg">
+  <div class="text-gray-400 text-6xl mb-4">📋</div>
+  <h3 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'"
+      class="text-xl font-semibold mb-2">No hay registros</h3>
+  <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+    No se encontraron {{ tipoFiltro === 'todos' ? 'transacciones' : tipoFiltro }} para el período seleccionado.</p>
 </div>
 
 <!-- Modal de Recambio mejorado -->
 <div *ngIf="mostrarModalRecambio" class="fixed inset-0 bg-gray-900/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in-scale">
-  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-300">
-    <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-      <h3 class="text-xl font-bold text-gray-900">Realizar Recambio</h3>
-      <button (click)="cerrarModalRecambio()" class="text-gray-400 hover:text-gray-700 text-3xl font-light leading-none transition">&times;</button>
+  <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
+       class="rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-300">
+    <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
+         class="sticky top-0 border-b px-6 py-4 flex justify-between items-center">
+      <h3 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
+          class="text-xl font-bold">Realizar Recambio</h3>
+      <button (click)="cerrarModalRecambio()" 
+              [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400 hover:text-gray-200' : 'text-gray-400 hover:text-gray-700'"
+              class="text-3xl font-light leading-none transition">&times;</button>
     </div>
 
     <div class="p-6">
       <!-- Información de la venta original -->
-      <div class="bg-gray-100 rounded-xl p-4 mb-6 border-l-4 border-blue-500">
-        <h4 class="font-bold text-gray-800 mb-2">Venta Original</h4>
+      <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50 border-blue-500' : 'bg-gray-100 border-blue-500'"
+           class="rounded-xl p-4 mb-6 border-l-4">
+        <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-800'"
+            class="font-bold mb-2">Venta Original</h4>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-1 text-sm">
           <p><strong>Cliente:</strong> {{ ventaSeleccionada?.cliente_nombre || 'Sin cliente' }}</p>
           <p><strong>Fecha:</strong> {{ ventaSeleccionada?.fecha_venta | date: 'dd/MM/yyyy HH:mm' }}</p>
@@ -516,11 +656,14 @@
       </div>
 
       <!-- Paso 1: Seleccionar productos a devolver -->
-      <div class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-red-500">
-        <h4 class="font-bold text-lg text-red-700 mb-4">1. Productos a devolver</h4>
+      <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-750 border-red-500' : 'bg-white border-red-500'"
+           class="rounded-xl shadow-md p-6 mb-8 border-l-4">
+        <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-red-400' : 'text-red-700'"
+            class="font-bold text-lg mb-4">1. Productos a devolver</h4>
         <div class="space-y-4">
           <div *ngFor="let producto of productosOriginales; let i = index" 
-            class="bg-gray-50 rounded-lg p-4 transition-all duration-200 hover:bg-gray-100">
+            [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'"
+            class="rounded-lg p-4 transition-all duration-200">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
               <label [for]="'producto-' + i" class="flex items-center space-x-3 flex-1 cursor-pointer">
                 <input 
@@ -531,8 +674,10 @@
                   class="w-5 h-5 text-red-600 focus:ring-red-500 rounded flex-shrink-0"
                 >
                 <div>
-                  <div class="font-medium text-gray-900">{{ producto.nombre }}</div>
-                  <div class="text-sm text-gray-600">
+                  <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
+                       class="font-medium">{{ producto.nombre }}</div>
+                  <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'"
+                       class="text-sm">
                     Talle: {{ producto.talle }} | Precio: {{ (producto.precio_unitario || 0) | monedaArs }}
                   </div>
                 </div>
@@ -542,10 +687,12 @@
               <div class="flex items-center space-x-2 text-sm" *ngIf="producto.seleccionado">
                 <label class="font-medium">Cant:</label>
                 <select [(ngModel)]="producto.cantidadDevolver" (change)="calcularTotalesRecambio()" 
-                  class="border border-gray-300 rounded-lg px-2 py-1 w-16 focus:ring-2 focus:ring-red-500">
+                  [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-600 border-gray-500 text-gray-100' : 'bg-white border-gray-300 text-gray-900'"
+                  class="border rounded-lg px-2 py-1 w-16 focus:ring-2 focus:ring-red-500">
                   <option *ngFor="let c of getOpcionesCantidad(producto.cantidad)" [value]="c">{{ c }}</option>
                 </select>
-                <span class="text-gray-500">de {{ producto.cantidad || 0 }}</span>
+                <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+                  de {{ producto.cantidad || 0 }}</span>
               </div>
             </div>
           </div>
@@ -553,8 +700,10 @@
       </div>
 
       <!-- Paso 2: Productos de recambio -->
-      <div class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-green-500">
-        <h4 class="font-bold text-lg text-green-700 mb-4">2. Productos de recambio</h4>
+      <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-750 border-green-500' : 'bg-white border-green-500'"
+           class="rounded-xl shadow-md p-6 mb-8 border-l-4">
+        <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-700'"
+            class="font-bold text-lg mb-4">2. Productos de recambio</h4>
         
         <!-- Buscador de productos -->
         <div class="mb-4">
@@ -563,44 +712,56 @@
             [(ngModel)]="busquedaProducto"
             (input)="buscarProductos()"
             placeholder="Buscar productos por nombre, código o marca..."
-            class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
+            [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'"
+            class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition"
           >
         </div>
 
         <!-- Productos disponibles -->
-        <div class="max-h-60 overflow-y-auto border border-gray-200 rounded-lg mb-4">
+        <div [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600' : 'border-gray-200'"
+             class="max-h-60 overflow-y-auto border rounded-lg mb-4">
           <div *ngFor="let producto of productosFiltrados" 
-            class="border-b border-gray-200 last:border-b-0 p-3 transition-colors duration-200 hover:bg-green-50 cursor-pointer"
+            [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600 hover:bg-green-900/20' : 'border-gray-200 hover:bg-green-50'"
+            class="border-b last:border-b-0 p-3 transition-colors duration-200 cursor-pointer"
             (click)="agregarProductoRecambio(producto)">
             <div class="flex items-center justify-between">
               <div>
-                <div class="font-medium text-gray-900">{{ producto.nombre }}</div>
-                <div class="text-sm text-gray-600">
+                <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
+                     class="font-medium">{{ producto.nombre }}</div>
+                <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'"
+                     class="text-sm">
                   {{ producto.marca }} | Talle: {{ producto.talle }} | Stock: {{ producto.cantidad_stock }}
                 </div>
               </div>
               <div class="text-right flex-shrink-0">
-                <div class="font-semibold text-green-600">{{ (producto.precio || 0) | monedaArs }}</div>
+                <div [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-600'"
+                     class="font-semibold">{{ (producto.precio || 0) | monedaArs }}</div>
                 <button class="bg-green-500 text-white px-3 py-1 rounded-full text-xs hover:bg-green-600 transition mt-1">
                   Agregar
                 </button>
               </div>
             </div>
           </div>
-          <div *ngIf="productosFiltrados.length === 0" class="p-4 text-center text-gray-500 text-sm">
+          <div *ngIf="productosFiltrados.length === 0" 
+               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'"
+               class="p-4 text-center text-sm">
             No se encontraron productos.
           </div>
         </div>
 
         <!-- Productos seleccionados para recambio -->
         <div *ngIf="productosRecambio.length > 0">
-          <h5 class="font-semibold text-gray-800 mb-2">Productos seleccionados:</h5>
+          <h5 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'"
+              class="font-semibold mb-2">Productos seleccionados:</h5>
           <div class="space-y-2">
             <div *ngFor="let item of productosRecambio; let i = index" 
-              class="bg-green-50 border border-green-200 rounded-lg p-3 flex justify-between items-center transition-all duration-200">
+              [ngClass]="themeService.theme() === 'dark' ? 'bg-green-900/20 border-green-700' : 'bg-green-50 border-green-200'"
+              class="border rounded-lg p-3 flex justify-between items-center transition-all duration-200">
               <div>
-                <div class="font-medium text-gray-800">{{ item.producto.nombre }}</div>
-                <div class="text-sm text-gray-600">
+                <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-800'"
+                     class="font-medium">{{ item.producto.nombre }}</div>
+                <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'"
+                     class="text-sm">
                   Talle: {{ item.producto.talle }} | {{ (item.producto.precio || 0) | monedaArs }} c/u
                 </div>
               </div>
@@ -611,9 +772,12 @@
                   (input)="calcularTotalesRecambio()"
                   min="1" 
                   [max]="item.producto.cantidad_stock"
-                  class="w-16 border border-gray-300 rounded-lg px-2 py-1 text-center text-sm focus:ring-2 focus:ring-green-500"
+                  [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100' : 'bg-white border-gray-300 text-gray-900'"
+                  class="w-16 border rounded-lg px-2 py-1 text-center text-sm focus:ring-2 focus:ring-green-500"
                 >
-                <button (click)="quitarProductoRecambio(i)" class="text-gray-400 hover:text-red-500 transition">
+                <button (click)="quitarProductoRecambio(i)" 
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400 hover:text-red-400' : 'text-gray-400 hover:text-red-500'"
+                        class="transition">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
                   </svg>
@@ -625,18 +789,22 @@
       </div>
 
       <!-- Paso 3: Descuento, Resumen y Pago -->
-      <div class="bg-white rounded-xl shadow-md p-6 mb-8 border-l-4 border-blue-500">
-        <h4 class="font-bold text-lg text-blue-700 mb-4">3. Resumen y Confirmación</h4>
+      <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-750 border-blue-500' : 'bg-white border-blue-500'"
+           class="rounded-xl shadow-md p-6 mb-8 border-l-4">
+        <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-blue-400' : 'text-blue-700'"
+            class="font-bold text-lg mb-4">3. Resumen y Confirmación</h4>
 
         <!-- Descuento del recambio -->
         <div class="mb-6">
-          <p class="font-semibold text-gray-800 mb-2">Descuento (opcional)</p>
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'"
+             class="font-semibold mb-2">Descuento (opcional)</p>
           <div class="flex items-center space-x-3">
             <input 
               type="text" 
               [(ngModel)]="codigoDescuentoRecambio"
               placeholder="Código de descuento"
-              class="border border-gray-300 rounded-lg px-4 py-2 flex-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'"
+              class="border rounded-lg px-4 py-2 flex-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
             <button 
               (click)="aplicarDescuentoRecambio()"
@@ -645,7 +813,9 @@
               Aplicar
             </button>
           </div>
-          <div *ngIf="descuentoRecambioAplicado > 0" class="mt-2 text-sm text-green-600 flex items-center">
+          <div *ngIf="descuentoRecambioAplicado > 0" 
+               [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-600'"
+               class="mt-2 text-sm flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
             </svg>
@@ -654,25 +824,39 @@
         </div>
 
         <!-- Resumen financiero -->
-        <div class="bg-blue-50 rounded-lg p-4 mb-6 text-sm">
-          <p class="font-semibold text-blue-800 mb-3">Detalle</p>
+        <div [ngClass]="themeService.theme() === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'"
+             class="rounded-lg p-4 mb-6 text-sm">
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-blue-300' : 'text-blue-800'"
+             class="font-semibold mb-3">Detalle</p>
           <div class="space-y-2">
-            <div class="flex justify-between text-gray-700">
+            <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'"
+                 class="flex justify-between">
               <span>Total devuelto:</span>
-              <span class="font-medium text-red-600">- {{ totalDevuelto | monedaArs }}</span>
+              <span [ngClass]="themeService.theme() === 'dark' ? 'text-red-400' : 'text-red-600'"
+                    class="font-medium">- {{ totalDevuelto | monedaArs }}</span>
             </div>
-            <div class="flex justify-between text-gray-700">
+            <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'"
+                 class="flex justify-between">
               <span>Total recambio:</span>
-              <span class="font-medium text-green-600">+ {{ totalRecambio | monedaArs }}</span>
+              <span [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-600'"
+                    class="font-medium">+ {{ totalRecambio | monedaArs }}</span>
             </div>
-            <div *ngIf="montoDescuentoRecambio > 0" class="flex justify-between text-gray-700">
+            <div *ngIf="montoDescuentoRecambio > 0" 
+                 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'"
+                 class="flex justify-between">
               <span>Ahorro por descuento:</span>
-              <span class="font-medium text-purple-600">- {{ montoDescuentoRecambio | monedaArs }}</span>
+              <span [ngClass]="themeService.theme() === 'dark' ? 'text-purple-400' : 'text-purple-600'"
+                    class="font-medium">- {{ montoDescuentoRecambio | monedaArs }}</span>
             </div>
-            <hr class="my-2 border-dashed border-gray-300">
-            <div class="flex justify-between font-bold text-lg text-gray-900">
+            <hr [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600' : 'border-gray-300'"
+                class="my-2 border-dashed">
+            <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
+                 class="flex justify-between font-bold text-lg">
               <span>Diferencia:</span>
-              <span [class.text-green-600]="diferencia >= 0" [class.text-red-600]="diferencia < 0">
+              <span [class.text-green-600]="diferencia >= 0 && themeService.theme() !== 'dark'" 
+                    [class.text-green-400]="diferencia >= 0 && themeService.theme() === 'dark'"
+                    [class.text-red-600]="diferencia < 0 && themeService.theme() !== 'dark'"
+                    [class.text-red-400]="diferencia < 0 && themeService.theme() === 'dark'">
                 {{ diferencia | monedaArs }}
               </span>
             </div>
@@ -681,9 +865,12 @@
 
         <!-- Método de pago (si hay diferencia) -->
         <div *ngIf="diferencia > 0" class="mb-6">
-          <p class="font-semibold text-gray-800 mb-2">Método de pago para la diferencia</p>
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'"
+             class="font-semibold mb-2">Método de pago para la diferencia</p>
           <div class="flex flex-wrap gap-3">
-            <label *ngFor="let metodo of metodosPago" class="flex items-center space-x-2 cursor-pointer bg-gray-100 rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-200 transition">
+            <label *ngFor="let metodo of metodosPago" 
+                   [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'"
+                   class="flex items-center space-x-2 cursor-pointer rounded-lg px-3 py-2 text-sm font-medium transition">
               <input 
                 type="radio" 
                 name="metodoPago" 
@@ -699,20 +886,24 @@
         <!-- Motivo y observaciones -->
         <div class="space-y-4">
           <div>
-            <p class="font-semibold text-gray-800 mb-2">Motivo del recambio</p>
+            <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'"
+               class="font-semibold mb-2">Motivo del recambio</p>
             <textarea 
               [(ngModel)]="motivoRecambio"
               placeholder="Describe el motivo del recambio..."
-              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'"
+              class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               rows="3"
             ></textarea>
           </div>
           <div>
-            <p class="font-semibold text-gray-800 mb-2">Observaciones adicionales (opcional)</p>
+            <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'"
+               class="font-semibold mb-2">Observaciones adicionales (opcional)</p>
             <textarea 
               [(ngModel)]="observacionesRecambio"
               placeholder="Detalles adicionales para el registro..."
-              class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+              [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-100 placeholder-gray-400' : 'bg-white border-gray-300 text-gray-900'"
+              class="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               rows="2"
             ></textarea>
           </div>
@@ -721,7 +912,8 @@
     </div>
 
     <!-- Botones del modal -->
-    <div class="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-4 flex flex-col sm:flex-row-reverse justify-between items-center space-y-3 sm:space-y-0 sm:space-x-3">
+    <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
+         class="sticky bottom-0 border-t px-6 py-4 flex flex-col sm:flex-row-reverse justify-between items-center space-y-3 sm:space-y-0 sm:space-x-3">
       <button 
         (click)="procesarRecambio()"
         [disabled]="!puedeConfirmarRecambio()"
@@ -729,8 +921,10 @@
         [class.bg-green-600]="puedeConfirmarRecambio()"
         [class.hover:bg-green-700]="puedeConfirmarRecambio()"
         [class.text-white]="puedeConfirmarRecambio()"
-        [class.bg-gray-200]="!puedeConfirmarRecambio()"
-        [class.text-gray-500]="!puedeConfirmarRecambio()">
+        [class.bg-gray-200]="!puedeConfirmarRecambio() && themeService.theme() !== 'dark'"
+        [class.bg-gray-700]="!puedeConfirmarRecambio() && themeService.theme() === 'dark'"
+        [class.text-gray-500]="!puedeConfirmarRecambio() && themeService.theme() !== 'dark'"
+        [class.text-gray-400]="!puedeConfirmarRecambio() && themeService.theme() === 'dark'">
         {{ procesandoRecambio ? 'Procesando...' : 'Confirmar Recambio' }}
       </button>
       <button 
@@ -740,8 +934,12 @@
       </button>
     </div>
   </div>
-  <div *ngIf="toastVisible" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 text-white font-medium animate-slide-up"
-  [ngClass]="toastColor">
+</div>
+
+<!-- Toast notification -->
+<div *ngIf="toastVisible" 
+     class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 text-white font-medium animate-slide-up"
+     [ngClass]="toastColor">
   {{ toastMensaje }}
 </div>
 </div>

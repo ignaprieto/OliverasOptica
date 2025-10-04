@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { Descuento } from '../../models/descuento.model';
 import { RouterModule } from '@angular/router';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-descuentos',
@@ -24,7 +25,8 @@ export class DescuentosComponent implements OnInit {
   toastColor = 'bg-green-600'; 
   mostrarConfirmacion: boolean = false;
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService,
+    public themeService: ThemeService) {}
 
   ngOnInit(): void {
     this.obtenerDescuentos();

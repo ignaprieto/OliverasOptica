@@ -26,11 +26,22 @@ export class NavbarComponent implements OnInit {
   // Escuchar clicks en toda la ventana
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: Event) {
-    const target = event.target as HTMLElement;
-    const navbar = document.querySelector('nav');
+    if (!this.mostrarMenu) return;
     
-    // Si el click no es dentro del navbar y el menú está abierto, cerrarlo
-    if (navbar && !navbar.contains(target) && this.mostrarMenu) {
+    const target = event.target as HTMLElement;
+    
+    // Buscar todos los elementos del menú
+    const navbar = document.querySelector('nav');
+    const sidebar = document.querySelector('[data-menu="sidebar"]');
+    const desktopMenu = document.querySelector('[data-menu="desktop"]');
+    
+    // Verificar si el click fue dentro de algún elemento del menú
+    const clickedInsideNavbar = navbar?.contains(target);
+    const clickedInsideSidebar = sidebar?.contains(target);
+    const clickedInsideDesktopMenu = desktopMenu?.contains(target);
+    
+    // Solo cerrar si el click fue completamente fuera de todos los elementos del menú
+    if (!clickedInsideNavbar && !clickedInsideSidebar && !clickedInsideDesktopMenu) {
       this.mostrarMenu = false;
     }
   }
@@ -43,7 +54,11 @@ export class NavbarComponent implements OnInit {
     }
   }
 
-  toggleMenu() {
+  toggleMenu(event?: Event) {
+    // Prevenir que el evento se propague al documento
+    if (event) {
+      event.stopPropagation();
+    }
     this.mostrarMenu = !this.mostrarMenu;
   }
 

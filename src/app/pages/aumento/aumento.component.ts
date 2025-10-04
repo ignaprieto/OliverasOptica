@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-aumento',
@@ -47,7 +48,8 @@ export class AumentoComponent implements OnInit {
   // Propiedad para manejar timeout del toast
   private toastTimeout?: any;
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(private supabase: SupabaseService,
+      public themeService: ThemeService) {}
 
   async ngOnInit() {
     this.isLoading = true;

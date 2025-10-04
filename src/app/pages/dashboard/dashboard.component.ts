@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
+import { ThemeService } from '../../services/theme.service';
 
 interface EstadisticasDia {
   ventasHoy: number;
@@ -30,7 +31,10 @@ export class DashboardComponent implements OnInit {
 
   cargando = true;
 
-  constructor(private supabase: SupabaseService) {}
+  constructor(
+    private supabase: SupabaseService,
+    public themeService: ThemeService  // ✨ Agregar ThemeService
+  ) {}
 
   ngOnInit() {
     this.cargarEstadisticas();

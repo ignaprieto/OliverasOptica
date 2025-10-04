@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { SupabaseService } from './services/supabase.service';
+import { ThemeService } from './services/theme.service';
 import { environment } from '../environments/environment';
 import { filter } from 'rxjs/operators';
 
@@ -17,15 +18,17 @@ export class AppComponent implements OnInit {
   isAppInitialized = false;
   isAuthenticated = false;
   currentRoute = '';
-  showFooter = false; // Nueva propiedad para controlar la visibilidad del footer
+  showFooter = false;
   public title = 'ventas';
   private static authListenerSet = false;
 
-  constructor(public router: Router, private supabase: SupabaseService) {
-    // Inicializar la ruta actual inmediatamente
+  constructor(
+    public router: Router, 
+    private supabase: SupabaseService,
+    public themeService: ThemeService 
+  ) {
     this.currentRoute = this.router.url;
     
-    // Escuchar cambios de navegación
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
@@ -90,7 +93,6 @@ export class AppComponent implements OnInit {
   }
 
   mostrarFooter(): boolean {
-    // Mostrar footer cuando la ruta esté definida Y showFooter sea true
     return this.showFooter && this.currentRoute !== '';
   }
 

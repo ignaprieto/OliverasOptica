@@ -102,7 +102,15 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard, roleGuard],
   },
-
+// Empleados - Solo admin
+  {
+    path: 'configuracion',
+    loadComponent: () =>
+      import('./pages/configuracion/configuracion.component').then(
+        (m) => m.ConfiguracionComponent
+      ),
+    canActivate: [authGuard, roleGuard],
+  },
   // Rutas no encontradas redirigen a login
   { 
     path: '**', 

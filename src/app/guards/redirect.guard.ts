@@ -23,7 +23,7 @@ export const redirectGuard: CanActivateFn = async (route, state) => {
     }
 
     if (userRole === 'vendedor') {
-      console.log('➡️ Redirigiendo vendedor a /ventas');
+    
       router.navigate(['/ventas'], { replaceUrl: true });
       return false;
     }

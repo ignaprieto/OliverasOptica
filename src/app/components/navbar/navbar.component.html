@@ -1,329 +1,111 @@
-<!-- Contenedor completo con position relative -->
 <div class="relative">
-<!-- Navbar -->
-<nav class="bg-gradient-to-r from-gray-900 via-gray-950 to-gray-900 text-white px-4 sm:px-6 lg:px-8 py-4 shadow-2xl relative z-50 border-b border-gray-800">
-  <div class="max-w-7xl mx-auto flex justify-between items-center">
-    <!-- Logo / Nombre de la tienda -->
-    <div class="flex items-center space-x-3 sm:space-x-4">
-      <!-- Admin: logo clickeable -->
-      <a 
-        *ngIf="shouldShowMenuItem()"
-        routerLink="/dashboard"
-        class="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent transition duration-300 ease-in-out transform hover:scale-105"
-      >
-        COMERSYS
-      </a>
+  <nav class="bg-gradient-to-r from-gray-900 via-gray-950 to-gray-900 text-white px-4 sm:px-6 lg:px-8 py-4 shadow-2xl relative z-50 border-b border-gray-800">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
       
-      <!-- Vendedor: logo solo texto -->
-      <span 
-        *ngIf="!shouldShowMenuItem()"
-        class="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent"
-      >
-        COMERSYS
-      </span>
+      <div class="flex items-center space-x-3 sm:space-x-4">
+        <a routerLink="/dashboard"
+           class="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent transition duration-300 ease-in-out transform hover:scale-105">
+          COMERSYS
+        </a>
 
-      <!-- Botón hamburguesa solo admin -->
-      <button 
-        *ngIf="shouldShowMenuItem()"
-        (click)="toggleMenu($event)"
-        class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95"
-        aria-label="Toggle menu"
-      >
-        <svg *ngIf="!mostrarMenu" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-        <svg *ngIf="mostrarMenu" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-    </div>
-
-    <!-- Usuario y cerrar sesión (desktop) -->
-    <div class="hidden md:flex items-center space-x-4 lg:space-x-6">
-      <div class="text-sm lg:text-base font-medium text-gray-300">
-        <span class="hidden lg:inline">Bienvenido, </span>
-        <span class="text-white font-semibold">{{ userName }}</span>
+        <button (click)="toggleMenu($event)"
+                class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95"
+                aria-label="Toggle menu">
+          @if (!mostrarMenu()) {
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          } @else {
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          }
+        </button>
       </div>
-      
-      <button
-        (click)="cerrarSesion()"
-        class="group flex items-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-sm lg:text-base text-white font-semibold px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-      >
-        <svg class="w-4 h-4 lg:w-5 lg:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-        </svg>
-        <span class="hidden sm:inline">Cerrar sesión</span>
-      </button>
+
+      <div class="hidden md:flex items-center space-x-4 lg:space-x-6">
+        <div class="text-sm lg:text-base font-medium text-gray-300">
+          <span class="hidden lg:inline">Bienvenido, </span>
+          <span class="text-white font-semibold">{{ userName() }}</span>
+        </div>
+        
+        <button (click)="cerrarSesion()"
+                class="group flex items-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-sm lg:text-base text-white font-semibold px-4 lg:px-5 py-2 lg:py-2.5 rounded-xl transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl">
+          <svg class="w-4 h-4 lg:w-5 lg:h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+          <span class="hidden sm:inline">Cerrar sesión</span>
+        </button>
+      </div>
+
+      <div class="md:hidden">
+        <button (click)="cerrarSesion()" 
+                class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-110 active:scale-95">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+        </button>
+      </div>
     </div>
+  </nav>
 
-    <!-- Usuario móvil -->
-    <div class="md:hidden">
-      <button 
-        (click)="cerrarSesion()" 
-        class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-110 active:scale-95"
-        aria-label="Cerrar sesión"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-        </svg>
-      </button>
+  @if (mostrarMenu()) {
+    <div (click)="closeMenu()"
+         class="fixed inset-0 z-30 transition-opacity duration-300 bg-black bg-opacity-50 md:bg-transparent">
     </div>
-  </div>
-</nav>
+  }
 
-<!-- Overlay para cerrar el menú al hacer click fuera -->
-<div 
-  *ngIf="mostrarMenu && shouldShowMenuItem()"
-  (click)="closeMenu()"
-  class="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 md:hidden"
-></div>
+  <div [ngClass]="{'translate-x-0': mostrarMenu(), '-translate-x-full': !mostrarMenu()}"
+       class="fixed top-0 left-0 w-80 max-w-[85vw] h-full bg-gradient-to-b from-gray-900 to-gray-950 shadow-2xl z-50 overflow-y-auto transform transition-transform duration-300 ease-in-out md:hidden">
+    
+    <div class="p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Menú</h2>
+        <button (click)="closeMenu()" class="p-2 rounded-lg hover:bg-gray-800 text-white transition-all duration-300 transform hover:rotate-90">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
 
-<!-- Sidebar (solo admin) -->
-<div 
-  *ngIf="shouldShowMenuItem()"
-  data-menu="sidebar"
-  [ngClass]="{'translate-x-0': mostrarMenu, '-translate-x-full': !mostrarMenu}"
-  class="fixed top-0 left-0 w-80 max-w-[85vw] h-full bg-gradient-to-b from-gray-900 to-gray-950 shadow-2xl z-50 overflow-y-auto transform transition-transform duration-300 ease-in-out md:hidden"
->
-  <div class="p-6">
-    <!-- Header del sidebar -->
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">Menú</h2>
-      <button 
-        (click)="closeMenu()" 
-        class="p-2 rounded-lg hover:bg-gray-800 text-white transition-all duration-300 transform hover:rotate-90"
-        aria-label="Cerrar menú"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-    </div>
+      <div class="mb-6 p-4 bg-gradient-to-r from-gray-800 to-gray-850 rounded-xl border border-gray-700">
+        <p class="text-sm text-gray-400">Bienvenido,</p>
+        <p class="text-white font-semibold text-lg">{{ userName() }}</p>
+      </div>
 
-    <!-- Info usuario móvil -->
-    <div class="mb-6 p-4 bg-gradient-to-r from-gray-800 to-gray-850 rounded-xl border border-gray-700">
-      <p class="text-sm text-gray-400">Bienvenido,</p>
-      <p class="text-white font-semibold text-lg">{{ userName }}</p>
-    </div>
-
-    <!-- Menú items -->
-    <nav class="space-y-1">
-      <a 
-        routerLink="/dashboard" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-        </svg>
-        <span class="font-medium">Menu Principal</span>
-      </a>
-
-      <a 
-        routerLink="/productos" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-        </svg>
-        <span class="font-medium">Productos</span>
-      </a>
-
-      <a 
-        routerLink="/stock" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-        </svg>
-        <span class="font-medium">Stock</span>
-      </a>
-
-      <a 
-        routerLink="/ventas" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-        </svg>
-        <span class="font-medium">Ventas</span>
-      </a>
-
-      <a 
-        routerLink="/descuentos" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-        </svg>
-        <span class="font-medium">Descuentos</span>
-      </a>
-
-      <a 
-        routerLink="/historial" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-        </svg>
-        <span class="font-medium">Historial</span>
-      </a>
-
-      <a 
-        routerLink="/aumento" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-        </svg>
-        <span class="font-medium">Aumento</span>
-      </a>
-
-      <a 
-        routerLink="/finanzas" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span class="font-medium">Finanzas</span>
-      </a>
-
-      <a 
-        routerLink="/empleados" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-        </svg>
-        <span class="font-medium">Empleados</span>
-      </a>
-
-      <a 
-        routerLink="/configuracion" 
-        routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-        (click)="closeMenu()" 
-        class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group"
-      >
-        <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-        <span class="font-medium">Configuración</span>
-      </a>
-    </nav>
-
-    <!-- Botón cerrar sesión en sidebar móvil -->
-    <div class="mt-6 pt-6 border-t border-gray-800">
-      <button
-        (click)="cerrarSesion()"
-        class="w-full flex items-center justify-center space-x-2 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold px-5 py-3.5 rounded-xl transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 shadow-lg"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-        </svg>
-        <span>Cerrar sesión</span>
-      </button>
+      <nav class="space-y-1">
+        @for (opcion of opcionesMenu(); track opcion.vista) {
+          <a [routerLink]="opcion.route" 
+             routerLinkActive="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
+             (click)="closeMenu()" 
+             class="flex items-center space-x-3 px-4 py-3.5 rounded-xl text-gray-300 hover:bg-gradient-to-r hover:from-gray-800 hover:to-gray-750 hover:text-white transition-all duration-300 transform hover:translate-x-2 group">
+            <svg class="w-5 h-5 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="opcion.icon"></path>
+            </svg>
+            <span class="font-medium">{{ opcion.label }}</span>
+          </a>
+        }
+      </nav>
     </div>
   </div>
-</div>
 
-<!-- Menú desplegable desktop (solo admin) -->
-<div 
-  *ngIf="mostrarMenu && shouldShowMenuItem()"
-  data-menu="desktop"
-  class="hidden md:block absolute top-full left-0 right-0 bg-gradient-to-b from-gray-900 to-gray-950 shadow-2xl z-40 border-t border-gray-800"
->
-  <div class="max-w-7xl mx-auto px-6 py-6">
-    <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
-      <a routerLink="/dashboard" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Menu Principal</span>
-      </a>
-      
-      <a routerLink="/productos" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Productos</span>
-      </a>
-      
-      <a routerLink="/stock" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Stock</span>
-      </a>
-      
-      <a routerLink="/ventas" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Ventas</span>
-      </a>
-      
-      <a routerLink="/descuentos" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Descuentos</span>
-      </a>
-      
-      <a routerLink="/historial" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Historial</span>
-      </a>
-      
-      <a routerLink="/aumento" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Aumento</span>
-      </a>
-      
-      <a routerLink="/finanzas" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Finanzas</span>
-      </a>
-      
-      <a routerLink="/empleados" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Empleados</span>
-      </a>
-      
-      <a routerLink="/configuracion" routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" (click)="closeMenu()" class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
-        <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-        <span class="text-sm font-medium text-center">Configuración</span>
-      </a>
+  @if (mostrarMenu()) {
+    <div class="hidden md:block absolute top-full left-0 right-0 bg-gradient-to-b from-gray-900 to-gray-950 shadow-2xl z-40 border-t border-gray-800">
+      <div class="max-w-7xl mx-auto px-6 py-6">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+            @for (opcion of opcionesMenu(); track opcion.vista) {
+              <a [routerLink]="opcion.route" 
+                 routerLinkActive="bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg border-blue-500" 
+                 (click)="closeMenu()" 
+                 class="group flex flex-col items-center justify-center px-4 py-4 rounded-xl text-gray-300 hover:bg-gradient-to-br hover:from-gray-800 hover:to-gray-850 hover:text-white transition-all duration-300 ease-in-out transform hover:scale-105 active:scale-95 border border-transparent hover:border-gray-700">
+                <svg class="w-6 h-6 mb-2 text-blue-400 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="opcion.icon"></path>
+                </svg>
+                <span class="text-sm font-medium text-center">{{ opcion.label }}</span>
+              </a>
+            }
+          </div>
+      </div>
     </div>
-  </div>
-</div>
+  }
 </div>

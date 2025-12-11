@@ -16,7 +16,11 @@ export class LoginComponent implements OnInit {
   email: string = '';
   password: string = '';
   error: string | null = null;
-  isLoading: boolean = false;
+  
+  // Estados de carga
+  isLoading: boolean = false;       // Para el botón de submit
+  isLoadingInitial: boolean = true; // NUEVO: Para la carga inicial de la página
+
   showPassword: boolean = false;
   dni: string = '';
 
@@ -25,10 +29,18 @@ export class LoginComponent implements OnInit {
 
   async ngOnInit() {
     // Verificar si ya está logueado al cargar el componente
-    const currentAppUser = await this.supabase.getCurrentAppUser();
-    if (currentAppUser) {
-      // Si ya está autenticado, redirigir según el rol
-      await this.redirectByRole();
+    try {
+      const currentAppUser = await this.supabase.getCurrentAppUser();
+      if (currentAppUser) {
+        // Si ya está autenticado, redirigir según el rol
+        await this.redirectByRole();
+      } else {
+        // Si no hay usuario, terminamos la carga inicial para mostrar el form
+        this.isLoadingInitial = false;
+      }
+    } catch (e) {
+      // Si falla la verificación, mostramos el form igual
+      this.isLoadingInitial = false;
     }
     
     this.error = null;
@@ -49,20 +61,21 @@ export class LoginComponent implements OnInit {
     }
 
     try {
+      // Corregido: No desestructuramos { error } porque el servicio maneja errores internamente o devuelve datos
       await this.supabase.signInWithPassword(this.email, this.password);
       
       // Redirigir según el rol después del login exitoso
       await this.redirectByRole();
       
-    } catch (error: any) {
-      console.error('❌ Error en login:', error);
-      if (error.message?.includes('Invalid login credentials')) {
+    } catch (error: unknown) {
+      const err = error as { message: string };
+      console.error('❌ Error en login:', err);
+      if (err.message?.includes('Invalid login credentials')) {
         this.error = 'Credenciales incorrectas';
       } else {
         this.error = 'Error inesperado. Inténtalo de nuevo.';
       }
-    } finally {
-      this.isLoading = false;
+      this.isLoading = false; // Solo desactivar carga si hubo error
     }
   }
 
@@ -86,11 +99,12 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  async loginVendedorPorDni(dni: string) {
+  // CORREGIDO: Eliminado el parámetro 'dni' porque ya usamos this.dni del ngModel
+  async loginVendedorPorDni() {
     this.error = null;
     this.isLoading = true;
 
-    if (!dni) {
+    if (!this.dni) {
       this.error = 'El DNI es obligatorio';
       this.isLoading = false;
       return;
@@ -100,15 +114,15 @@ export class LoginComponent implements OnInit {
       const { data, error } = await this.supabase.getClient()
         .from('vendedores')
         .select('*')
-        .eq('dni', dni)
+        .eq('dni', this.dni)
         .eq('activo', true)
         .single();
 
       if (error || !data) {
         this.error = 'DNI no encontrado o vendedor inactivo';
+        this.isLoading = false;
         return;
       }
-
 
       // Crear sesión de vendedor en localStorage
       const vendedorSession = {
@@ -128,7 +142,6 @@ export class LoginComponent implements OnInit {
     } catch (e) {
       this.error = 'Error al intentar ingresar como vendedor';
       console.error('Error en loginVendedorPorDni:', e);
-    } finally {
       this.isLoading = false;
     }
   }

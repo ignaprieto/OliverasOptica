@@ -1,6 +1,20 @@
 <div class="min-h-screen p-4 sm:p-8 md:p-12 animate-fade-in-scale transition-colors duration-300" [ngClass]="themeService.isDark() ? 'bg-gray-900' : 'bg-gray-100'">
   <div class="w-full max-w-7xl mx-auto">
-    <!-- Título principal -->
+    
+    <button 
+      (click)="toggleReportes()"
+      class="fixed top-20 right-6 z-50 p-4 rounded-full shadow-2xl transition-all duration-300 transform hover:scale-110 active:scale-95"
+      [ngClass]="themeService.isDark() ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-500 hover:bg-blue-600'">
+      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+      </svg>
+      <span 
+        *ngIf="reportesNoLeidos > 0" 
+        class="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center animate-pulse shadow-lg">
+        {{ reportesNoLeidos }}
+      </span>
+    </button>
+
     <header class="text-center mb-10 md:mb-16">
       <h1 class="text-3xl md:text-5xl font-extrabold leading-tight mb-2 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">
         Panel de Control Administrativo
@@ -10,7 +24,163 @@
       </p>
     </header>
 
-    <!-- Sección de estadísticas del día -->
+    <div 
+      *ngIf="mostrarReportes"
+      class="fixed inset-0 z-[60] overflow-hidden"
+      [@slideIn]>
+      
+      <div 
+        class="absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300"
+        (click)="toggleReportes()">
+      </div>
+      
+      <div 
+        class="absolute right-0 top-0 h-full w-full sm:w-[420px] shadow-2xl transform transition-all duration-300 ease-out overflow-y-auto"
+        [ngClass]="themeService.isDark() ? 'bg-gray-800' : 'bg-white'"
+        (click)="$event.stopPropagation()">
+        
+        <div 
+          class="sticky top-0 z-10 p-6 border-b backdrop-blur-sm" 
+          [ngClass]="themeService.isDark() ? 'bg-gray-800/95 border-gray-700' : 'bg-white/95 border-gray-200'">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-2xl font-bold flex items-center gap-2" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">
+              <svg class="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+              </svg>
+              Notificaciones
+            </h2>
+            <button 
+              (click)="toggleReportes()"
+              class="p-2 rounded-full transition-all duration-200 hover:rotate-90"
+              [ngClass]="themeService.isDark() ? 'hover:bg-gray-700 text-gray-400 hover:text-white' : 'hover:bg-gray-200 text-gray-600 hover:text-gray-900'">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div class="flex gap-2">
+            <button 
+              (click)="marcarTodosComoLeidos()"
+              class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+              [ngClass]="themeService.isDark() ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'">
+              <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+              Marcar leídos
+            </button>
+            <button 
+              (click)="cargarDatosDashboard()"
+              class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95"
+              [ngClass]="themeService.isDark() ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'">
+              <svg class="w-4 h-4 inline-block mr-1" [class.animate-spin]="cargando" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              Actualizar
+            </button>
+          </div>
+        </div>
+
+        <div class="p-4">
+          <div *ngIf="reportes.length === 0" class="text-center py-16">
+            <svg class="w-20 h-20 mx-auto mb-4 opacity-40" [ngClass]="themeService.isDark() ? 'text-gray-600' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-lg font-medium mb-1" [ngClass]="themeService.isDark() ? 'text-gray-300' : 'text-gray-700'">
+              ¡Todo al día!
+            </p>
+            <p class="text-sm" [ngClass]="themeService.isDark() ? 'text-gray-500' : 'text-gray-500'">
+              No hay notificaciones pendientes
+            </p>
+          </div>
+
+          <div class="space-y-3">
+            <div 
+              *ngFor="let reporte of reportes"
+              class="rounded-xl border transition-all duration-200 hover:shadow-lg transform hover:-translate-y-1"
+              [ngClass]="[
+                getPrioridadBg(reporte.prioridad),
+                themeService.isDark() ? 'border-gray-700' : 'border-gray-200',
+                !reporte.leido ? 'opacity-100 ring-2' : 'opacity-70',
+                !reporte.leido && reporte.prioridad === 'alta' ? 'ring-red-500/50' : '',
+                !reporte.leido && reporte.prioridad === 'media' ? 'ring-yellow-500/50' : '',
+                !reporte.leido && reporte.prioridad === 'baja' ? 'ring-blue-500/50' : ''
+              ]">
+              
+              <div class="p-4">
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3 flex-1">
+                    <div class="flex-shrink-0">
+                      <i [class]="'fas ' + reporte.icono + ' text-xl ' + getPrioridadColor(reporte.prioridad)"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2 mb-1">
+                        <h3 class="font-bold text-base truncate" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">
+                          {{ reporte.titulo }}
+                        </h3>
+                        <span 
+                          *ngIf="!reporte.leido"
+                          class="flex-shrink-0 w-2 h-2 bg-blue-500 rounded-full animate-pulse">
+                        </span>
+                      </div>
+                      <span class="inline-block px-2 py-0.5 text-xs font-semibold rounded-full" 
+                            [ngClass]="'text-white ' + (reporte.prioridad === 'alta' ? 'bg-red-500' : reporte.prioridad === 'media' ? 'bg-yellow-500' : 'bg-blue-500')">
+                        {{ reporte.prioridad === 'alta' ? 'Alta' : reporte.prioridad === 'media' ? 'Media' : 'Baja' }}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <button 
+                    (click)="eliminarReporte(reporte)"
+                    class="flex-shrink-0 p-1.5 rounded-lg transition-all duration-200 hover:scale-110"
+                    [ngClass]="themeService.isDark() ? 'hover:bg-gray-700 text-gray-400 hover:text-red-400' : 'hover:bg-gray-200 text-gray-500 hover:text-red-500'">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+
+                <p class="text-sm mb-4 leading-relaxed" [ngClass]="themeService.isDark() ? 'text-gray-300' : 'text-gray-700'">
+                  {{ reporte.mensaje }}
+                </p>
+
+                <div class="flex items-center justify-between pt-3 border-t" [ngClass]="themeService.isDark() ? 'border-gray-700' : 'border-gray-200'">
+                  <span class="text-xs flex items-center gap-1" [ngClass]="themeService.isDark() ? 'text-gray-500' : 'text-gray-500'">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    {{ reporte.fecha | date:'dd/MM/yyyy HH:mm' }}
+                  </span>
+                  
+                  <div class="flex gap-2">
+                    <button 
+                      *ngIf="!reporte.leido"
+                      (click)="marcarComoLeido(reporte)"
+                      class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-200 transform hover:scale-105"
+                      [ngClass]="themeService.isDark() ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'">
+                      Leído
+                    </button>
+                    
+                    <a 
+                      *ngIf="reporte.accion"
+                      [routerLink]="reporte.accion"
+                      (click)="toggleReportes()"
+                      class="text-xs px-3 py-1.5 rounded-lg font-medium transition-all duration-200 transform hover:scale-105 flex items-center gap-1"
+                      [ngClass]="themeService.isDark() ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-800'">
+                      Ver
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="mb-10">
       <h2 class="text-2xl font-bold mb-6 flex items-center transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-200' : 'text-gray-800'">
         <svg class="w-6 h-6 mr-2" [ngClass]="themeService.isDark() ? 'text-blue-400' : 'text-blue-600'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,7 +189,6 @@
         Estadísticas de Hoy
       </h2>
 
-      <!-- Loader mientras carga -->
       <div *ngIf="cargando" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div *ngFor="let item of [1,2,3,4]" class="rounded-xl p-6 shadow-md animate-pulse transition-colors duration-300" [ngClass]="themeService.isDark() ? 'bg-gray-800' : 'bg-white'">
           <div class="h-4 rounded w-3/4 mb-4" [ngClass]="themeService.isDark() ? 'bg-gray-700' : 'bg-gray-200'"></div>
@@ -27,10 +196,8 @@
         </div>
       </div>
 
-      <!-- Tarjetas de estadísticas -->
       <div *ngIf="!cargando" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         
-        <!-- Ventas Hoy -->
         <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-gradient-to-br from-blue-500 to-blue-600'">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Ventas Hoy</h3>
@@ -42,7 +209,6 @@
           <p class="text-xs mt-2 opacity-80">Transacciones completadas</p>
         </div>
 
-        <!-- Total Recaudado -->
         <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-green-600 to-green-700' : 'bg-gradient-to-br from-green-500 to-green-600'">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Recaudado</h3>
@@ -54,7 +220,17 @@
           <p class="text-xs mt-2 opacity-80">Promedio: ${{ estadisticas.ventaPromedio.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</p>
         </div>
 
-        <!-- Productos Vendidos -->
+        <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-amber-600 to-amber-700' : 'bg-gradient-to-br from-amber-500 to-amber-600'">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Ventas Fiadas</h3>
+            <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+          </div>
+          <p class="text-4xl font-bold">{{ estadisticas.ventasFiadasHoy }}</p>
+          <p class="text-xs mt-2 opacity-80">Total: ${{ estadisticas.montoFiadoHoy.toLocaleString('es-AR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</p>
+        </div>
+
         <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-purple-600 to-purple-700' : 'bg-gradient-to-br from-purple-500 to-purple-600'">
           <div class="flex items-center justify-between mb-2">
             <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Unidades</h3>
@@ -66,31 +242,13 @@
           <p class="text-xs mt-2 opacity-80">Productos vendidos</p>
         </div>
 
-        <!-- Alertas de Stock -->
-        <div class="rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300" [ngClass]="themeService.isDark() ? 'bg-gradient-to-br from-orange-600 to-red-600' : 'bg-gradient-to-br from-orange-500 to-red-500'">
-          <div class="flex items-center justify-between mb-2">
-            <h3 class="text-sm font-semibold uppercase tracking-wide opacity-90">Alertas</h3>
-            <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-          </div>
-          <div class="flex items-baseline gap-2">
-            <p class="text-4xl font-bold">{{ estadisticas.stockBajo + estadisticas.sinStock }}</p>
-          </div>
-          <p class="text-xs mt-2 opacity-80">
-            {{ estadisticas.stockBajo }} bajo stock · {{ estadisticas.sinStock }} sin stock
-          </p>
-        </div>
-
       </div>
     </div>
 
-    <!-- Sección de navegación -->
     <div>
       <h2 class="text-2xl font-bold mb-6 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-200' : 'text-gray-800'">Accesos Rápidos</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         
-        <!-- Stock -->
         <a routerLink="/stock" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-indigo-600' : 'bg-indigo-500'">
@@ -103,7 +261,6 @@
           </div>
         </a>
 
-        <!-- Ventas -->
         <a routerLink="/ventas" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-green-600' : 'bg-green-500'">
@@ -116,7 +273,6 @@
           </div>
         </a>
 
-        <!-- Historial -->
         <a routerLink="/historial" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-rose-600' : 'bg-rose-500'">
@@ -129,7 +285,6 @@
           </div>
         </a>
 
-        <!-- Productos -->
         <a routerLink="/productos" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-yellow-600' : 'bg-yellow-500'">
@@ -142,7 +297,6 @@
           </div>
         </a>
 
-        <!-- Aumento -->
         <a routerLink="/aumento" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-orange-600' : 'bg-orange-500'">
@@ -155,8 +309,7 @@
           </div>
         </a>
 
-        <!-- Descuentos -->
-        <a routerLink="/descuentos" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+<a routerLink="/descuentos" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-teal-600' : 'bg-teal-500'">
               <i class="fas fa-percent text-xl"></i>
@@ -168,7 +321,6 @@
           </div>
         </a>
 
-        <!-- Finanzas -->
         <a routerLink="/finanzas" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-green-800' : 'bg-green-700'">
@@ -181,7 +333,6 @@
           </div>
         </a>
 
-        <!-- Empleados -->
         <a routerLink="/empleados" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-blue-800' : 'bg-blue-700'">
@@ -189,12 +340,11 @@
             </div>
             <div>
               <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Empleados</h3>
-              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Gestión de vendedores.</p>
+              <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Gestión de empleados.</p>
             </div>
           </div>
         </a>
 
-        <!-- Configuración -->
         <a routerLink="/configuracion" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex items-start">
             <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" [ngClass]="themeService.isDark() ? 'bg-gray-600' : 'bg-gray-500'">
@@ -203,6 +353,54 @@
             <div>
               <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Configuración</h3>
               <p class="text-sm transition-colors duration-300" [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Configura opciones del sistema.</p>
+            </div>
+          </div>
+        </a>
+
+        <a routerLink="/caja" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" 
+           [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" 
+                 [ngClass]="themeService.isDark() ? 'bg-green-400' : 'bg-green-400'">
+              <i class="fas fa-cash-register text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" 
+                  [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Caja</h3>
+              <p class="text-sm transition-colors duration-300" 
+                 [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Controla y gestiona la caja de tu negocio.</p>
+            </div>
+          </div>
+        </a>
+
+        <a routerLink="/clientes" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" 
+           [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" 
+                 [ngClass]="themeService.isDark() ? 'bg-blue-400' : 'bg-blue-400'">
+              <i class="fas fa-users text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" 
+                  [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Clientes</h3>
+              <p class="text-sm transition-colors duration-300" 
+                 [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Agrega clientes y realiza vista de sus movimientos.</p>
+            </div>
+          </div>
+        </a>
+
+        <a routerLink="/deposito" class="block rounded-xl p-6 shadow-md hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 transform border" 
+           [ngClass]="themeService.isDark() ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+          <div class="flex items-start">
+            <div class="text-white rounded-full p-3 flex-shrink-0 mr-4 shadow-sm" 
+                 [ngClass]="themeService.isDark() ? 'bg-orange-300' : 'bg-orange-300'">
+              <i class="fas fa-warehouse text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold mb-1 transition-colors duration-300" 
+                  [ngClass]="themeService.isDark() ? 'text-white' : 'text-gray-900'">Depósito</h3>
+              <p class="text-sm transition-colors duration-300" 
+                 [ngClass]="themeService.isDark() ? 'text-gray-400' : 'text-gray-500'">Carga y controla stock en tu depósito.</p>
             </div>
           </div>
         </a>

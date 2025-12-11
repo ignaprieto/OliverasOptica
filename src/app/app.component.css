@@ -1,0 +1,14 @@
+@keyframes slideDownFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-bounce-in {
+  animation: slideDownFade 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}

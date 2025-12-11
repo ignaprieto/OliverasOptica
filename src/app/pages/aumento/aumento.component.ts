@@ -1,10 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
 import { ThemeService } from '../../services/theme.service';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 
 @Component({
   selector: 'app-aumento',
@@ -13,493 +15,379 @@ import { ThemeService } from '../../services/theme.service';
   templateUrl: './aumento.component.html',
   styleUrl: './aumento.component.css'
 })
-export class AumentoComponent implements OnInit {
-  // Propiedades para el estado de carga
+export class AumentoComponent implements OnInit, OnDestroy {
+  // Estado de carga
   isLoading: boolean = true;
+  cargandoProductosCategoria: { [key: string]: boolean } = {};
 
-  // Propiedades existentes
+  // Datos
   categorias: string[] = [];
   productosPorCategoria: { [key: string]: any[] } = {};
-  productosPorCategoriaFiltrados: { [key: string]: any[] } = {};
-  categoriaSeleccionada: string | null = null;
+  
+  // Selección y Lógica
   seleccionados: Set<string> = new Set();
   aumentarTodaCategoria: { [key: string]: boolean } = {};
+  expandido: { [key: string]: boolean } = {};
+  
+  // Configuración del Aumento
   valorAumento: number | null = null;
-  productosConfirmados: any[] = [];
-  paso = 1;
-  expandido: { [key: string]: boolean } = {}; 
-  productosSeleccionados: { [key: string]: boolean } = {};
-  confirmando: boolean = false;
   tipoAumento: 'precio' | 'porcentaje' | null = null;
+  
+  // UI
+  paso = 1;
+  confirmando: boolean = false;
   toastVisible = false;
   toastMensaje = '';
   toastColor: string = '';
   resumenAumento: string[] = [];
-  productos: any[] = [];
   errorAumentoInvalido = false;
 
-  categoriasExpandidas: { [key: string]: boolean } = {};
-  mostrarFiltroCategorias: boolean = false;
-  categoriaFiltroSeleccionada: string | null = null;
-
-  // Nueva propiedad para el filtro de búsqueda
+  // Filtro Global
+  private searchSubject = new Subject<string>();
+  private searchSubscription: Subscription | null = null;
   filtroTexto: string = '';
 
-  // Propiedad para manejar timeout del toast
-  private toastTimeout?: any;
+  // Paginación de Categorías
+  paginaActual: number = 1;
+  categoriasPorPagina: number = 10;
 
-  constructor(private supabase: SupabaseService,
-      public themeService: ThemeService) {}
+  private toastTimeout?: any;
+  Math = Math;
+
+  constructor(
+    private supabase: SupabaseService,
+    public themeService: ThemeService
+  ) {}
 
   async ngOnInit() {
     this.isLoading = true;
-    await this.obtenerProductos();
+    
+    this.searchSubscription = this.searchSubject.pipe(
+      debounceTime(500),
+      distinctUntilChanged()
+    ).subscribe(texto => {
+      this.filtrarProductosGlobal(texto);
+    });
+
+    await this.cargarCategoriasUnicas();
     this.isLoading = false;
   }
 
-  // ==================== MÉTODOS DE TOAST MEJORADOS ====================
-  
-  // Método mejorado para mostrar toast
-  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'info' | 'warning' = 'info', duracion = 3000) {
-    this.toastMensaje = mensaje;
+  ngOnDestroy() {
+    if (this.searchSubscription) this.searchSubscription.unsubscribe();
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+  }
+
+  // ==================== CARGA OPTIMIZADA DE DATOS ====================
+
+  async cargarCategoriasUnicas() {
+    try {
+      const { data, error } = await this.supabase.getClient()
+        .from('productos')
+        .select('categoria')
+        .eq('activo', true)
+        .eq('eliminado', false);
+
+      if (error) throw error;
+
+      const categoriasUnicas = new Set((data || []).map((p: any) => p.categoria));
+      this.categorias = Array.from(categoriasUnicas).sort();
+      
+    } catch (error) {
+      console.error('Error cargando categorías:', error);
+      this.mostrarError('Error al cargar categorías');
+    }
+  }
+
+  async toggleCategoria(categoria: string) {
+    this.expandido[categoria] = !this.expandido[categoria];
+
+    if (this.expandido[categoria] && !this.productosPorCategoria[categoria]) {
+      await this.cargarProductosDeCategoria(categoria);
+    }
+  }
+
+  async cargarProductosDeCategoria(categoria: string) {
+    this.cargandoProductosCategoria[categoria] = true;
     
-    // Mapear tipos a las clases CSS que ya usas
-    switch (tipo) {
-      case 'success':
-        this.toastColor = 'bg-green-600';
-        break;
-      case 'error':
-        this.toastColor = 'bg-red-600';
-        break;
-      case 'info':
-        this.toastColor = 'bg-blue-600';
-        break;
-      case 'warning':
-        this.toastColor = 'bg-yellow-600';
-        break;
-      default:
-        this.toastColor = 'bg-gray-800';
-    }
-    
-    this.toastVisible = true;
+    try {
+      // CORRECCIÓN 1: Traemos TODOS los campos necesarios para que el upsert no falle por 'codigo null'
+      const { data, error } = await this.supabase.getClient()
+        .from('productos')
+        .select('*') // Traemos todo para evitar problemas de constraints
+        .eq('categoria', categoria)
+        .eq('activo', true)
+        .eq('eliminado', false)
+        .order('nombre');
 
-    // Limpiar timeout anterior si existe
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
-    }
+      if (error) throw error;
 
-    // Auto-ocultar después de la duración especificada
-    this.toastTimeout = setTimeout(() => {
-      this.ocultarToast();
-    }, duracion);
-  }
+      this.productosPorCategoria[categoria] = data || [];
 
-  // Método para ocultar toast
-  ocultarToast() {
-    this.toastVisible = false;
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
+      if (this.aumentarTodaCategoria[categoria]) {
+        this.marcarTodosEnCategoria(categoria, true);
+      }
+
+    } catch (error) {
+      console.error(`Error cargando productos de ${categoria}:`, error);
+      this.mostrarError(`Error al cargar productos de ${categoria}`);
+    } finally {
+      this.cargandoProductosCategoria[categoria] = false;
     }
   }
 
-  // Métodos específicos para diferentes tipos de toast
-  mostrarExito(mensaje: string) {
-    this.mostrarToast(mensaje, 'success');
-  }
+  // ==================== LÓGICA DE SELECCIÓN ====================
 
-  mostrarError(mensaje: string) {
-    this.mostrarToast(mensaje, 'error', 4000); // Errores duran más tiempo
-  }
-
-  mostrarInfo(mensaje: string) {
-    this.mostrarToast(mensaje, 'info');
-  }
-
-  mostrarAdvertencia(mensaje: string) {
-    this.mostrarToast(mensaje, 'warning');
-  }
-
-  // ==================== MÉTODOS EXISTENTES ====================
-
-  toggleSeleccion(id: string) {
+  toggleSeleccion(id: string, categoria: string) {
     if (this.seleccionados.has(id)) {
       this.seleccionados.delete(id);
+      this.aumentarTodaCategoria[categoria] = false;
     } else {
       this.seleccionados.add(id);
     }
   }
 
-  toggleCategoria(categoria: string) {
-    this.categoriasExpandidas[categoria] = !this.categoriasExpandidas[categoria];
+  async toggleTodos(categoria: string) {
+    const nuevoEstado = !this.aumentarTodaCategoria[categoria];
+    this.aumentarTodaCategoria[categoria] = nuevoEstado;
+
+    if (!this.productosPorCategoria[categoria]) {
+      await this.cargarProductosDeCategoria(categoria);
+    }
+
+    this.marcarTodosEnCategoria(categoria, nuevoEstado);
   }
 
-  toggleFiltroCategorias() {
-    this.mostrarFiltroCategorias = !this.mostrarFiltroCategorias;
-  }
-
-  filtrarPorCategoria(categoria: string) {
-  this.categoriaFiltroSeleccionada = categoria;
-  this.mostrarFiltroCategorias = false;
-  
-  // Limpiar filtro de texto
-  this.filtroTexto = '';
-  
-  // Mostrar solo la categoría seleccionada
-  this.productosPorCategoriaFiltrados = {
-    [categoria]: this.productosPorCategoria[categoria]
-  };
-  
-  // Expandir automáticamente la categoría filtrada
-  this.categoriasExpandidas[categoria] = true;
-}
-
-  limpiarFiltroCategoria() {
-  this.categoriaFiltroSeleccionada = null;
-  this.mostrarFiltroCategorias = false; // Agregar esta línea para cerrar el dropdown
-  
-  // Si hay filtro de texto activo, aplicar solo ese filtro
-  if (this.filtroTexto.trim()) {
-    this.aplicarFiltro();
-  } else {
-    // Si no hay filtro de texto, restaurar todas las categorías
-    this.productosPorCategoriaFiltrados = { ...this.productosPorCategoria };
-  }
-}
-
-  continuar() {
-    if (!this.categoriaSeleccionada) return;
-    const productos = this.productosPorCategoria[this.categoriaSeleccionada];
-    this.productosConfirmados = this.aumentarTodaCategoria
-      ? productos
-      : productos.filter(p => this.seleccionados.has(p.id));
-    if (this.productosConfirmados.length === 0) return;
-    this.paso = 2;
-  }
-
-  resetearSeleccion() {
-    this.aumentarTodaCategoria = {};
-    this.productosSeleccionados = {};
-    this.resumenAumento = [];
-  }
-
-  // Método mejorado para filtrar productos
-  aplicarFiltro() {
-    // Si hay un filtro de categoría activo, mantenerlo
-    if (this.categoriaFiltroSeleccionada) {
-      if (!this.filtroTexto.trim()) {
-        this.productosPorCategoriaFiltrados = {
-          [this.categoriaFiltroSeleccionada]: this.productosPorCategoria[this.categoriaFiltroSeleccionada]
-        };
-        return;
+  marcarTodosEnCategoria(categoria: string, seleccionar: boolean) {
+    const productos = this.productosPorCategoria[categoria] || [];
+    productos.forEach(p => {
+      if (seleccionar) {
+        this.seleccionados.add(p.id);
+      } else {
+        this.seleccionados.delete(p.id);
       }
-      
-      // Filtrar dentro de la categoría seleccionada
-      const textoFiltro = this.filtroTexto.toLowerCase().trim();
-      const productosFiltrados = this.productosPorCategoria[this.categoriaFiltroSeleccionada].filter(producto => 
-        producto.nombre.toLowerCase().includes(textoFiltro) ||
-        producto.marca.toLowerCase().includes(textoFiltro)
-      );
-      
-      this.productosPorCategoriaFiltrados = productosFiltrados.length > 0 
-        ? { [this.categoriaFiltroSeleccionada]: productosFiltrados }
-        : {};
+    });
+  }
+
+  estaProductoSeleccionado(id: string): boolean {
+    return this.seleccionados.has(id);
+  }
+
+  // ==================== FILTRADO Y PAGINACIÓN ====================
+
+  onSearchInput(valor: string) {
+    this.filtroTexto = valor;
+    this.searchSubject.next(valor);
+  }
+
+  async filtrarProductosGlobal(termino: string) {
+    if (!termino.trim()) {
+      this.resetearPaginacion();
+      if (this.categorias.length === 0) await this.cargarCategoriasUnicas();
       return;
     }
     
-    // Lógica original cuando no hay filtro de categoría
-    if (!this.filtroTexto.trim()) {
-      this.productosPorCategoriaFiltrados = { ...this.productosPorCategoria };
+    try {
+      this.isLoading = true;
+      const t = termino.trim();
+
+      // CORRECCIÓN 2: También aquí traemos todo (*) para que si se actualiza desde el filtro no falle
+      const { data, error } = await this.supabase.getClient()
+        .from('productos')
+        .select('*') 
+        .eq('activo', true)
+        .eq('eliminado', false)
+        .or(`nombre.ilike.%${t}%,marca.ilike.%${t}%,categoria.ilike.%${t}%`)
+        .limit(100);
+
+      if (error) throw error;
+
+      const resultados = data || [];
+      this.productosPorCategoria = {};
+      const categoriasEncontradas = new Set<string>();
+
+      resultados.forEach((prod: any) => {
+        categoriasEncontradas.add(prod.categoria);
+        if (!this.productosPorCategoria[prod.categoria]) {
+          this.productosPorCategoria[prod.categoria] = [];
+        }
+        this.productosPorCategoria[prod.categoria].push(prod);
+      });
+
+      this.categorias = Array.from(categoriasEncontradas).sort();
+      this.categorias.forEach(c => this.expandido[c] = true);
+      
+      this.resetearPaginacion();
+
+    } catch (error) {
+      console.error('Error en búsqueda:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  get totalPaginas(): number {
+    return Math.ceil(this.categorias.length / this.categoriasPorPagina);
+  }
+
+  get categoriasVisibles(): string[] {
+    const inicio = (this.paginaActual - 1) * this.categoriasPorPagina;
+    return this.categorias.slice(inicio, inicio + this.categoriasPorPagina);
+  }
+
+  cambiarPagina(pagina: number) {
+    if (pagina >= 1 && pagina <= this.totalPaginas) {
+      this.paginaActual = pagina;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  resetearPaginacion() {
+    this.paginaActual = 1;
+  }
+
+  // ==================== CONFIRMACIÓN Y APLICACIÓN ====================
+
+  pasarAPasoConfirmacion() {
+    if (this.seleccionados.size === 0) {
+      this.mostrarAdvertencia("Selecciona al menos un producto para continuar");
       return;
     }
 
-    const textoFiltro = this.filtroTexto.toLowerCase().trim();
-    this.productosPorCategoriaFiltrados = {};
+    this.resumenAumento = [];
+    let contadorProductos = 0;
 
-    Object.keys(this.productosPorCategoria).forEach(categoria => {
-      const productosFiltrados = this.productosPorCategoria[categoria].filter(producto => 
-        producto.nombre.toLowerCase().includes(textoFiltro) ||
-        producto.categoria.toLowerCase().includes(textoFiltro) ||
-        producto.marca.toLowerCase().includes(textoFiltro)
-      );
-
-      if (productosFiltrados.length > 0) {
-        this.productosPorCategoriaFiltrados[categoria] = productosFiltrados;
-        // Auto-expandir categorías que tienen resultados
-        this.categoriasExpandidas[categoria] = true;
+    Object.keys(this.productosPorCategoria).forEach(cat => {
+      const productos = this.productosPorCategoria[cat];
+      const seleccionadosEnCat = productos.filter(p => this.seleccionados.has(p.id));
+      
+      if (seleccionadosEnCat.length > 0) {
+        contadorProductos += seleccionadosEnCat.length;
+        
+        if (seleccionadosEnCat.length === productos.length && productos.length > 1) {
+           this.resumenAumento.push(`Todos los productos de: ${cat}`);
+        } else {
+           seleccionadosEnCat.forEach(p => {
+             if (this.resumenAumento.length < 10) {
+                this.resumenAumento.push(`${p.nombre} (${p.marca})`);
+             }
+           });
+        }
       }
     });
-  }
 
-  // Método para obtener las categorías filtradas
-  get categoriasFiltradas(): string[] {
-    return Object.keys(this.productosPorCategoriaFiltrados);
-  }
-
-  // Método para limpiar el filtro
-  limpiarFiltro() {
-    this.filtroTexto = '';
-    this.limpiarFiltroCategoria();
-  }
-
-  organizarPorCategoria() {
-    const agrupados = this.productos.reduce((acc: any, prod: any) => {
-      acc[prod.categoria] = acc[prod.categoria] || [];
-      acc[prod.categoria].push(prod);
-      return acc;
-    }, {});
-
-    this.categorias = Object.keys(agrupados);
-    this.productosPorCategoria = agrupados;
-    this.productosPorCategoriaFiltrados = { ...agrupados };
-
-    this.categorias.forEach(cat => {
-      this.expandido[cat] = false;
-      this.aumentarTodaCategoria[cat] = false;
-    });
-  }
-
-  async obtenerProductos() {
-    const { data, error } = await this.supabase.getClient()
-      .from('productos')
-      .select('*');
-
-    if (error) {
-      console.error('Error al obtener productos', error.message);
-      this.mostrarError('Error al cargar los productos');
-      return;
+    if (contadorProductos > 10) {
+       this.resumenAumento.push(`... y ${contadorProductos - 10} productos más.`);
     }
 
-    this.productos = data || [];
-    this.organizarPorCategoria();
+    this.confirmando = true;
+  }
+
+  calcularPrecioFinal(precioBase: number): number {
+    if (!this.valorAumento) return precioBase;
+    
+    if (this.tipoAumento === 'precio') {
+      return precioBase + this.valorAumento;
+    } else {
+      return Math.round(precioBase * (1 + this.valorAumento / 100));
+    }
   }
 
   async aplicarAumento() {
     if (!this.tipoAumento || this.valorAumento === null) {
       this.errorAumentoInvalido = true;
-      setTimeout(() => {
-        this.errorAumentoInvalido = false;
-      }, 3000);
+      setTimeout(() => this.errorAumentoInvalido = false, 3000);
       return;
     }
 
-    this.errorAumentoInvalido = false;
+    this.isLoading = true;
+    let errores = 0;
 
-    const productosParaActualizar: any[] = [];
-    let huboError = false;
+    try {
+      const todasLasCategorias = Object.keys(this.productosPorCategoria);
+      let productosParaActualizar: any[] = [];
 
-    for (const cat of this.categorias) {
-      const todos = this.aumentarTodaCategoria[cat];
-      const productos = this.productosPorCategoria[cat];
+      todasLasCategorias.forEach(cat => {
+        const prods = this.productosPorCategoria[cat].filter(p => this.seleccionados.has(p.id));
+        prods.forEach(p => {
+          // CORRECCIÓN 3: Enviamos TODO el objeto producto (...p)
+          // Esto asegura que 'codigo' y otros campos NOT NULL estén presentes en el payload
+          productosParaActualizar.push({
+            ...p, 
+            precio: this.calcularPrecioFinal(p.precio)
+          });
+        });
+      });
 
-      const filtrados = todos
-        ? productos.filter(p => this.productosSeleccionados[p.id] !== false) // Solo excluir los explícitamente deseleccionados
-        : productos.filter(p => this.productosSeleccionados[p.id]);
-
-      for (const prod of filtrados) {
-        let nuevoPrecio = prod.precio;
-
-        if (this.tipoAumento === 'precio') {
-          nuevoPrecio += this.valorAumento!;
-        } else if (this.tipoAumento === 'porcentaje') {
-          nuevoPrecio += prod.precio * (this.valorAumento! / 100);
-        }
-
+      const CHUNK_SIZE = 500; 
+      for (let i = 0; i < productosParaActualizar.length; i += CHUNK_SIZE) {
+        const lote = productosParaActualizar.slice(i, i + CHUNK_SIZE);
+        
         const { error } = await this.supabase.getClient()
           .from('productos')
-          .update({ precio: Math.round(nuevoPrecio) })
-          .eq('id', prod.id);
+          .upsert(lote, { onConflict: 'id' })
+          .select('id');
 
         if (error) {
-          console.error(`Error al actualizar producto ${prod.nombre}:`, error.message);
-          huboError = true;
-        } else {
-          productosParaActualizar.push(prod.id);
+          console.error('Error en lote:', error);
+          errores++;
         }
       }
-    }
 
-    // Usar los nuevos métodos de toast
-    if (productosParaActualizar.length > 0 && !huboError) {
-      this.mostrarExito('¡Aumento aplicado correctamente!');
-    } else {
-      this.mostrarError('Hubo un error al aplicar el aumento');
-    }
+      if (errores === 0) {
+        this.mostrarExito(`Se actualizaron ${productosParaActualizar.length} productos correctamente.`);
+        this.reset();
+        this.ngOnInit();
+      } else {
+        this.mostrarError(`Hubo errores en ${errores} lotes de actualización.`);
+      }
 
-    setTimeout(() => {
+    } catch (error) {
+      console.error('Error crítico:', error);
+      this.mostrarError('Error al aplicar el aumento');
+    } finally {
+      this.isLoading = false;
       this.confirmando = false;
-      this.valorAumento = null;
-      this.tipoAumento = null;
-      this.resetearSeleccion();
-      this.obtenerProductos();
-    }, 2500);
+    }
   }
+
+  // ==================== UTILS & UI ====================
 
   reset() {
     this.paso = 1;
     this.seleccionados.clear();
-    this.categoriaSeleccionada = null;
     this.aumentarTodaCategoria = {};
-    this.productosConfirmados = [];
-    this.valorAumento = 0;
-  }
-
-  // Método mejorado para manejar la selección de toda la categoría
-  toggleTodos(categoria: string) {
-    const seleccionarTodos = this.aumentarTodaCategoria[categoria];
-    const productos = this.productosPorCategoria[categoria];
-    
-    if (seleccionarTodos) {
-      // Si se selecciona toda la categoría, marcar todos los productos como true
-      productos.forEach(p => {
-        this.productosSeleccionados[p.id] = true;
-      });
-    } else {
-      // Si se deselecciona la categoría, desmarcar todos los productos
-      productos.forEach(p => {
-        this.productosSeleccionados[p.id] = false;
-      });
-    }
-  }
-
-  // Método mejorado para toggle individual de productos
-  toggleProducto(id: string) {
-    // Si está marcado como seleccionado, lo desmarcamos (o lo marcamos como false si toda la categoría está seleccionada)
-    if (this.productosSeleccionados[id]) {
-      this.productosSeleccionados[id] = false;
-    } else {
-      this.productosSeleccionados[id] = true;
-    }
-  }
-
-  // Método para verificar si un producto está efectivamente seleccionado
-  estaProductoSeleccionado(productoId: string, categoria: string): boolean {
-    // Si toda la categoría está seleccionada y el producto no está explícitamente deseleccionado
-    if (this.aumentarTodaCategoria[categoria] && this.productosSeleccionados[productoId] !== false) {
-      return true;
-    }
-    // Si el producto está explícitamente seleccionado
-    return this.productosSeleccionados[productoId] === true;
-  }
-
-  seSeleccionoAlgo(): boolean {
-    // Verificar si hay alguna categoría completa seleccionada
-    const hayCategoriasSeleccionadas = Object.keys(this.aumentarTodaCategoria).some(categoria => {
-      if (!this.aumentarTodaCategoria[categoria]) return false;
-      
-      // Verificar que al menos un producto de la categoría no esté explícitamente deseleccionado
-      const productos = this.productosPorCategoria[categoria];
-      return productos.some(p => this.productosSeleccionados[p.id] !== false);
-    });
-    
-    // Verificar si hay productos individuales seleccionados
-    const hayProductosSeleccionados = Object.keys(this.productosSeleccionados).some(id => 
-      this.productosSeleccionados[id] === true
-    );
-    
-    return hayCategoriasSeleccionadas || hayProductosSeleccionados;
-  }
-
-  pasarAPasoConfirmacion() {
+    this.valorAumento = null;
+    this.tipoAumento = null;
+    this.expandido = {};
+    this.filtroTexto = '';
+    this.productosPorCategoria = {};
     this.resumenAumento = [];
-
-    for (const categoria of this.categorias) {
-      if (this.aumentarTodaCategoria[categoria]) {
-        const productos = this.productosPorCategoria[categoria];
-        const productosSeleccionados = productos.filter(p => this.productosSeleccionados[p.id] !== false);
-        
-        if (productosSeleccionados.length === productos.length) {
-          this.resumenAumento.push(`Toda la categoría "${categoria}"`);
-        } else {
-          const seleccionados = productosSeleccionados
-            .map(p => `${p.nombre} - $${p.precio.toLocaleString()}`);
-          this.resumenAumento.push(...seleccionados);
-        }
-      } else {
-        const seleccionados = this.productosPorCategoria[categoria]
-          .filter(p => this.productosSeleccionados[p.id] === true)
-          .map(p => `${p.nombre} - $${p.precio.toLocaleString()}`);
-        this.resumenAumento.push(...seleccionados);
-      }
-    }
-    
-    if (this.seSeleccionoAlgo()) {
-      this.confirmando = true;
-    } else {
-      // Usar el nuevo método de toast
-      this.mostrarAdvertencia("Selecciona al menos un producto para continuar");
-    }
   }
 
   cancelar() {
     this.confirmando = false;
-    this.valorAumento = null;
-    this.tipoAumento = null;
-    this.errorAumentoInvalido = false;
   }
 
-  // Método para manejar clicks fuera del modal
-  cancelarSiClickAfuera(event: Event) {
-    // Este método se puede implementar si necesitas cerrar el modal al hacer click afuera
-    // Por ahora solo previente la propagación del evento
-    event.stopPropagation();
-  }
-
-  // Método para calcular preview del aumento
-  calcularPreview(precioBase: number): number {
-    if (!this.valorAumento || !this.tipoAumento) return precioBase;
-    
-    if (this.tipoAumento === 'precio') {
-      return precioBase + this.valorAumento;
-    } else {
-      return precioBase + (precioBase * (this.valorAumento / 100));
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'info' | 'warning' = 'info', duracion = 3000) {
+    this.toastMensaje = mensaje;
+    switch (tipo) {
+      case 'success': this.toastColor = 'bg-green-600'; break;
+      case 'error': this.toastColor = 'bg-red-600'; break;
+      case 'info': this.toastColor = 'bg-blue-600'; break;
+      case 'warning': this.toastColor = 'bg-yellow-600'; break;
+      default: this.toastColor = 'bg-gray-800';
     }
+    this.toastVisible = true;
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
+    this.toastTimeout = setTimeout(() => this.ocultarToast(), duracion);
   }
 
-  // Métodos para tracking y conteo
-
-  // Método para tracking de categorías en *ngFor
-  trackByCategoria(index: number, categoria: string): string {
-    return categoria;
+  ocultarToast() {
+    this.toastVisible = false;
   }
 
-  // Método para obtener el total de productos en todas las categorías
-  obtenerTotalProductos(): number {
-    return this.productos.length;
-  }
-
-  // Método para obtener la cantidad de productos en una categoría específica
-  obtenerCantidadProductosCategoria(categoria: string): number {
-    return this.productosPorCategoria[categoria]?.length || 0;
-  }
-
-  // Método para obtener la cantidad de productos seleccionados
-  obtenerCantidadProductosSeleccionados(): number {
-    let contador = 0;
-    
-    for (const categoria of this.categorias) {
-      if (this.aumentarTodaCategoria[categoria]) {
-        // Si toda la categoría está seleccionada, contar los que no están explícitamente deseleccionados
-        const productos = this.productosPorCategoria[categoria];
-        contador += productos.filter(p => this.productosSeleccionados[p.id] !== false).length;
-      } else {
-        // Contar solo los productos explícitamente seleccionados
-        const productos = this.productosPorCategoria[categoria];
-        contador += productos.filter(p => this.productosSeleccionados[p.id] === true).length;
-      }
-    }
-    
-    return contador;
-  }
-
-  // Método para cerrar el filtro de categorías
-  cerrarFiltroCategorias(): void {
-    this.mostrarFiltroCategorias = false;
-  }
-
-  // Método para limpiar timeout al destruir el componente
-  ngOnDestroy() {
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout);
-    }
-  }
+  mostrarExito(msg: string) { this.mostrarToast(msg, 'success'); }
+  mostrarError(msg: string) { this.mostrarToast(msg, 'error', 4000); }
+  mostrarAdvertencia(msg: string) { this.mostrarToast(msg, 'warning'); }
 }

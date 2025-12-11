@@ -1,0 +1,4 @@
+/* Solo estilos personalizados que Tailwind no cubre fácilmente */
+.card-stat {
+    @apply rounded-xl p-6 shadow-lg text-white transform hover:scale-105 transition-all duration-300;
+}

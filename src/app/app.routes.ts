@@ -17,7 +17,7 @@ export const routes: Routes = [
       import('./pages/login/login.component').then((m) => m.LoginComponent),
   },
 
-  // Dashboard - Solo admin
+  // Dashboard - Requiere autenticación y permisos
   {
     path: 'dashboard',
     loadComponent: () =>
@@ -27,7 +27,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Stock - Solo admin
+  // Stock - Requiere autenticación y permisos
   {
     path: 'stock',
     loadComponent: () =>
@@ -35,7 +35,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Productos - Solo admin
+  // Productos - Requiere autenticación y permisos
   {
     path: 'productos',
     loadComponent: () =>
@@ -45,15 +45,15 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Ventas - Admin y Vendedor
+  // Ventas - Requiere autenticación y permisos
   {
     path: 'ventas',
     loadComponent: () =>
       import('./pages/ventas/ventas.component').then((m) => m.VentasComponent),
-    canActivate: [authGuard], // Solo requiere estar autenticado
+    canActivate: [authGuard, roleGuard],
   },
 
-  // Descuentos - Solo admin
+  // Descuentos - Requiere autenticación y permisos
   {
     path: 'descuentos',
     loadComponent: () =>
@@ -63,7 +63,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Historial - Solo admin
+  // Historial - Requiere autenticación y permisos
   {
     path: 'historial',
     loadComponent: () =>
@@ -73,7 +73,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Aumento - Solo admin
+  // Aumento - Requiere autenticación y permisos
   {
     path: 'aumento',
     loadComponent: () =>
@@ -83,7 +83,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Finanzas - Solo admin
+  // Finanzas - Requiere autenticación y permisos
   {
     path: 'finanzas',
     loadComponent: () =>
@@ -93,7 +93,7 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard],
   },
 
-  // Empleados - Solo admin
+  // Empleados - Requiere autenticación y permisos
   {
     path: 'empleados',
     loadComponent: () =>
@@ -102,7 +102,8 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard, roleGuard],
   },
-// Empleados - Solo admin
+
+  // Configuracion - Requiere autenticación y permisos
   {
     path: 'configuracion',
     loadComponent: () =>
@@ -111,6 +112,37 @@ export const routes: Routes = [
       ),
     canActivate: [authGuard, roleGuard],
   },
+
+  // Caja - Requiere autenticación y permisos
+  {
+    path: 'caja',
+    loadComponent: () =>
+      import('./pages/caja/caja.component').then(
+        (m) => m.CajaComponent
+      ),
+    canActivate: [authGuard, roleGuard],
+  },
+
+  // Deposito - Requiere autenticación y permisos
+  {
+    path: 'deposito',
+    loadComponent: () =>
+      import('./pages/deposito/deposito.component').then(
+        (m) => m.DepositoComponent
+      ),
+    canActivate: [authGuard, roleGuard],
+  },
+
+  // Clientes - Requiere autenticación y permisos
+  {
+    path: 'clientes',
+    loadComponent: () =>
+      import('./pages/clientes/clientes.component').then(
+        (m) => m.ClientesComponent
+      ),
+    canActivate: [authGuard, roleGuard],
+  },
+
   // Rutas no encontradas redirigen a login
   { 
     path: '**', 

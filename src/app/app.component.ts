@@ -1,12 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { Component, OnInit, OnDestroy, NgZone, inject, signal, computed } from '@angular/core';
+import { Router, RouterOutlet, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { SupabaseService } from './services/supabase.service';
-import { ThemeService } from './services/theme.service';
-import { environment } from '../environments/environment';
 import { filter } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -14,122 +13,137 @@ import { filter } from 'rxjs/operators';
   imports: [RouterOutlet, CommonModule, NavbarComponent, FooterComponent],
   templateUrl: './app.component.html',
 })
-export class AppComponent implements OnInit {
-  isAppInitialized = false;
-  isAuthenticated = false;
-  currentRoute = '';
-  showFooter = false;
-  public title = 'ventas';
-  private static authListenerSet = false;
+export class AppComponent implements OnInit, OnDestroy {
+  // --- INYECCIÓN DE DEPENDENCIAS (Estilo Moderno) ---
+  private router = inject(Router);
+  private supabase = inject(SupabaseService);
+  private ngZone = inject(NgZone);
 
-  constructor(
-    public router: Router, 
-    private supabase: SupabaseService,
-    public themeService: ThemeService 
-  ) {
-    this.currentRoute = this.router.url;
+  // --- SIGNALS (Estado Reactivo) ---
+  isAuthenticated = signal<boolean>(false);
+  currentRoute = signal<string>('');
+  
+  // Rutas donde NO queremos ver navbar/footer
+  private readonly rutasOcultas = ['/login'];
+
+  // --- COMPUTED SIGNALS (Cálculos en caché) ---
+  mostrarLayout = computed(() => {
+    const isAuth = this.isAuthenticated();
+    const route = this.currentRoute();
+    const esOculta = this.rutasOcultas.some(r => route.includes(r));
     
+    return isAuth && !esOculta;
+  });
+
+  // --- CONFIGURACIÓN INACTIVIDAD ---
+  private readonly TIMEOUT_INACTIVIDAD = 8 * 60 * 60 * 1000; // 8 horas
+  //private readonly TIMEOUT_INACTIVIDAD = 1 * 60 * 1000; // 1 minuto
+  // Tipado estricto para el timer (NodeJS.Timeout o number dependiendo del entorno, ReturnType es lo más seguro)
+  private inactivityTimer?: ReturnType<typeof setTimeout>;
+  private userSubscription?: Subscription;
+  
+  // Eventos que reinician el contador
+  private readonly userActivityEvents = ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'];
+
+  // CORRECCIÓN DE MEMORY LEAK:
+  // Definimos el handler como una Arrow Function guardada en una propiedad.
+  // Esto mantiene la referencia estable para addEventListener y removeEventListener.
+  private readonly handleUserActivity = () => this.resetInactivityTimer();
+
+showSessionToast = false; // Controla la visibilidad
+  toastMessage = '';        // Mensaje a mostrar
+
+  constructor() {
+    // Monitor de rutas
     this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
+      filter((event: RouterEvent): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      this.currentRoute = event.url;
+      // Actualizamos el Signal de la ruta
+      this.currentRoute.set(event.urlAfterRedirects);
     });
   }
 
-  async ngOnInit(): Promise<void> {
-    await this.initializeApp();
-    this.showFooter = true;
-  }
+  ngOnInit() {
+    // Suscripción al estado del usuario
+    this.userSubscription = this.supabase.currentUser$.subscribe(user => {
+      const isLogged = !!user;
+      this.isAuthenticated.set(isLogged); // Actualizamos Signal
 
-  private async initializeApp(): Promise<void> {
-    try {
-      await this.checkAuthStatusOnly();
-      
-      if (!AppComponent.authListenerSet) {
-        this.setupAuthListener();
-        AppComponent.authListenerSet = true;
-      }
-      
-      this.verificarInactividad();
-      this.registrarActividad();
-      
-      this.isAppInitialized = true;
-      
-    } catch (error) {
-      if (!environment.production) {
-        console.error('Error initializing app:', error);
-      }
-      this.isAuthenticated = false;
-      this.isAppInitialized = true;
-    }
-  }
-
-  private async checkAuthStatusOnly(): Promise<void> {
-    try {
-      const { data } = await this.supabase.getClient().auth.getSession();
-      this.isAuthenticated = !!data.session;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      if (!environment.production && !errorMessage.includes('NavigatorLock')) {
-        console.error('Error checking auth:', error);
-      }
-      this.isAuthenticated = false;
-    }
-  }
-
-  private setupAuthListener(): void {
-    this.supabase.getClient().auth.onAuthStateChange((event, session) => {
-      this.isAuthenticated = !!session;
-      
-      if (event === 'SIGNED_OUT') {
-        this.router.navigate(['/login']);
+      if (isLogged) {
+        this.iniciarMonitorInactividad();
+      } else {
+        this.detenerMonitorInactividad();
       }
     });
   }
 
-  mostrarNavbar(): boolean {
-    const user = localStorage.getItem('user');
-    return this.isAppInitialized && (this.isAuthenticated || !!user) && this.currentRoute !== '/login';
+  ngOnDestroy() {
+    this.detenerMonitorInactividad();
+    this.userSubscription?.unsubscribe();
   }
 
-  mostrarFooter(): boolean {
-    return this.showFooter && this.currentRoute !== '';
+  // ==========================================
+  // LÓGICA DE INACTIVIDAD (OPTIMIZADA Y SIN FUGAS)
+  // ==========================================
+
+  private iniciarMonitorInactividad() {
+    // Si ya hay listeners, no los agregamos de nuevo
+    this.detenerMonitorInactividad();
+
+    // Ejecutamos fuera de Angular para evitar Change Detection masivo
+    this.ngZone.runOutsideAngular(() => {
+      this.userActivityEvents.forEach(event => {
+        // Usamos 'handleUserActivity' que es una referencia estable
+        window.addEventListener(event, this.handleUserActivity, { passive: true });
+      });
+    });
+
+    this.resetInactivityTimer();
   }
 
-  mostrarContenido(): boolean {
-    return this.isAppInitialized;
-  }
-
-  registrarActividad() {
-    const eventos = ['click', 'keydown', 'mousemove', 'scroll'];
-    const actualizarActividad = () => {
-      localStorage.setItem('ultimaActividad', Date.now().toString());
-    };
-
-    eventos.forEach(e => window.addEventListener(e, actualizarActividad));
-    actualizarActividad();
-  }
-
-  async verificarInactividad() {
-    try {
-      const { data } = await this.supabase.getClient().auth.getSession();
-      const session = data.session;
-
-      if (!session) return;
-
-      const ultimaActividad = localStorage.getItem('ultimaActividad');
-      if (!ultimaActividad) return;
-
-      const haceMs = Date.now() - parseInt(ultimaActividad, 10);
-      const horasInactivo = haceMs / (1000 * 60 * 60);
-
-      if (horasInactivo >= 8) {
-        await this.supabase.getClient().auth.signOut();
-      }
-    } catch (error) {
-      if (!environment.production) {
-        console.error('Error checking inactivity:', error);
-      }
+  private detenerMonitorInactividad() {
+    // Removemos usando la MISMA referencia de función
+    this.userActivityEvents.forEach(event => {
+      window.removeEventListener(event, this.handleUserActivity);
+    });
+    
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
     }
+  }
+
+  private resetInactivityTimer() {
+    if (this.inactivityTimer) {
+      clearTimeout(this.inactivityTimer);
+    }
+    
+    // Solo si hay usuario autenticado
+    if (this.isAuthenticated()) {
+      // Configuramos el timeout fuera de Angular también, para que el simple hecho
+      // de que corra el tiempo no dispare detecciones.
+      this.ngZone.runOutsideAngular(() => {
+        this.inactivityTimer = setTimeout(() => {
+          // SOLO volvemos a entrar a la zona de Angular cuando realmente expira
+          this.ngZone.run(() => this.cerrarSesionPorInactividad());
+        }, this.TIMEOUT_INACTIVIDAD);
+      });
+    }
+  }
+
+  private async cerrarSesionPorInactividad() {
+    this.detenerMonitorInactividad();
+    
+    // 1. Cerrar sesión y redirigir
+    await this.supabase.signOut();
+    this.router.navigate(['/login']);
+
+    // 2. Mostrar el Toast en lugar del alert
+    this.toastMessage = 'Tu sesión ha expirado por inactividad.';
+    this.showSessionToast = true;
+
+    // 3. Ocultar automáticamente después de 5 segundos
+    setTimeout(() => {
+      this.showSessionToast = false;
+    }, 5000);
   }
 }

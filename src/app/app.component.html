@@ -1,7 +1,40 @@
-<div class="flex flex-col min-h-screen">
-  <app-navbar *ngIf="mostrarNavbar()"></app-navbar>
-  <main class="flex-grow">
-    <router-outlet></router-outlet>
+<div class="flex flex-col min-h-screen bg-gradient-to-b from-gray-900 to-gray-950 text-white relative">
+  
+  @if (mostrarLayout()) {
+    <app-navbar></app-navbar>
+  }
+
+  <main class="flex-grow w-full relative">
+    <div class="fade-in">
+        <router-outlet></router-outlet>
+    </div>
   </main>
-  <app-footer *ngIf="mostrarFooter()"></app-footer>
+
+  @if (mostrarLayout()) {
+    <app-footer></app-footer>
+  }
+
+  @if (showSessionToast) {
+    <div class="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-bounce-in w-11/12 max-w-md">
+      <div class="flex items-center gap-4 px-6 py-4 rounded-xl shadow-2xl bg-gray-800 text-white border border-red-500/50 shadow-red-900/20 backdrop-blur-md">
+        
+        <div class="flex-shrink-0 p-2 bg-red-500/20 text-red-400 rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+  
+        <div class="flex-1">
+          <h3 class="font-bold text-sm text-red-400 uppercase tracking-wider mb-0.5">Sesión Cerrada</h3>
+          <p class="text-sm text-gray-300">{{ toastMessage }}</p>
+        </div>
+  
+        <button (click)="showSessionToast = false" class="p-1.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414 1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  }
 </div>

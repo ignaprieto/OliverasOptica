@@ -2,40 +2,28 @@ import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { SupabaseService } from '../services/supabase.service';
 
-/**
- * Guard que redirige a la ruta correcta según el rol del usuario
- * - Admin → /dashboard
- * - Vendedor → /ventas
- * - Sin sesión → /login
- */
 export const redirectGuard: CanActivateFn = async (route, state) => {
   const router = inject(Router);
   const supabase = inject(SupabaseService);
 
-  try {
-    const userRole = await supabase.getCurrentUserRole();
-    
+  const role = await supabase.getCurrentUserRole();
 
-    if (userRole === 'admin') {
-      
-      router.navigate(['/dashboard'], { replaceUrl: true });
-      return false;
-    }
-
-    if (userRole === 'vendedor') {
-    
-      router.navigate(['/ventas'], { replaceUrl: true });
-      return false;
-    }
-
-    // Sin rol válido → login
-    
-    router.navigate(['/login'], { replaceUrl: true });
-    return false;
-    
-  } catch (error) {
-    
-    router.navigate(['/login'], { replaceUrl: true });
+  if (role === 'admin') {
+    router.navigate(['/dashboard'], { replaceUrl: true });
     return false;
   }
+
+  if (role === 'vendedor') {
+    const home = await supabase.getPrimeraVistaAccesible();
+    if (home) {
+      router.navigate([`/${home}`], { replaceUrl: true });
+    } else {
+      // Vendedor sin permisos asignados
+      router.navigate(['/login'], { replaceUrl: true });
+    }
+    return false;
+  }
+
+  // Si llega aquí es que no hay sesión válida, deja pasar al login (o redirige)
+  return true; 
 };

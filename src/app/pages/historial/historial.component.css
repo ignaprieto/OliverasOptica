@@ -1,0 +1,34 @@
+/* En tu archivo .component.css o styles de Angular */
+
+/* Animación de entrada */
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-scale {
+  animation: fade-in-scale 0.2s ease-out;
+}
+
+/* Mejora el backdrop blur */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Asegura que el modal esté sobre todo */
+.z-50 {
+  z-index: 9999;
+}
+
+/* Opcional: Sombra más pronunciada para el contenedor del modal */
+.shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+

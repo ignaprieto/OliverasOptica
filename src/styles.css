@@ -5,26 +5,32 @@
   --color-scheme: light dark;
 }
 
-/* Estilos base con soporte para modo oscuro */
 @layer base {
   :root {
+    /* 1. CAMBIO CLAVE: Esquema por defecto dark para evitar flash blanco */
+    color-scheme: dark; 
+  }
+
+  /* Opcional: Si implementas un toggle a modo claro explícito */
+  :root.light {
     color-scheme: light;
   }
 
-  :root.dark {
-    color-scheme: dark;
-  }
-
   html {
-    transition: background-color 0.3s ease, color 0.3s ease;
+
+    background-color: #030712; /* gray-950 */
+    margin: 0;
+    height: 100%;
   }
 
   body {
-    @apply bg-white text-gray-900;
+
+    @apply bg-gray-950 text-white;
   }
 
-  .dark body {
-    @apply bg-gray-900 text-white;
+  /* Si alguna vez quieres modo claro, usas la clase .light explícitamente */
+  .light body {
+    @apply bg-white text-gray-900;
   }
 }
 
@@ -46,15 +52,18 @@
 }
 
 @layer components {
+  /* Input base (Oscuro por defecto para coincidir con el body) */
   .input {
-    @apply border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition;
+    @apply border border-gray-600 bg-gray-800 text-white rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 transition;
   }
 
-  .dark .input {
-    @apply border-gray-600 bg-gray-800 text-white;
+  /* Input modo claro (solo si se activa .light) */
+  .light .input {
+    @apply border-gray-300 bg-white text-gray-900;
   }
 }
 
+/* Animaciones globales */
 @keyframes fade-in-out {
   0% { opacity: 0; transform: translateY(20px); }
   10%, 90% { opacity: 1; transform: translateY(0); }

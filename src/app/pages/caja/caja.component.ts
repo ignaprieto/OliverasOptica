@@ -1460,9 +1460,6 @@ export class CajaComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ... (Resto de métodos auxiliares: calcularResumen, obtenerUsuarioActual, formatearFecha, etc. se mantienen igual) ...
-  // Solo asegúrate de incluirlos aquí abajo tal cual estaban en tu código original.
-
   // ========== UTILIDADES ==========
 
   calcularResumen() {

@@ -3,36 +3,32 @@ import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SupabaseService } from '../../services/supabase.service';
 
-
 export interface MenuOption {
   vista: string;
   label: string;
   route: string;
   icon: string;
 }
-export interface PermisoEmpleado {
-  vista: string;
-}
+
 @Component({
   selector: 'app-navbar',
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css'],
-  changeDetection: ChangeDetectionStrategy.OnPush // ⚡ MEJORA CRÍTICA DE RENDIMIENTO
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavbarComponent implements OnInit {
-  // Inyección de dependencias moderna
   private router = inject(Router);
   private supabase = inject(SupabaseService);
 
-  // --- SIGNALS (Estado Reactivo) ---
+  // --- SIGNALS ---
   mostrarMenu = signal<boolean>(false);
   isVendedor = signal<boolean>(false);
   userName = signal<string>('');
-  permisosVendedor = signal<string[]>([]); // Guardamos solo los strings de las vistas permitidas
+  permisosVendedor = signal<string[]>([]);
 
-  // --- DEFINICIÓN DE MENÚ (Constante) ---
+  // --- OPCIONES DE MENÚ ---
   readonly todasLasOpciones: MenuOption[] = [
     { vista: 'dashboard', label: 'Menu Principal', route: '/dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { vista: 'productos', label: 'Productos', route: '/productos', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
@@ -49,68 +45,64 @@ export class NavbarComponent implements OnInit {
     { vista: 'deposito', label: 'Depósito', route: '/deposito', icon: 'M20.25 7.5l-8.954-4.477a.75.75 0 00-.684 0L2.25 7.5m18 0l-9 4.5m9-4.5v9.75a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75V7.5m9 4.5v9.75' }
   ];
 
-  // --- COMPUTED (Memoización automática) ---
-  // Este filtro SOLO se ejecutará si cambia isVendedor o permisosVendedor.
-  // Antes se ejecutaba en cada frame o interacción del mouse.
+  // --- COMPUTED ---
+  // Filtra las opciones basándose en los permisos cargados
   opcionesMenu = computed(() => {
     const esVendedor = this.isVendedor();
     const permisos = this.permisosVendedor();
 
+    // Si no es vendedor (es Admin), muestra todo
     if (!esVendedor) return this.todasLasOpciones;
 
-    // Usamos un Set para búsqueda O(1) en lugar de O(n) dentro del filter
     const permisosSet = new Set(permisos);
 
     return this.todasLasOpciones.filter(opcion => {
+      // El dashboard siempre se oculta para vendedores (van directo a Ventas u otros)
       if (opcion.vista === 'dashboard') return false;
       return permisosSet.has(opcion.vista);
     });
   });
 
-  async ngOnInit() {
-    // Promise.all permite que ambas peticiones inicien al mismo tiempo
-    const [esVendedor, nombreUsuario] = await Promise.all([
-      this.supabase.isUserVendedor(),
-      this.supabase.getCurrentUserName()
-    ]);
+  ngOnInit() {
+    // 1. Suscribirse al estado del usuario (Reactivo)
+    // Esto asegura que si recargas o cambias de usuario, el navbar se entere
+    this.supabase.currentUser$.subscribe(async (user) => {
+      if (user) {
+        this.userName.set(user.nombre);
+        const esVend = user.rol === 'vendedor';
+        this.isVendedor.set(esVend);
 
-    this.isVendedor.set(esVendedor);
-    this.userName.set(nombreUsuario);
-
-    if (esVendedor) {
-      await this.cargarPermisosVendedor();
-    }
+        // Si es vendedor, cargamos sus permisos usando el servicio
+        if (esVend) {
+          await this.cargarPermisosVendedor();
+        }
+      } else {
+        // Reset si no hay usuario
+        this.userName.set('');
+        this.isVendedor.set(false);
+        this.permisosVendedor.set([]);
+      }
+    });
   }
 
   async cargarPermisosVendedor() {
     try {
-      const vendedorStr = localStorage.getItem('user');
-      if (!vendedorStr) return;
-
-      const vendedor = JSON.parse(vendedorStr);
-      if (!vendedor?.id) return; // Optional chaining para seguridad
-
-      // OPTIMIZACIÓN BD: Solo traemos la columna 'vista'
-      const { data, error } = await this.supabase.getClient()
-        .from('permisos_empleado')
-        .select('vista') // <--- NO traigas '*' si no lo necesitas
-        .eq('empleado_id', vendedor.id)
-        .eq('puede_ver', true);
-
-      if (error) throw error;
-
-      // Mapeamos para guardar solo un array de strings limpio: ['ventas', 'caja', ...]
-      const vistasPermitidas = (data as PermisoEmpleado[]).map(p => p.vista);
-      this.permisosVendedor.set(vistasPermitidas);
-
+      // Usamos el método centralizado del servicio
+      // El servicio ya sabe quién es el usuario actual y busca su ID de vendedor
+      const permisos = await this.supabase.getPermisosUsuario();
+      
+      if (permisos) {
+        // Filtramos solo las vistas que tiene permitidas (puede_ver = true)
+        const vistasPermitidas = permisos
+          .filter(p => p.puede_ver)
+          .map(p => p.vista);
+          
+        this.permisosVendedor.set(vistasPermitidas);
+      }
     } catch (error) {
-      console.error('Error al cargar permisos:', error);
+      console.error('Error al cargar permisos en Navbar:', error);
     }
   }
-
-  // Optimización de Event Listeners
-  // Eliminamos el HostListener pesado que consultaba el DOM constantemente.
-  // Manejaremos el cierre mediante el Overlay (fondo negro) que ya tienes.
 
   @HostListener('document:keydown.escape')
   onEscapeKey() {
@@ -131,6 +123,7 @@ export class NavbarComponent implements OnInit {
   async cerrarSesion() {
     try {
       await this.supabase.signOut();
+      // La redirección ya la hace el servicio, pero por seguridad:
       await this.router.navigate(['/login']);
     } catch (error) {
       console.error('Error logout:', error);

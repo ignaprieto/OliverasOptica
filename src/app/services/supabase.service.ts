@@ -18,7 +18,6 @@ export interface AppUser {
   nombre: string;
   rol: 'admin' | 'vendedor' | 'guest';
   dni?: string;
-  // Propiedades opcionales para compatibilidad con User de Supabase
   email?: string;
   user_metadata?: any;
 }
@@ -38,7 +37,8 @@ export class SupabaseService {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        storage: localStorage 
       }
     });
     
@@ -50,55 +50,38 @@ export class SupabaseService {
   }
 
   // ==========================================
-  // GESTIÓN DE SESIÓN (Admin & Vendedor)
+  // GESTIÓN DE SESIÓN
   // ==========================================
 
   private async recoverSession() {
-    // 1. Intentar recuperar Admin
+    // 1. Intentar recuperar sesión de Supabase Auth
     const { data } = await this.supabase.auth.getSession();
     if (data.session?.user) {
-      this.setAdminUser(data.session.user);
+      this.setSessionUser(data.session.user);
       return;
     }
 
-    // 2. Intentar recuperar Vendedor
-    const vendedorStr = localStorage.getItem('user');
-    if (vendedorStr) {
-      try {
-        const vendedor = JSON.parse(vendedorStr);
-        if (vendedor && vendedor.rol === 'vendedor') {
-          this.setVendedorUser(vendedor);
-          return;
-        }
-      } catch (e) {
-        localStorage.removeItem('user');
-      }
-    }
-
-    // 3. Nadie
+    // 2. Limpiar usuario si no hay sesión
     this.currentUserSubject.next(null);
   }
 
-  private setAdminUser(user: User) {
+  private setSessionUser(user: User) {
+    const metadata = user.user_metadata || {};
+    
+    // Leer el rol de la metadata. Si no existe, asumir guest o admin según prefieras.
+    // Aquí asumimos que si no es vendedor, es admin (o el sistema lo tratará como tal hasta que RLS diga lo contrario)
+    const rolReal = metadata['rol'] === 'vendedor' ? 'vendedor' : 'admin';
+
     const appUser: AppUser = {
       id: user.id,
-      nombre: user.user_metadata?.['nombre'] || user.email || 'Admin',
-      rol: 'admin',
+      nombre: metadata['nombre'] || user.email || 'Usuario',
+      rol: rolReal,
       email: user.email,
-      user_metadata: user.user_metadata
+      user_metadata: metadata,
+      dni: metadata['dni'] // Importante si guardaste el DNI en metadata
     };
+    
     this.currentUserSubject.next(appUser);
-  }
-
-  private setVendedorUser(vendedor: any) {
-    const appUser: AppUser = {
-      id: vendedor.id,
-      nombre: vendedor.nombre,
-      rol: 'vendedor',
-      dni: vendedor.dni
-    };
-    this.currentUserSubject.next(appUser);
-    localStorage.setItem('user', JSON.stringify(appUser));
   }
 
   get currentUser$() {
@@ -124,23 +107,21 @@ export class SupabaseService {
   async signInWithPassword(email: string, password: string) {
     const { data, error } = await this.supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
-    if (data.user) this.setAdminUser(data.user);
+    if (data.user) this.setSessionUser(data.user);
     return data;
   }
 
-  setVendedorTemp(vendedor: any) {
-    this.setVendedorUser(vendedor);
-  }
-  
-  getVendedorTemp() {
-    return this.currentUserSubject.value?.rol === 'vendedor' ? this.currentUserSubject.value : null;
-  }
-
   async signOut() {
-    localStorage.removeItem('user');
-    this.permisosCache = null;
     this.currentUserSubject.next(null);
-    await this.supabase.auth.signOut();
+    this.permisosCache = null;
+    localStorage.removeItem('user'); 
+
+    try {
+      await this.supabase.auth.signOut(); 
+    } catch (error) {
+      console.error('Error en signOut', error);
+    }
+
     this.router.navigate(['/login']);
   }
 
@@ -152,14 +133,24 @@ export class SupabaseService {
     const user = await this.getCurrentAppUser();
     if (!user) return [];
 
-    if (user.rol === 'admin') return null; 
+    if (user.rol === 'admin') return null; // Admin (null significa acceso total en la lógica de guards)
 
     if (this.permisosCache) return this.permisosCache;
 
+    // Buscar perfil de vendedor vinculado al usuario actual
+    const { data: vendedor } = await this.supabase
+        .from('vendedores')
+        .select('id')
+        .eq('usuario_id', user.id)
+        .maybeSingle();
+
+    if (!vendedor) return [];
+
+    // Cargar permisos usando el ID del vendedor
     const { data, error } = await this.supabase
       .from('permisos_empleado')
       .select('vista, puede_ver, puede_crear, puede_editar, puede_eliminar')
-      .eq('empleado_id', user.id);
+      .eq('empleado_id', vendedor.id);
 
     if (error) {
       console.error('Error fetching permisos:', error);
@@ -172,53 +163,43 @@ export class SupabaseService {
 
   async puedeVerVista(vista: string): Promise<boolean> {
     const permisos = await this.getPermisosUsuario();
-    if (permisos === null) return true; 
+    if (permisos === null) return true; // Admin ve todo
     const p = permisos.find(p => p.vista === vista);
     return p ? p.puede_ver : false;
   }
 
+  // ✅ MÉTODO RESTAURADO: Necesario para los Guards
   async getPrimeraVistaAccesible(): Promise<string | null> {
     const permisos = await this.getPermisosUsuario();
-    if (permisos === null) return 'dashboard';
+    if (permisos === null) return 'dashboard'; // Admin va a dashboard
 
+    // Orden de preferencia para vendedores
     const orden = ['ventas', 'caja', 'productos', 'clientes'];
     for (const vista of orden) {
       if (permisos.find(p => p.vista === vista && p.puede_ver)) return vista;
     }
+    
+    // Si no encuentra ninguna de las preferidas, devuelve la primera que tenga permiso
     return permisos.find(p => p.puede_ver)?.vista || null;
   }
 
   // ==========================================
-  // MÉTODOS DE COMPATIBILIDAD (Legacy Support)
+  // MÉTODOS DE COMPATIBILIDAD (Legacy)
   // ==========================================
-  // Estos métodos aseguran que el resto de componentes no se rompan.
-
-  /**
-   * @deprecated Usar getCurrentAppUser() para obtener un objeto unificado
-   */
-  async getCurrentUser(): Promise<any> {
-    // Retorna el AppUser, que es compatible en estructura básica
-    return this.getCurrentAppUser();
+  
+  // ✅ CORREGIDO: Devuelve el usuario si es vendedor, evitando errores de tipo 'never'
+  getVendedorTemp() {
+    const user = this.currentUserSubject.value;
+    if (user && user.rol === 'vendedor') {
+        return user;
+    }
+    return null;
   }
-
-  /**
-   * @deprecated Usar getCurrentAppUser().nombre
-   */
-  async getCurrentUserName(): Promise<string> {
-    const user = await this.getCurrentAppUser();
-    return user?.nombre || 'Usuario';
-  }
-
-  /**
-   * @deprecated Usar getCurrentUserRole() === 'vendedor'
-   */
-  async isUserVendedor(): Promise<boolean> {
-    const role = await this.getCurrentUserRole();
-    return role === 'vendedor';
-  }
-
-  async isUserAdmin(): Promise<boolean> {
-    const role = await this.getCurrentUserRole();
-    return role === 'admin';
-  }
+  
+  // Estos métodos aseguran que otros componentes no se rompan
+  setVendedorTemp(vendedor: any) { /* No hace nada, manejado por Auth */ }
+  async getCurrentUser(): Promise<any> { return this.getCurrentAppUser(); }
+  async getCurrentUserName(): Promise<string> { const u = await this.getCurrentAppUser(); return u?.nombre || ''; }
+  async isUserVendedor(): Promise<boolean> { return (await this.getCurrentUserRole()) === 'vendedor'; }
+  async isUserAdmin(): Promise<boolean> { return (await this.getCurrentUserRole()) === 'admin'; }
 }

@@ -1,0 +1,11 @@
+/* Forzar estilos oscuros en las opciones del select para navegadores basados en Webkit */
+:host ::ng-deep option {
+    background-color: var(--bg-option, white);
+    color: var(--text-option, black);
+}
+
+/* Cuando el tema es dark (asumiendo que aplicas una clase o atributo al body/host) */
+:host-context(.dark) option {
+    background-color: #1f2937; /* gray-800 */
+    color: white;
+}

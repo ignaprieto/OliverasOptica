@@ -127,6 +127,8 @@ export class ClientesComponent implements OnInit {
   
   Math = Math; 
 
+cajaAbierta: boolean = false;
+
   constructor(
     private clientesService: ClientesService,
     public themeService: ThemeService
@@ -325,21 +327,24 @@ async toggleEstadoCliente(cliente: Cliente) {
 
   // ========== PAGOS ==========
 
-  async abrirModalPago(venta: VentaCreditoExtendida) {
-    const cajaAbierta = await this.verificarCajaAbierta();
-    this.ventaCreditoSeleccionada = venta;
-    const saldo = this.getSaldoPendienteConRecambio(venta);
-    
-    this.nuevoPago = {
-      monto_pagado: saldo,
-      metodo_pago: cajaAbierta ? 'efectivo' : 'transferencia',
-      observaciones: '',
-      efectivo_entregado: saldo,
-      vuelto: 0
-    };
-    this.mostrarModalPago = true;
-  }
+  // En clientes.component.ts
 
+async abrirModalPago(venta: VentaCreditoExtendida) {
+  this.cajaAbierta = await this.verificarCajaAbierta(); 
+  
+  this.ventaCreditoSeleccionada = venta;
+  const saldo = this.getSaldoPendienteConRecambio(venta);
+  
+  this.nuevoPago = {
+    monto_pagado: saldo,
+    // Usamos la variable de clase para definir el default
+    metodo_pago: this.cajaAbierta ? 'efectivo' : 'transferencia',
+    observaciones: '',
+    efectivo_entregado: saldo,
+    vuelto: 0
+  };
+  this.mostrarModalPago = true;
+}
   cerrarModalPago() {
     this.mostrarModalPago = false;
     this.ventaCreditoSeleccionada = null;
@@ -350,6 +355,15 @@ async toggleEstadoCliente(cliente: Cliente) {
     
     if (this.nuevoPago.monto_pagado <= 0) return this.mostrarMensaje('Monto inválido', 'error');
     
+if (this.nuevoPago.metodo_pago === 'efectivo') {
+    // Verificamos de nuevo por seguridad o usamos la variable local
+    const cajaEstaAbierta = await this.verificarCajaAbierta(); 
+    if (!cajaEstaAbierta) {
+      this.mostrarMensaje('❌ No hay caja abierta. No se puede en efectivo.', 'error');
+      return;
+    }
+  }
+
     // Validación de monto excedente
     const saldoPendiente = this.getSaldoPendienteConRecambio(this.ventaCreditoSeleccionada as VentaCreditoExtendida);
     if (this.nuevoPago.monto_pagado > saldoPendiente) {

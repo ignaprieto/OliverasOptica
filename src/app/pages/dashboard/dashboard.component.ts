@@ -160,14 +160,15 @@ export class DashboardComponent implements OnInit {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
+    // 1. Traemos las ventas de hoy. IMPORTANTE: Agregamos 'id' al select
     const { data: ventas } = await this.supabase.getClient()
       .from('ventas')
-      .select('total_final, metodo_pago')
+      .select('id, total_final, metodo_pago') 
       .gte('fecha_venta', hoy.toISOString());
 
     if (!ventas) return;
 
-    // Cálculo eficiente usando reduce una sola vez si fuera posible, o filtros simples
+    // Cálculos financieros existentes
     const ventasFiadas = ventas.filter(v => v.metodo_pago === 'fiado');
     const ventasReales = ventas.filter(v => v.metodo_pago !== 'fiado');
 
@@ -179,11 +180,31 @@ export class DashboardComponent implements OnInit {
       ? this.estadisticas.totalRecaudado / ventasReales.length 
       : 0;
 
-    // Solo para productos vendidos (dato cosmético), hacemos una query separada liviana
+    // --- CORRECCIÓN: Lógica para contar unidades vendidas ---
     if (ventas.length > 0) {
-        // Podrías optimizar esto guardando un contador en otra tabla, pero por ahora select count
-        // es aceptable si no hay miles de ventas diarias.
+        try {
+            // Obtenemos los IDs de las ventas de hoy
+            const ventaIds = ventas.map(v => v.id);
+
+            // Consultamos detalle_venta filtrando por esos IDs
+            const { data: detalles, error } = await this.supabase.getClient()
+                .from('detalle_venta')
+                .select('cantidad')
+                .in('venta_id', ventaIds);
+
+            if (!error && detalles) {
+                // Sumamos la columna cantidad de todos los registros encontrados
+                this.estadisticas.productosVendidos = detalles.reduce((acc, item: any) => acc + (item.cantidad || 0), 0);
+            }
+        } catch (err) {
+            console.error('Error calculando productos vendidos:', err);
+        }
+    } else {
+        this.estadisticas.productosVendidos = 0;
     }
+
+    // Actualizamos la vista manualmente (necesario por OnPush)
+    this.cdr.markForCheck();
   }
   
   async procesarFinanzasYClientes() {

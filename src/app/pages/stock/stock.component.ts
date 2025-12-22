@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
 import { Producto } from '../../models/producto.model';
 import { SupabaseService } from '../../services/supabase.service';
 import { CommonModule } from '@angular/common';
@@ -6,15 +6,9 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
 import { ThemeService } from '../../services/theme.service';
-import JsBarcode from 'jsbarcode';
-import * as XLSX from 'xlsx';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
-
-// ==========================================
-// DEFINICIÓN DE TIPOS (Para coincidir con el resto del proyecto)
-// ==========================================
-
+import { PermisosService } from '../../services/permisos.service';
 interface QuaggaInputStreamConstraints {
   width?: { min?: number; ideal?: number; max?: number };
   height?: { min?: number; ideal?: number; max?: number };
@@ -94,17 +88,29 @@ declare global {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, MonedaArsPipe],
   templateUrl: './stock.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class StockComponent implements OnInit, OnDestroy {
   @ViewChild('barcodeCanvas', { static: false }) barcodeCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('scrollContainer', { static: false }) scrollContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('scannerVideo', { static: false }) scannerVideo!: ElementRef<HTMLVideoElement>;
 
-  // Propiedades
-  productos: Producto[] = [];
+  // === SIGNALS (Estado Reactivo) ===
+  // Reemplazan a las variables simples para usar OnPush
+  productosVisibles: WritableSignal<Producto[]> = signal([]);
+  cargando: WritableSignal<boolean> = signal(false);
+  mensaje: WritableSignal<string> = signal('');
+  error: WritableSignal<string> = signal('');
+  categoriasDisponibles: WritableSignal<string[]> = signal([]);
+  productosEliminados: WritableSignal<Producto[]> = signal([]);
+  mostrarToast: WritableSignal<boolean> = signal(false);
+
+  // === CONSTANTES ===
+  private readonly COLUMNAS_PRODUCTO = 'id, codigo, nombre, marca, talle, categoria, precio, cantidad_stock, cantidad_deposito, activo';
+
+  // === PROPIEDADES NORMALES ===
+  productos: Producto[] = []; // (Opcional: Si ya no la usas en el HTML, bórrala)
   modo: 'agregar' | 'editar' = 'agregar';
-  mensaje: string = '';
-  error: string = '';
   
   // Selección múltiple
   productosSeleccionados: Set<string> = new Set();
@@ -120,15 +126,17 @@ export class StockComponent implements OnInit, OnDestroy {
   set filtro(value: string) { this.searchSubject.next(value); }
 
   producto: Producto = this.nuevoProducto();
-  mostrarToast: boolean = false;
   
-  // Modales y estados
+  // Modales y estados UI simples
   mostrarModalEliminar = false;
   productoAEliminar: Producto | null = null;
   motivoEliminacion = '';
-  
   mostrarCodigoBarras: boolean = false;
   codigoBarrasGenerado: string = '';
+  mostrarScanner = false;
+  scannerActivo = false;
+  intentosScanner = 0;
+  mostrarMenuExportar = false;
 
   // Filtros y Orden
   ordenPrecio: 'asc' | 'desc' | 'none' = 'none';
@@ -136,31 +144,21 @@ export class StockComponent implements OnInit, OnDestroy {
   filtroEstado: 'todos' | 'activos' | 'desactivados' = 'activos';
   destinoProducto: 'stock' | 'deposito' = 'stock';
 
-  // Productos Eliminados
+  // Productos Eliminados UI
   mostrarProductosEliminados = false;
-  productosEliminados: Producto[] = [];
 
   // Paginación
-  productosVisibles: Producto[] = [];
   itemsPorPagina = 20;
   paginaActual = 0;
-  cargando = false;
   todosLosDatosCargados = false;
-
-  // Scanner
-  mostrarScanner = false;
-  scannerActivo = false;
-  intentosScanner = 0;
-  
-  // Exportación
-  mostrarMenuExportar = false;
 
   mapaDescuentos: Map<string, number> = new Map();
 
-  categoriasDisponibles: string[] = [];
-  constructor(private supabase: SupabaseService, public themeService: ThemeService) {}
+  constructor(private supabase: SupabaseService, public themeService: ThemeService, public permisos: PermisosService) {}
 
   ngOnInit(): void {
+this.permisos.cargarPermisos();
+
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(400),
       distinctUntilChanged()
@@ -184,17 +182,14 @@ export class StockComponent implements OnInit, OnDestroy {
   }
 
 async cargarCategorias() {
-  // Traemos las categorías de los últimos 200 productos cargados
-  // Esto es muy rápido y suficiente para sugerir las categorías más usadas
   const { data } = await this.supabase.getClient()
     .from('productos')
     .select('categoria')
     .limit(200);
 
   if (data) {
-    // Usamos Set para eliminar duplicados automáticamente
     const unicos = new Set(data.map((p: any) => p.categoria?.trim()).filter(Boolean));
-    this.categoriasDisponibles = Array.from(unicos).sort();
+    this.categoriasDisponibles.set(Array.from(unicos).sort()); // Uso correcto de signal
   }
 }
 
@@ -225,58 +220,62 @@ async cargarCategorias() {
   }
 
   async cargarMasProductos(): Promise<void> {
-    if (this.cargando || this.todosLosDatosCargados) return;
+  // Leer signal con paréntesis ()
+  if (this.cargando() || this.todosLosDatosCargados) return;
 
-    this.cargando = true;
-    const from = this.paginaActual * this.itemsPorPagina;
-    const to = from + this.itemsPorPagina - 1;
+  this.cargando.set(true); // Escribir signal
+  const from = this.paginaActual * this.itemsPorPagina;
+  const to = from + this.itemsPorPagina - 1;
 
-    try {
-      let query = this.supabase.getClient()
-        .from('productos')
-        .select('*', { count: 'exact' })
-        .eq('eliminado', false);
+  try {
+    // Select optimizado
+    let query = this.supabase.getClient()
+      .from('productos')
+      .select(this.COLUMNAS_PRODUCTO, { count: 'exact' })
+      .eq('eliminado', false);
 
-      if (this._filtro && this._filtro.trim() !== '') {
-        const termino = this._filtro.trim();
-        query = query.or(`codigo.ilike.%${termino}%,nombre.ilike.%${termino}%,marca.ilike.%${termino}%,categoria.ilike.%${termino}%`);
-      }
-
-      if (this.filtroEstado === 'activos') query = query.eq('activo', true);
-      else if (this.filtroEstado === 'desactivados') query = query.eq('activo', false);
-
-      if (this.ordenPrecio !== 'none') query = query.order('precio', { ascending: this.ordenPrecio === 'asc' });
-      else if (this.ordenStock !== 'none') query = query.order('cantidad_stock', { ascending: this.ordenStock === 'asc' });
-      else query = query.order('created_at', { ascending: false });
-
-      const { data, error, count } = await query.range(from, to);
-
-      if (error) throw error;
-
-      if (data) {
-        const productosProcesados = data.map((p: any) => {
-          const descuento = this.mapaDescuentos.get(p.id);
-          if (descuento) {
-            return { ...p, tiene_promocion: true, precio_promocional: p.precio - (p.precio * (descuento / 100)), porcentaje_promocion: descuento };
-          }
-          return p;
-        });
-
-        if (this.paginaActual === 0) this.productosVisibles = productosProcesados;
-        else this.productosVisibles = [...this.productosVisibles, ...productosProcesados];
-
-        this.totalRegistros = count || 0;
-        this.paginaActual++;
-
-        if (this.productosVisibles.length >= this.totalRegistros) this.todosLosDatosCargados = true;
-      }
-    } catch (error) {
-      console.error('Error cargando productos:', error);
-      this.error = 'Error al cargar productos';
-    } finally {
-      this.cargando = false;
+    if (this._filtro && this._filtro.trim() !== '') {
+      const termino = this._filtro.trim();
+      query = query.or(`codigo.ilike.%${termino}%,nombre.ilike.%${termino}%,marca.ilike.%${termino}%,categoria.ilike.%${termino}%`);
     }
+
+    if (this.filtroEstado === 'activos') query = query.eq('activo', true);
+    else if (this.filtroEstado === 'desactivados') query = query.eq('activo', false);
+
+    if (this.ordenPrecio !== 'none') query = query.order('precio', { ascending: this.ordenPrecio === 'asc' });
+    else if (this.ordenStock !== 'none') query = query.order('cantidad_stock', { ascending: this.ordenStock === 'asc' });
+    else query = query.order('created_at', { ascending: false });
+
+    const { data, error, count } = await query.range(from, to);
+
+    if (error) throw error;
+
+    if (data) {
+      const productosProcesados = data.map((p: any) => {
+        const descuento = this.mapaDescuentos.get(p.id);
+        if (descuento) {
+          return { ...p, tiene_promocion: true, precio_promocional: p.precio - (p.precio * (descuento / 100)), porcentaje_promocion: descuento };
+        }
+        return p;
+      });
+
+      // Actualizar Signal correctamente
+      this.productosVisibles.update(actuales => 
+        this.paginaActual === 0 ? productosProcesados : [...actuales, ...productosProcesados]
+      );
+
+      this.totalRegistros = count || 0;
+      this.paginaActual++;
+
+      if (this.productosVisibles().length >= this.totalRegistros) this.todosLosDatosCargados = true;
+    }
+  } catch (error) {
+    console.error('Error cargando productos:', error);
+    this.error.set('Error al cargar productos'); // Uso correcto de signal
+  } finally {
+    this.cargando.set(false); // Uso correcto de signal
   }
+}
 
   onScroll(event: Event): void {
     const element = event.target as HTMLElement;
@@ -286,11 +285,11 @@ async cargarCategorias() {
   }
 
   resetearVirtualScroll(): void {
-    this.paginaActual = 0;
-    this.productosVisibles = [];
-    this.todosLosDatosCargados = false;
-    this.cargarMasProductos();
-  }
+  this.paginaActual = 0;
+  this.productosVisibles.set([]); // Reset signal
+  this.todosLosDatosCargados = false;
+  this.cargarMasProductos();
+}
 
   // ==================== SCANNER ====================
 
@@ -306,21 +305,21 @@ async cargarCategorias() {
   abrirScanner(): void {
     this.mostrarScanner = true;
     this.intentosScanner = 0;
-    this.error = '';
+    this.error.set('');
     setTimeout(() => this.iniciarScanner(false), 500); 
   }
 
   abrirScannerBusqueda(): void {
     this.mostrarScanner = true;
     this.intentosScanner = 0;
-    this.error = '';
+    this.error.set('');
     setTimeout(() => this.iniciarScanner(true), 500); 
   }
 
   async iniciarScanner(esBusqueda: boolean): Promise<void> {
     const Quagga = window.Quagga;
     if (!Quagga) {
-      this.error = 'Cargando scanner... intenta nuevamente.';
+      this.error.set('Cargando scanner... intenta nuevamente.');
       return;
     }
 
@@ -351,7 +350,7 @@ async cargarCategorias() {
       }, (err: any) => {
         if (err) {
           console.error(err);
-          this.error = 'No se pudo acceder a la cámara.';
+          this.error.set('No se pudo acceder a la cámara.');
           return;
         }
         Quagga.start();
@@ -373,7 +372,7 @@ async cargarCategorias() {
       });
 
     } catch (err) {
-      this.error = 'Permiso de cámara denegado o no disponible.';
+      this.error.set('Permiso de cámara denegado o no disponible.');
       console.error(err);
     }
   }
@@ -418,35 +417,30 @@ async cargarCategorias() {
     this.generarImagenCodigoBarras(this.producto.codigo);
   }
 
-  generarImagenCodigoBarras(codigo: string): void {
-    if (!codigo) return;
-    this.codigoBarrasGenerado = codigo;
-    this.mostrarCodigoBarras = true;
-    
-    const esEAN13 = /^\d{13}$/.test(codigo);
-    const formato = esEAN13 ? 'EAN13' : 'CODE128';
+  async generarImagenCodigoBarras(codigo: string): Promise<void> {
+  if (!codigo) return;
+  this.codigoBarrasGenerado = codigo;
+  this.mostrarCodigoBarras = true;
+  
+  // Carga Dinámica
+  const { default: JsBarcode } = await import('jsbarcode');
 
-    setTimeout(() => {
-      if (this.barcodeCanvas?.nativeElement) {
-        try {
-          JsBarcode(this.barcodeCanvas.nativeElement, codigo, {
-            format: formato,
-            width: 2,
-            height: 80,
-            displayValue: true,
-            fontSize: 16,
-            margin: 0
-          });
-        } catch (e) {
-          try {
-             JsBarcode(this.barcodeCanvas.nativeElement, codigo, { format: 'CODE128' });
-          } catch(err) {
-             this.mostrarCodigoBarras = false;
-          }
-        }
+  const esEAN13 = /^\d{13}$/.test(codigo);
+  const formato = esEAN13 ? 'EAN13' : 'CODE128';
+
+  setTimeout(() => {
+    if (this.barcodeCanvas?.nativeElement) {
+      try {
+        JsBarcode(this.barcodeCanvas.nativeElement, codigo, {
+          format: formato, width: 2, height: 80, displayValue: true, fontSize: 16, margin: 0
+        });
+      } catch (e) {
+        try { JsBarcode(this.barcodeCanvas.nativeElement, codigo, { format: 'CODE128' }); } 
+        catch(err) { this.mostrarCodigoBarras = false; }
       }
-    }, 100);
-  }
+    }
+  }, 100);
+}
 
   generarPDFEtiquetas(productos: Producto[], imprimir: boolean): void {
     const ventana = window.open('', '_blank');
@@ -562,7 +556,8 @@ async cargarCategorias() {
   imprimirEtiquetasMultiples() { this.generarPDFEtiquetas(this.getProductosSeleccionados(), true); }
   
   getProductosSeleccionados() {
-     return this.productosVisibles.filter(p => this.productosSeleccionados.has(p.id));
+    // CORRECCIÓN AQUÍ: Agregamos el tipo explícito ': Producto'
+    return this.productosVisibles().filter((p: Producto) => this.productosSeleccionados.has(p.id));
   }
 
   // ==================== ABM ====================
@@ -591,16 +586,24 @@ cancelarEdicion() {
   }
 
   async guardarProducto() {
-     this.mensaje = ''; 
-     this.error = '';
+     this.mensaje.set(''); 
+     this.error.set('');
+
+const accion = this.modo === 'agregar' ? 'crear' : 'editar';
+    
+    // Validación Frontend
+    if (!this.permisos.puede('stock', accion)) {
+      this.mostrarMensaje(`⛔ No tienes permiso para ${accion} productos.`);
+      return;
+    }
 
      // Validaciones básicas
      if(!this.producto.nombre?.trim() || !this.producto.precio) { 
-         this.error = 'Nombre y Precio son obligatorios'; 
+         this.error.set('Nombre y Precio son obligatorios'); 
          return; 
      }
      if(!this.producto.codigo?.trim()) { 
-         this.error = 'El código es obligatorio'; 
+         this.error.set('El código es obligatorio'); 
          return; 
      }
 
@@ -638,7 +641,7 @@ cancelarEdicion() {
             .limit(1);
             
          if(data && data.length > 0) { 
-            this.error = 'El código ya existe'; 
+            this.error.set('El código ya existe'); 
             return; 
          }
          
@@ -665,13 +668,20 @@ cancelarEdicion() {
      }
   }
 
-  async eliminarProducto(id: string) {
+ async eliminarProducto(id: string) {
+    if (!this.permisos.puede('stock', 'eliminar')) {
+      this.mostrarMensaje('⛔ No tienes permiso para eliminar productos.');
+      return;
+    }
     const { data } = await this.supabase.getClient().from('detalle_venta').select('id').eq('producto_id', id).limit(1);
     if(data && data.length > 0) {
        this.mostrarMensaje('⚠️ No se puede eliminar: tiene ventas asociadas.');
        return;
     }
-    this.productoAEliminar = this.productosVisibles.find(p => p.id === id) || null;
+    
+    // CORRECCIÓN AQUÍ: Agregamos () para leer el valor del signal
+    this.productoAEliminar = this.productosVisibles().find((p: Producto) => p.id === id) || null;
+    
     this.mostrarModalEliminar = true;
     this.motivoEliminacion = '';
   }
@@ -691,16 +701,20 @@ cancelarEdicion() {
        this.mostrarMensaje('Producto enviado a papelera');
        this.cancelarEdicion();
        this.resetearVirtualScroll();
-    } catch(e) { this.error = 'Error al eliminar'; }
+    } catch(e) { this.error.set('Error al eliminar'); }
     finally { this.mostrarModalEliminar = false; }
   }
 
   cancelarEliminarConMotivo() { this.mostrarModalEliminar = false; }
 
   async obtenerProductosEliminados() {
-    const { data } = await this.supabase.getClient().from('productos').select('*').eq('eliminado', true).order('eliminado_en', {ascending: false});
-    if(data) this.productosEliminados = data;
-  }
+  const { data } = await this.supabase.getClient()
+    .from('productos')
+    .select(this.COLUMNAS_PRODUCTO)
+    .eq('eliminado', true)
+    .order('eliminado_en', {ascending: false});
+  if(data) this.productosEliminados.set(data);
+}
 
   async toggleProductosEliminados() {
     this.mostrarProductosEliminados = !this.mostrarProductosEliminados;
@@ -708,41 +722,52 @@ cancelarEdicion() {
   }
 
   async restaurarProducto(p: Producto) {
-    await this.supabase.getClient().from('productos').update({ 
-       eliminado: false, motivo_eliminacion: null, eliminado_por: null, eliminado_en: null 
-    }).eq('id', p.id);
-    this.mostrarMensaje('Producto restaurado');
-    await this.obtenerProductosEliminados();
-    this.resetearVirtualScroll();
+  // [CORRECCIÓN AÑADIDA]
+  if (!this.permisos.puede('stock', 'editar')) {
+    this.mostrarMensaje('⛔ No tienes permiso para restaurar productos.');
+    return;
   }
+  
+  await this.supabase.getClient().from('productos').update({ 
+    eliminado: false, motivo_eliminacion: null, eliminado_por: null, eliminado_en: null 
+  }).eq('id', p.id);
+  
+  this.mostrarMensaje('Producto restaurado');
+  await this.obtenerProductosEliminados();
+  this.resetearVirtualScroll();
+}
 
   // ==================== EXCEL ====================
   
-  descargarPlantillaImportacion() {
-      const headers = [{ codigo: 'ABC001', nombre: 'Ej: Producto', marca: 'Marca', talle: 'U', categoria: 'Gral', precio: 100, stock_mostrador: 10, stock_deposito: 5 }];
-      const ws = XLSX.utils.json_to_sheet(headers);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
-      XLSX.writeFile(wb, 'plantilla.xlsx');
-  }
+  async descargarPlantillaImportacion() {
+  const XLSX = await import('xlsx');
+  const headers = [{ codigo: 'ABC001', nombre: 'Ej: Producto', marca: 'Marca', talle: 'U', categoria: 'Gral', precio: 100, stock_mostrador: 10, stock_deposito: 5 }];
+  const ws = XLSX.utils.json_to_sheet(headers);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
+  XLSX.writeFile(wb, 'plantilla.xlsx');
+}
   
   triggerInputFile() { document.getElementById('inputImportar')?.click(); }
   
   async onFileSelected(event: any) {
-      const target: DataTransfer = <DataTransfer>(event.target);
-      if (target.files.length !== 1) return;
-      this.cargando = true;
-      const reader = new FileReader();
-      reader.onload = async (e: any) => {
-          try {
-              const wb = XLSX.read(e.target.result, { type: 'binary' });
-              const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-              await this.procesarDatosImportados(data);
-          } catch(err) { this.error = 'Error lectura'; }
-          finally { this.cargando = false; event.target.value = ''; }
-      };
-      reader.readAsBinaryString(target.files[0]);
-  }
+  const target: DataTransfer = <DataTransfer>(event.target);
+  if (target.files.length !== 1) return;
+  this.cargando.set(true); // Signal
+  
+  const XLSX = await import('xlsx');
+
+  const reader = new FileReader();
+  reader.onload = async (e: any) => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      await this.procesarDatosImportados(data);
+    } catch(err) { this.error.set('Error lectura'); } // Signal
+    finally { this.cargando.set(false); event.target.value = ''; }
+  };
+  reader.readAsBinaryString(target.files[0]);
+}
 
   async procesarDatosImportados(datos: any[]) {
       const productosParaInsertar: any[] = [];
@@ -772,15 +797,15 @@ cancelarEdicion() {
         });
       }
 
-      if (productosParaInsertar.length === 0) { this.error = 'Sin datos válidos'; return; }
+      if (productosParaInsertar.length === 0) { this.error.set('Sin datos válidos'); return; }
 
       try {
         const { error } = await this.supabase.getClient().from('productos').upsert(productosParaInsertar, { onConflict: 'codigo' });
         if(error) throw error;
         this.mostrarMensaje(`Importados ${productosParaInsertar.length} productos`);
-        this.cargando = false;
+        this.cargando.set(false);
         this.resetearVirtualScroll();
-      } catch(e:any) { this.error = 'Error importando: ' + e.message; }
+      } catch(e:any) { this.error.set('Error importando: ' + e.message); }
   }
 
   private generarCodigoAutomaticoParaLote(indice: number): string {
@@ -799,24 +824,29 @@ cancelarEdicion() {
   }
 
   async ejecutarExportacion(tipo: string) {
-    try {
-      let query = this.supabase.getClient().from('productos').select('*').eq('eliminado', false);
-      if (this._filtro) {
-         const t = this._filtro.trim();
-         query = query.or(`codigo.ilike.%${t}%,nombre.ilike.%${t}%,marca.ilike.%${t}%`);
-      }
-      if(tipo === 'mostrador') query = query.gt('cantidad_stock', 0);
-      if(tipo === 'deposito') query = query.gt('cantidad_deposito', 0);
+  try {
+    const XLSX = await import('xlsx');
+    let query = this.supabase.getClient()
+      .from('productos')
+      .select(this.COLUMNAS_PRODUCTO) // Select optimizado
+      .eq('eliminado', false);
       
-      const { data } = await query;
-      if(data) {
-          const ws = XLSX.utils.json_to_sheet(data);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, 'Productos');
-          XLSX.writeFile(wb, `Stock_${tipo}.xlsx`);
-      }
-    } catch(e) { this.error = 'Error exportando'; }
-  }
+    if (this._filtro) {
+       const t = this._filtro.trim();
+       query = query.or(`codigo.ilike.%${t}%,nombre.ilike.%${t}%,marca.ilike.%${t}%`);
+    }
+    if(tipo === 'mostrador') query = query.gt('cantidad_stock', 0);
+    if(tipo === 'deposito') query = query.gt('cantidad_deposito', 0);
+    
+    const { data } = await query;
+    if(data) {
+       const ws = XLSX.utils.json_to_sheet(data);
+       const wb = XLSX.utils.book_new();
+       XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+       XLSX.writeFile(wb, `Stock_${tipo}.xlsx`);
+    }
+  } catch(e) { this.error.set('Error exportando'); }
+}
 
   // Helpers UI
   toggleOrdenPrecio() { this.ordenStock = 'none'; this.ordenPrecio = this.ordenPrecio === 'asc' ? 'desc' : (this.ordenPrecio === 'desc' ? 'none' : 'asc'); this.resetearVirtualScroll(); }
@@ -824,16 +854,31 @@ cancelarEdicion() {
   cambiarFiltroEstado(e: any) { this.filtroEstado = e; this.resetearVirtualScroll(); }
   
   async toggleEstadoProducto(p: Producto) { 
-     await this.supabase.getClient().from('productos').update({activo: !p.activo}).eq('id', p.id);
-     this.resetearVirtualScroll();
+  if (!this.permisos.puede('stock', 'editar')) {
+    this.mostrarMensaje('⛔ No tienes permiso para editar el estado de productos.');
+    return;
   }
+  
+  await this.supabase.getClient().from('productos').update({activo: !p.activo}).eq('id', p.id);
+  this.resetearVirtualScroll();
+}
 
   toggleSeleccionMultiple() { this.modoSeleccionMultiple = !this.modoSeleccionMultiple; if(!this.modoSeleccionMultiple) this.productosSeleccionados.clear(); }
   toggleSeleccionProducto(id: string, e: Event) { e.stopPropagation(); this.productosSeleccionados.has(id) ? this.productosSeleccionados.delete(id) : this.productosSeleccionados.add(id); }
   isProductoSeleccionado(id: string) { return this.productosSeleccionados.has(id); }
-  seleccionarTodos() { this.productosVisibles.forEach(p => this.productosSeleccionados.add(p.id)); }
+seleccionarTodos() { 
+    // CORRECCIÓN AQUÍ: Tipo explícito ': Producto'
+    this.productosVisibles().forEach((p: Producto) => this.productosSeleccionados.add(p.id)); 
+  }
   deseleccionarTodos() { this.productosSeleccionados.clear(); }
   
-  mostrarMensaje(m: string) { this.mensaje = m; this.mostrarToast = true; setTimeout(() => this.mostrarToast = false, 3000); }
-  trackByFn(index: number, item: Producto) { return item.id; }
+  mostrarMensaje(m: string) { 
+  this.mensaje.set(m); 
+  this.mostrarToast.set(true); 
+  setTimeout(() => this.mostrarToast.set(false), 3000); 
+}
+// Agrega esto antes de la última llave de cierre } de la clase StockComponent
+  trackByFn(index: number, item: Producto): string {
+    return item.id;
+  }
 }

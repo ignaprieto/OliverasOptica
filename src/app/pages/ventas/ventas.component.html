@@ -2,6 +2,7 @@
      [ngClass]="themeService.theme() === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100' : 'bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 text-gray-800'">
   <div class="w-full max-w-full space-y-8">
     
+    <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 backdrop-blur-sm p-6 rounded-2xl shadow-xl transition-colors duration-300"
          [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800/70 border border-gray-700/50' : 'bg-white/70 border border-white/20'">
       <div class="flex items-center space-x-4">
@@ -27,7 +28,8 @@
       </button>
     </div>
 
-    <div *ngIf="cargando" class="max-w-7xl mx-auto mb-8">
+    <!-- Loading State -->
+    <div *ngIf="cargando()" class="max-w-7xl mx-auto mb-8">
       <div class="rounded-2xl p-8 shadow-xl backdrop-blur-sm flex items-center justify-center"
            [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/80 border border-gray-200'">
         <div class="flex flex-col items-center gap-4">
@@ -40,20 +42,23 @@
       </div>
     </div>
 
+    <!-- Main Content -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column: Products -->
       <div class="lg:col-span-2 space-y-6">
+        <!-- Search Box -->
         <div class="p-6 rounded-2xl shadow-xl transition-colors duration-300"
              [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border border-gray-700/50' : 'bg-white border border-gray-200/50'">
           <div class="relative">
             <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
-              <div *ngIf="!buscandoProductos">
+              <div *ngIf="!buscandoProductos()">
                 <svg class="w-5 h-5" 
                      [ngClass]="themeService.theme() === 'dark' ? 'text-gray-500' : 'text-gray-400'" 
                      fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
               </div>
-              <div *ngIf="buscandoProductos">
+              <div *ngIf="buscandoProductos()">
                  <svg class="animate-spin w-5 h-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -67,41 +72,42 @@
               placeholder="Buscar por código, nombre, marca o categoría..."
               class="w-full rounded-xl px-12 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 shadow-md"
               [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border border-gray-600 text-gray-100 placeholder-gray-400 hover:bg-gray-600' : 'bg-gray-50 border border-gray-300 text-gray-800 placeholder-gray-500 hover:bg-white'"
-              [style.padding-right]="soportaEscaner ? '3.5rem' : '3rem'"
+              [style.padding-right]="soportaEscaner() ? '3.5rem' : '3rem'"
             />
             
             <button
-              *ngIf="soportaEscaner"
+              *ngIf="soportaEscaner()"
               (click)="abrirScanner()"
-              [disabled]="escaneando"
+              [disabled]="escaneando()"
               class="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               [ngClass]="themeService.theme() === 'dark' 
                 ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-700'"
               title="Escanear código de barras"
             >
-              <svg *ngIf="!escaneando" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg *ngIf="!escaneando()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
               </svg>
-              <svg *ngIf="escaneando" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg *ngIf="escaneando()" class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
               </svg>
             </button>
           </div>
 
-          <div *ngIf="ordenPrecio !== 'none' || ordenStock !== 'none'" 
+          <!-- Active Filters -->
+          <div *ngIf="ordenPrecio() !== 'none' || ordenStock() !== 'none'" 
                class="p-4 rounded-xl shadow-md transition-colors duration-300 mt-4"
                [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-4">
                 <span class="text-sm font-medium" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Filtros activos:</span>
                 <div class="flex space-x-2">
-                  <span *ngIf="ordenPrecio !== 'none'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Precio {{ ordenPrecio === 'asc' ? '↑' : '↓' }}
+                  <span *ngIf="ordenPrecio() !== 'none'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Precio {{ ordenPrecio() === 'asc' ? '↑' : '↓' }}
                   </span>
-                  <span *ngIf="ordenStock !== 'none'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Stock {{ ordenStock === 'asc' ? '↑' : '↓' }}
+                  <span *ngIf="ordenStock() !== 'none'" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Stock {{ ordenStock() === 'asc' ? '↑' : '↓' }}
                   </span>
                 </div>
               </div>
@@ -116,6 +122,7 @@
           </div>
         </div>
       
+        <!-- Products Table -->
         <div class="rounded-2xl shadow-xl overflow-hidden transition-colors duration-300"
              [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border border-gray-700/50' : 'bg-white border border-gray-200/50'">
           <div class="px-6 py-4 transition-colors duration-300"
@@ -127,7 +134,11 @@
               Productos Disponibles
             </h3>
           </div>
-          <div class="max-h-[600px] overflow-y-auto">
+          
+          <!-- ✅ SCROLL INFINITO: Evento (scroll) agregado -->
+          <div class="max-h-[600px] overflow-y-auto custom-scrollbar" 
+               (scroll)="onScrollProductos($event)">
+            
             <table class="w-full text-sm text-left border-collapse">
               <thead class="sticky top-0 z-30 transition-colors duration-300"
                      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-b border-gray-600' : 'bg-gray-100 border-b border-gray-200'">
@@ -138,6 +149,7 @@
                   <th class="px-3 py-4 font-semibold text-center w-[8%]" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">Talle</th>
                   <th class="px-3 py-4 font-semibold w-[12%]" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">Categoría</th>
                   
+                  <!-- Precio Column (sortable) -->
                   <th class="px-3 py-4 font-semibold cursor-pointer transition-colors rounded-lg select-none text-right w-[12%]"
                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-800 hover:bg-gray-200'"
                       (click)="toggleOrdenPrecio()"
@@ -146,14 +158,14 @@
                       <span>Precio</span>
                       <div class="flex flex-col">
                         <svg class="w-3 h-3 transition-colors" 
-                             [class.text-blue-600]="ordenPrecio === 'desc'"
-                             [class.text-gray-400]="ordenPrecio !== 'desc'"
+                             [class.text-blue-600]="ordenPrecio() === 'desc'"
+                             [class.text-gray-400]="ordenPrecio() !== 'desc'"
                              fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
                         </svg>
                         <svg class="w-3 h-3 -mt-1 transition-colors" 
-                             [class.text-blue-600]="ordenPrecio === 'asc'"
-                             [class.text-gray-400]="ordenPrecio !== 'asc'"
+                             [class.text-blue-600]="ordenPrecio() === 'asc'"
+                             [class.text-gray-400]="ordenPrecio() !== 'asc'"
                              fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
@@ -161,6 +173,7 @@
                     </div>
                   </th>
 
+                  <!-- Stock Column (sortable) -->
                   <th class="px-3 py-4 font-semibold cursor-pointer transition-colors rounded-lg select-none text-center w-[9%]"
                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-800 hover:bg-gray-200'"
                       (click)="toggleOrdenStock()"
@@ -169,14 +182,14 @@
                       <span>Stock</span>
                       <div class="flex flex-col">
                         <svg class="w-3 h-3 transition-colors" 
-                             [class.text-green-600]="ordenStock === 'desc'"
-                             [class.text-gray-400]="ordenStock !== 'desc'"
+                             [class.text-green-600]="ordenStock() === 'desc'"
+                             [class.text-gray-400]="ordenStock() !== 'desc'"
                              fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd" />
                         </svg>
                         <svg class="w-3 h-3 -mt-1 transition-colors" 
-                             [class.text-blue-600]="ordenStock === 'asc'"
-                             [class.text-gray-400]="ordenStock !== 'asc'"
+                             [class.text-blue-600]="ordenStock() === 'asc'"
+                             [class.text-gray-400]="ordenStock() !== 'asc'"
                              fill="currentColor" viewBox="0 0 20 20">
                           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
@@ -185,15 +198,14 @@
                   </th>
 
                   <th class="px-3 py-4 text-center font-semibold w-[12%]" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">Cantidad</th>
-                  
-                  <th class="px-3 py-4 font-semibold text-center w-[10%]" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
-                    Acción
-                  </th>
+                  <th class="px-3 py-4 font-semibold text-center w-[10%]" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">Acción</th>
                 </tr>
               </thead>
+              
+              <!-- ✅ TRACKBY: trackByProductoId agregado -->
               <tbody class="divide-y transition-colors duration-300"
                      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'">
-                <tr *ngFor="let prod of productos; let i = index" 
+                <tr *ngFor="let prod of productos(); let i = index; trackBy: trackByProductoId" 
                     class="transition-all duration-200"
                     [ngClass]="themeService.theme() === 'dark' ? 
                       (i % 2 === 0 ? 'bg-gray-800/50 hover:bg-gray-700' : 'bg-gray-800 hover:bg-gray-700') : 
@@ -214,6 +226,7 @@
                     </span>
                   </td>
                   
+                  <!-- Price with Promotion -->
                   <td class="px-3 py-3 text-right">
                     <div *ngIf="prod.tiene_promocion" class="flex flex-col items-end">
                       <span class="text-xs line-through text-red-400 dark:text-red-300 font-medium">
@@ -234,25 +247,27 @@
                     </div>
                   </td>
 
+                  <!-- Stock with Color Indicator -->
                   <td class="px-3 py-3 text-center">
                     <span class="inline-flex items-center justify-center w-10 h-7 rounded-lg text-xs font-bold"
-                          [class.bg-red-100]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) <= 5"
-                          [class.text-red-800]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) <= 5"
-                          [class.bg-yellow-100]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) > 5 && (prod.cantidad_stock - (cantidades[prod.id] || 0)) <= 15"
-                          [class.text-yellow-800]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) > 5 && (prod.cantidad_stock - (cantidades[prod.id] || 0)) <= 15"
-                          [class.bg-green-100]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) > 15"
-                          [class.text-green-800]="(prod.cantidad_stock - (cantidades[prod.id] || 0)) > 15">
-                      {{ prod.cantidad_stock - (cantidades[prod.id] || 0) }}
+                          [class.bg-red-100]="(prod.cantidad_stock - (cantidades()[prod.id] || 0)) <= 5"
+                          [class.text-red-800]="(prod.cantidad_stock - (cantidades()[prod.id] || 0)) <= 5"
+                          [class.bg-yellow-100]="(prod.cantidad_stock - (cantidades()[prod.id] || 0)) > 5 && (prod.cantidad_stock - (cantidades()[prod.id] || 0)) <= 15"
+                          [class.text-yellow-800]="(prod.cantidad_stock - (cantidades()[prod.id] || 0)) > 5 && (prod.cantidad_stock - (cantidades()[prod.id] || 0)) <= 15"
+                          [class.bg-green-100]="(prod.cantidad_stock - (cantidades()[prod.id] || 0)) > 15"
+                          [class.text-green-800]="(prod.cantidad_stock - (cantidades()[prod.id] || 0)) > 15">
+                      {{ prod.cantidad_stock - (cantidades()[prod.id] || 0) }}
                     </span>
                   </td>
 
+                  <!-- Quantity Controls -->
                   <td class="px-3 py-3">
                     <div class="flex items-center justify-center gap-1">
                       <button (click)="disminuirCantidad(prod)" 
                               class="w-6 h-6 flex items-center justify-center bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 text-sm font-bold">
                         –
                       </button>
-                      <span class="w-6 text-center font-semibold text-sm" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">{{ cantidades[prod.id] || 0 }}</span>
+                      <span class="w-6 text-center font-semibold text-sm" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">{{ cantidades()[prod.id] || 0 }}</span>
                       <button (click)="aumentarCantidad(prod)" 
                               class="w-6 h-6 flex items-center justify-center bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white rounded-lg transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 text-sm font-bold">
                         +
@@ -260,11 +275,12 @@
                     </div>
                   </td>
 
+                  <!-- Add to Cart Button -->
                   <td class="px-3 py-3 text-center">
                     <button
                       *ngIf="prod.cantidad_stock > 0"
                       (click)="agregarAlCarrito(prod)"
-                      [disabled]="!(cantidades[prod.id] > 0) || (cantidades[prod.id] > prod.cantidad_stock)"
+                      [disabled]="!(cantidades()[prod.id] > 0) || (cantidades()[prod.id] > prod.cantidad_stock)"
                       class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-xs px-3 py-2 rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:shadow-md transform hover:-translate-y-1 w-full">
                       <span class="flex items-center justify-center space-x-1">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -277,10 +293,33 @@
                 </tr>
               </tbody>
             </table>
+
+            <!-- ✅ LOADING MORE: Indicador de carga al final -->
+            <div *ngIf="cargandoMas()" class="py-4 flex justify-center items-center w-full"
+                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
+              <div class="flex items-center space-x-2">
+                <svg class="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-sm font-medium" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                  Cargando más productos...
+                </span>
+              </div>
+            </div>
+
+            <!-- End of List Indicator -->
+            <div *ngIf="!hayMasProductos() && productos().length > 0 && !cargandoMas()" 
+                 class="py-4 text-center text-xs opacity-50"
+                 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-500' : 'text-gray-400'">
+              — Has llegado al final de la lista —
+            </div>
+
           </div>
         </div>
         
-        <div *ngIf="productos.length === 0 && !buscandoProductos" class="text-center py-12">
+        <!-- Empty State -->
+        <div *ngIf="productos().length === 0 && !buscandoProductos()" class="text-center py-12">
           <div class="max-w-sm mx-auto">
             <div class="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center transition-colors duration-300"
                  [ngClass]="themeService.theme() === 'dark' ? 'bg-gradient-to-br from-gray-700 to-gray-600' : 'bg-gradient-to-br from-gray-200 to-gray-300'">
@@ -294,6 +333,7 @@
         </div>
       </div>
 
+      <!-- Right Column: Cart & Checkout -->
       <div class="lg:col-span-1 rounded-2xl shadow-xl p-6 space-y-4 overflow-hidden transition-colors duration-300 h-fit sticky top-4"
            [ngClass]="themeService.theme() === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700/50' : 'bg-gradient-to-br from-white to-gray-50 border border-gray-200/50'">
         <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500"></div>
@@ -307,7 +347,8 @@
           Resumen
         </h3>
 
-        <div *ngIf="carrito.length === 0" class="text-center py-6" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+        <!-- Empty Cart State -->
+        <div *ngIf="carrito().length === 0" class="text-center py-6" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
           <div class="w-12 h-12 rounded-full mx-auto mb-3 flex items-center justify-center transition-colors duration-300"
                [ngClass]="themeService.theme() === 'dark' ? 'bg-gradient-to-br from-gray-700 to-gray-600' : 'bg-gradient-to-br from-gray-200 to-gray-300'">
             <svg class="w-6 h-6" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-500' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -318,8 +359,9 @@
           <p class="text-xs mt-1" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-500' : 'text-gray-400'">Agrega productos</p>
         </div>
       
-        <ul *ngIf="carrito.length > 0" class="space-y-2 max-h-64 overflow-y-auto">
-          <li *ngFor="let item of carrito" 
+        <!-- ✅ TRACKBY: trackByCarritoId agregado -->
+        <ul *ngIf="carrito().length > 0" class="space-y-2 max-h-64 overflow-y-auto">
+          <li *ngFor="let item of carrito(); trackBy: trackByCarritoId" 
               class="p-3 rounded-xl shadow-sm transition-all duration-300"
               [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50 border border-gray-600 hover:shadow-lg' : 'bg-white border border-gray-100 hover:shadow-md'">
             <div class="flex justify-between items-start gap-3">
@@ -352,24 +394,25 @@
                     class="w-5 h-5 flex items-center justify-center text-white rounded-md transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105"
                     title="Eliminar del carrito">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/>
-                      </svg>
-                    </button>
-                  </div>
+                      <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"/>
+                    </svg>
+                  </button>
                 </div>
               </div>
-            </li>
-          </ul>
+            </div>
+          </li>
+        </ul>
         
-          <hr [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-300'" />
+        <hr [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-300'" />
         
+        <!-- Credit Sale Checkbox -->
         <div class="mb-4 p-4 rounded-lg transition-colors duration-300"
              [ngClass]="themeService.theme() === 'dark' ? 'bg-blue-900/20 border border-blue-800/50' : 'bg-blue-50 border border-blue-200'">
           <label class="flex items-center cursor-pointer">
             <input 
               type="checkbox" 
-              [(ngModel)]="esVentaCredito"
-              (change)="onTipoPagoChange()"
+              [checked]="esVentaCredito()"
+              (change)="esVentaCredito.set(!esVentaCredito()); onTipoPagoChange()"
               class="mr-3 w-4 h-4 rounded focus:ring-2 focus:ring-blue-500"
               [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'"
             >
@@ -380,13 +423,15 @@
           </label>
         </div>
 
-        <div *ngIf="esVentaCredito" class="mb-4 space-y-3">
+        <!-- Credit Sale: Client Selection -->
+        <div *ngIf="esVentaCredito()" class="mb-4 space-y-3">
           <label class="block text-sm font-semibold"
                  [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
             Cliente *
           </label>
           
-          <div *ngIf="!clienteSeleccionado" class="relative">
+          <!-- Client Search -->
+          <div *ngIf="!clienteSeleccionado()" class="relative">
             <div class="relative">
               <div class="absolute left-3 top-1/2 transform -translate-y-1/2">
                 <svg class="w-4 h-4" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-500' : 'text-gray-400'" 
@@ -397,8 +442,9 @@
               </div>
               <input 
                 type="text"
-                [(ngModel)]="busquedaCliente"
-                (focus)="mostrarListaClientes = true"
+                [value]="busquedaCliente"
+                (input)="busquedaCliente = $any($event.target).value"
+                (focus)="mostrarListaClientes.set(true)"
                 placeholder="Buscar cliente por nombre, DNI o email..."
                 class="w-full pl-10 pr-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                 [ngClass]="themeService.theme() === 'dark' 
@@ -407,10 +453,11 @@
               >
             </div>
             
-            <div *ngIf="mostrarListaClientes && clientes.length > 0" 
+            <!-- ✅ TRACKBY: trackByClienteId agregado -->
+            <div *ngIf="mostrarListaClientes() && clientes().length > 0" 
                  class="absolute z-50 w-full mt-1 rounded-xl shadow-2xl max-h-60 overflow-y-auto transition-colors duration-300"
                  [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'">
-              <div *ngFor="let cliente of clientes; let last = last" 
+              <div *ngFor="let cliente of clientes(); let last = last; trackBy: trackByClienteId" 
                    (click)="seleccionarCliente(cliente)"
                    class="p-3 cursor-pointer transition-colors duration-150"
                    [ngClass]="{
@@ -433,21 +480,22 @@
             </div>
           </div>
           
-          <div *ngIf="clienteSeleccionado" 
+          <!-- Selected Client Card -->
+          <div *ngIf="clienteSeleccionado()" 
                class="p-4 rounded-xl transition-colors duration-300"
                [ngClass]="themeService.theme() === 'dark' ? 'bg-green-900/20 border border-green-800/50' : 'bg-green-50 border border-green-200'">
             <div class="flex justify-between items-start">
               <div class="flex-1">
                 <div class="font-semibold text-base mb-1"
                      [ngClass]="themeService.theme() === 'dark' ? 'text-green-300' : 'text-green-900'">
-                  {{ clienteSeleccionado.nombre }}
+                  {{ clienteSeleccionado()!.nombre }}
                 </div>
                 <div class="text-xs space-y-1"
                      [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-                  <div>DNI: {{ clienteSeleccionado.dni || 'N/A' }}</div>
+                  <div>DNI: {{ clienteSeleccionado()!.dni || 'N/A' }}</div>
                   <div class="mt-2 space-y-0.5">
-                    <div><span class="font-semibold">Límite:</span> {{ clienteSeleccionado.limite_credito | monedaArs }}</div>
-                    <div><span class="font-semibold">Saldo:</span> {{ clienteSeleccionado.saldo_actual | monedaArs }}</div>
+                    <div><span class="font-semibold">Límite:</span> {{ clienteSeleccionado()!.limite_credito | monedaArs }}</div>
+                    <div><span class="font-semibold">Saldo:</span> {{ clienteSeleccionado()!.saldo_actual | monedaArs }}</div>
                     <div class="font-semibold pt-1" 
                          [class.text-green-600]="creditoSuficiente()"
                          [class.text-red-600]="!creditoSuficiente()">
@@ -465,6 +513,7 @@
               </button>
             </div>
             
+            <!-- Insufficient Credit Warning -->
             <div *ngIf="!creditoSuficiente()" 
                  class="mt-3 p-2 rounded-lg text-xs font-medium transition-colors duration-300"
                  [ngClass]="themeService.theme() === 'dark' ? 'bg-red-900/30 text-red-200 border border-red-800/50' : 'bg-red-100 text-red-800 border border-red-200'">
@@ -477,6 +526,7 @@
             </div>
           </div>
           
+          <!-- Credit Sale Additional Fields -->
           <div class="mt-3 grid grid-cols-1 gap-3">
             <div>
               <label class="block text-xs font-semibold mb-1"
@@ -485,7 +535,8 @@
               </label>
               <input 
                 type="date"
-                [(ngModel)]="fechaVencimiento"
+                [value]="fechaVencimiento()"
+                (input)="fechaVencimiento.set($any($event.target).value)"
                 class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                 [ngClass]="themeService.theme() === 'dark' 
                   ? 'bg-gray-800 border-gray-700 text-gray-200 hover:bg-gray-750' 
@@ -499,7 +550,8 @@
               </label>
               <input 
                 type="text"
-                [(ngModel)]="observacionesCredito"
+                [value]="observacionesCredito()"
+                (input)="observacionesCredito.set($any($event.target).value)"
                 placeholder="Notas adicionales..."
                 class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-sm"
                 [ngClass]="themeService.theme() === 'dark' 
@@ -510,364 +562,377 @@
           </div>
         </div>
 
-        <div *ngIf="!esVentaCredito" class="space-y-3">
- <div class="mb-3 p-3 rounded-lg transition-colors duration-300"
-       [ngClass]="themeService.theme() === 'dark' ? 'bg-purple-900/20 border border-purple-800/50' : 'bg-purple-50 border border-purple-200'">
-    <label class="flex items-center cursor-pointer">
-      <input 
-        type="checkbox" 
-        [(ngModel)]="pagoDividido"
-        (ngModelChange)="togglePagoDividido()"
-        class="mr-3 w-4 h-4 rounded focus:ring-2 focus:ring-purple-500"
-        [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'"
-      >
-      <span class="font-semibold text-sm"
-            [ngClass]="themeService.theme() === 'dark' ? 'text-purple-300' : 'text-purple-800'">
-        💳 Pago con 2 métodos
-      </span>
-    </label>
-  </div>
-
-  <div *ngIf="!pagoDividido">
-    <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
-           class="block text-sm font-semibold mb-1">Método de pago</label>
-    <select 
-      [(ngModel)]="metodoPago" 
-      (ngModelChange)="onMetodoPagoChange()" 
-      [ngClass]="themeService.theme() === 'dark' 
-        ? 'bg-gray-800 border-gray-700 text-gray-200 focus:ring-green-600 hover:bg-gray-750' 
-        : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-green-500 hover:bg-white'"
-      class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-sm">
-      <option value="efectivo">💰 Efectivo</option>
-      <option value="transferencia">🏦 Transferencia</option>
-      <option value="debito">💳 Débito</option>
-      <option value="credito">💳 Crédito</option>
-      <option value="mercado_pago">📱 Mercado Pago</option>
-    </select>
-
-    <div *ngIf="metodoPago === 'efectivo' && !cajaAbierta"
-         class="mt-2 p-2 rounded-lg text-xs font-medium"
-         [ngClass]="themeService.theme() === 'dark' ? 'bg-red-900/30 text-red-200 border border-red-800/50' : 'bg-red-100 text-red-800 border border-red-200'">
-      <div class="flex items-start space-x-2">
-        <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-        </svg>
-        <span>No hay caja abierta. No se pueden realizar pagos en efectivo.</span>
-      </div>
-    </div>
-
-    <div *ngIf="metodoPago === 'efectivo'" 
-         [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-gray-50'"
-         class="mt-3 p-4 rounded-lg space-y-3">
-      <div>
-        <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
-               class="block font-semibold mb-2 text-sm">Efectivo Entregado</label>
-        <input 
-          type="number" 
-          [(ngModel)]="montoEntregado"
-          (ngModelChange)="onMontoEntregadoChange()"
-          [min]="0"
-          step="0.01"
-          [ngClass]="themeService.theme() === 'dark' 
-            ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-500' 
-            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'"
-          class="w-full border rounded-lg px-4 py-2"
-          placeholder="Ingrese el efectivo entregado">
-      </div>
-      
-      <div class="flex justify-between items-center">
-        <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
-              class="font-semibold">Total a Pagar:</span>
-        <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'" 
-              class="text-lg font-bold">{{ totalFinal | monedaArs }}</span>
-      </div>
-      
-      <div *ngIf="montoEntregado > 0" 
-           [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'"
-           class="flex justify-between items-center pt-2 border-t">
-        <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
-              class="font-semibold">Vuelto:</span>
-        <span 
-          class="text-lg font-bold"
-          [class.text-red-600]="vuelto < 0"
-          [class.text-green-600]="vuelto >= 0">
-          {{ vuelto | monedaArs }}
-        </span>
-      </div>
-      
-      <div *ngIf="montoEntregado > 0 && montoEntregado < totalFinal" 
-           [ngClass]="themeService.theme() === 'dark' ? 'text-red-400' : 'text-red-600'"
-           class="text-sm font-medium flex items-center space-x-1">
-        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-        </svg>
-        <span>⚠️ El monto entregado es insuficiente</span>
-      </div>
-    </div>
-  </div>
-
-  <div *ngIf="pagoDividido" class="space-y-3">
-    <div class="p-4 rounded-lg border-2"
-         [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-300'">
-      <label class="block text-sm font-bold mb-2"
-             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
-        💳 Método de pago 1
-      </label>
-      
-      <select 
-        [(ngModel)]="metodoPago1"
-        (ngModelChange)="onMetodoPago1Change()"
-        class="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-        [ngClass]="themeService.theme() === 'dark' 
-          ? 'bg-gray-700 border-gray-600 text-gray-200' 
-          : 'bg-white border-gray-300 text-gray-900'">
-        <option value="efectivo">💰 Efectivo</option>
-        <option value="transferencia">🏦 Transferencia</option>
-        <option value="debito">💳 Débito</option>
-        <option value="credito">💳 Crédito</option>
-        <option value="mercado_pago">📱 Mercado Pago</option>
-      </select>
-
-      <div *ngIf="metodoPago1 === 'efectivo' && !cajaAbierta"
-           class="mb-3 p-2 rounded-lg text-xs font-medium"
-           [ngClass]="themeService.theme() === 'dark' ? 'bg-red-900/30 text-red-200 border border-red-800/50' : 'bg-red-100 text-red-800 border border-red-200'">
-        ⚠️ No hay caja abierta para pagos en efectivo
-      </div>
-      
-      <div class="mb-3">
-        <label class="block text-xs font-semibold mb-1"
-               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-          Monto a pagar con este método
-        </label>
-        <input 
-          type="number"
-          [(ngModel)]="montoPago1"
-          (ngModelChange)="onMontoPago1Change()"
-          [min]="0"
-          [max]="totalFinal"
-          step="0.01"
-          placeholder="Monto"
-          class="w-full px-3 py-2 border rounded-lg text-sm"
-          [ngClass]="themeService.theme() === 'dark' 
-            ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-500' 
-            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'">
-      </div>
-
-      <div *ngIf="metodoPago1 === 'efectivo'" class="space-y-2">
-        <div>
-          <label class="block text-xs font-semibold mb-1"
-                 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-            Efectivo entregado
-          </label>
-          <input 
-            type="number"
-            [(ngModel)]="efectivoEntregadoPago1"
-            (ngModelChange)="onEfectivoEntregadoPago1Change()"
-            [min]="0"
-            step="0.01"
-            placeholder="Efectivo"
-            class="w-full px-3 py-2 border rounded-lg text-sm"
-            [ngClass]="themeService.theme() === 'dark' 
-              ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-500' 
-              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'">
-        </div>
-        
-        <div *ngIf="vueltoPago1 > 0" class="flex justify-between items-center text-xs">
-          <span class="font-semibold text-green-600">Vuelto:</span>
-          <span class="font-bold text-green-600">{{ vueltoPago1 | monedaArs }}</span>
-        </div>
-
-        <div *ngIf="efectivoEntregadoPago1 > 0 && efectivoEntregadoPago1 < montoPago1"
-             class="text-xs font-medium text-red-600 flex items-center space-x-1">
-          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-          </svg>
-          <span>Insuficiente</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border-2"
-         [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-300'">
-      <label class="block text-sm font-bold mb-2"
-             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
-        💳 Método de pago 2
-      </label>
-      
-      <select 
-        [(ngModel)]="metodoPago2"
-        (ngModelChange)="onMetodoPago2Change()"
-        class="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
-        [ngClass]="themeService.theme() === 'dark' 
-          ? 'bg-gray-700 border-gray-600 text-gray-200' 
-          : 'bg-white border-gray-300 text-gray-900'">
-        <option value="efectivo">💰 Efectivo</option>
-        <option value="transferencia">🏦 Transferencia</option>
-        <option value="debito">💳 Débito</option>
-        <option value="credito">💳 Crédito</option>
-        <option value="mercado_pago">📱 Mercado Pago</option>
-      </select>
-
-      <div *ngIf="metodoPago2 === 'efectivo' && !cajaAbierta"
-           class="mb-3 p-2 rounded-lg text-xs font-medium"
-           [ngClass]="themeService.theme() === 'dark' ? 'bg-red-900/30 text-red-200 border border-red-800/50' : 'bg-red-100 text-red-800 border border-red-200'">
-        ⚠️ No hay caja abierta para pagos en efectivo
-      </div>
-      
-      <div class="mb-3">
-        <label class="block text-xs font-semibold mb-1"
-               [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-          Monto a pagar con este método (calculado automáticamente)
-        </label>
-        <input 
-          type="number"
-          [(ngModel)]="montoPago2"
-          [disabled]="true"
-          step="0.01"
-          placeholder="Monto"
-          class="w-full px-3 py-2 border rounded-lg text-sm opacity-75 cursor-not-allowed"
-          [ngClass]="themeService.theme() === 'dark' 
-            ? 'bg-gray-700 border-gray-600 text-gray-200' 
-            : 'bg-white border-gray-300 text-gray-900'">
-      </div>
-
-      <div *ngIf="metodoPago2 === 'efectivo'" class="space-y-2">
-        <div>
-          <label class="block text-xs font-semibold mb-1"
-                 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-            Efectivo entregado
-          </label>
-          <input 
-            type="number"
-            [(ngModel)]="efectivoEntregadoPago2"
-            (ngModelChange)="onEfectivoEntregadoPago2Change()"
-            [min]="0"
-            step="0.01"
-            placeholder="Efectivo"
-            class="w-full px-3 py-2 border rounded-lg text-sm"
-            [ngClass]="themeService.theme() === 'dark' 
-              ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-500' 
-              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'">
-        </div>
-        
-        <div *ngIf="vueltoPago2 > 0" class="flex justify-between items-center text-xs">
-          <span class="font-semibold text-green-600">Vuelto:</span>
-          <span class="font-bold text-green-600">{{ vueltoPago2 | monedaArs }}</span>
-        </div>
-
-        <div *ngIf="efectivoEntregadoPago2 > 0 && efectivoEntregadoPago2 < montoPago2"
-             class="text-xs font-medium text-red-600 flex items-center space-x-1">
-          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-          </svg>
-          <span>Insuficiente</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="p-4 rounded-lg border-2"
-         [ngClass]="themeService.theme() === 'dark' ? 'bg-gradient-to-r from-gray-900 to-gray-800 border-gray-700' : 'bg-gradient-to-r from-white to-gray-50 border-gray-300'">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-sm font-bold"
-              [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
-          📊 Resumen de Pago
-        </span>
-      </div>
-      
-      <div class="space-y-2 text-sm"
-           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-        <div class="flex justify-between items-center">
-  <span>{{ metodoPago1 === 'efectivo' ? '💰' : metodoPago1 === 'transferencia' ? '🏦' : metodoPago1 === 'debito' ? '💳' : metodoPago1 === 'credito' ? '💳' : '📱' }} {{ getMetodoLabel(metodoPago1) }}:</span>
-  <span class="font-semibold"
-        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'">
-    {{ montoPago1 | monedaArs }}
-  </span>
-</div>
-
-<div class="flex justify-between items-center">
-  <span>{{ metodoPago2 === 'efectivo' ? '💰' : metodoPago2 === 'transferencia' ? '🏦' : metodoPago2 === 'debito' ? '💳' : metodoPago2 === 'credito' ? '💳' : '📱' }} {{ getMetodoLabel(metodoPago2) }}:</span>
-  <span class="font-semibold"
-        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'">
-    {{ montoPago2 | monedaArs }}
-  </span>
-</div>
-        
-        <div class="pt-2 border-t flex justify-between items-center"
-             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-300'">
-          <span class="font-bold text-base"
-                [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'">
-            Total:
-          </span>
-          <span class="font-bold text-lg"
-                [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
-            {{ totalFinal | monedaArs }}
-          </span>
-        </div>
-
-        <div *ngIf="Math.abs((montoPago1 + montoPago2) - totalFinal) > 0.01"
-             class="mt-2 p-2 rounded-lg text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
-          ⚠️ La suma no coincide con el total ({{ (montoPago1 + montoPago2) | monedaArs }})
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-          <div>
-            <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
-              class="block text-sm font-semibold mb-1">Código de descuento</label>
-            <div class="flex gap-1">
+        <!-- Regular Payment Methods -->
+        <div *ngIf="!esVentaCredito()" class="space-y-3">
+          <!-- Split Payment Checkbox -->
+          <div class="mb-3 p-3 rounded-lg transition-colors duration-300"
+               [ngClass]="themeService.theme() === 'dark' ? 'bg-purple-900/20 border border-purple-800/50' : 'bg-purple-50 border border-purple-200'">
+            <label class="flex items-center cursor-pointer">
               <input 
-                type="text" 
-                [(ngModel)]="codigoDescuento" 
-                placeholder="PROMO10" 
-                [ngClass]="themeService.theme() === 'dark' 
-                  ? 'bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500 focus:ring-green-600 hover:bg-gray-750' 
-                  : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-green-500 hover:bg-white'"
-                class="flex-1 px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-sm" />
-              <button 
-                (click)="aplicarDescuento()" 
-                class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-1 text-xs">
-                OK
-              </button>
-            </div>
-            <div *ngIf="descuentoAplicado > 0" 
+                type="checkbox" 
+                [checked]="pagoDividido()"
+                (change)="pagoDividido.set(!pagoDividido()); togglePagoDividido()"
+                class="mr-3 w-4 h-4 rounded focus:ring-2 focus:ring-purple-500"
+                [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'"
+              >
+              <span class="font-semibold text-sm"
+                    [ngClass]="themeService.theme() === 'dark' ? 'text-purple-300' : 'text-purple-800'">
+                💳 Pago con 2 métodos
+              </span>
+            </label>
+          </div>
+
+          <!-- Single Payment Method -->
+          <div *ngIf="!pagoDividido()">
+            <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
+                   class="block text-sm font-semibold mb-1">Método de pago</label>
+            <select 
+              [value]="metodoPago()"
+              (change)="metodoPago.set($any($event.target).value); onMetodoPagoChange()"
               [ngClass]="themeService.theme() === 'dark' 
-                ? 'bg-green-900/30 border-green-700' 
-                : 'bg-green-50 border-green-200'"
-              class="border rounded-lg p-2 mt-1">
-              <div class="flex justify-between items-center">
-                <span [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-800'" 
-                  class="text-xs font-medium">Descuento: {{ descuentoAplicado }}%</span>
-                <button 
-                  (click)="quitarDescuento()" 
+                ? 'bg-gray-800 border-gray-700 text-gray-200 focus:ring-green-600 hover:bg-gray-750' 
+                : 'bg-gray-50 border-gray-300 text-gray-900 focus:ring-green-500 hover:bg-white'"
+              class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-sm">
+              <option value="efectivo">💰 Efectivo</option>
+              <option value="transferencia">🏦 Transferencia</option>
+              <option value="debito">💳 Débito</option>
+              <option value="credito">💳 Crédito</option>
+              <option value="mercado_pago">📱 Mercado Pago</option>
+            </select>
+
+            <!-- Cash Register Closed Warning -->
+            <div *ngIf="metodoPago() === 'efectivo' && !cajaAbierta()"
+                 class="mt-2 p-2 rounded-lg text-xs font-medium"
+                 [ngClass]="themeService.theme() === 'dark' ? 'bg-red-900/30 text-red-200 border border-red-800/50' : 'bg-red-100 text-red-800 border border-red-200'">
+              <div class="flex items-start space-x-2">
+                <svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>No hay caja abierta. No se pueden realizar pagos en efectivo.</span>
+              </div>
+            </div>
+
+            <!-- Cash Payment Details -->
+            <div *ngIf="metodoPago() === 'efectivo'" 
+                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-gray-50'"
+                 class="mt-3 p-4 rounded-lg space-y-3">
+              <div>
+                <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
+                       class="block font-semibold mb-2 text-sm">Efectivo Entregado</label>
+                <input 
+                  type="number" 
+                  [value]="montoEntregado()"
+                  (input)="montoEntregado.set(+$any($event.target).value); onMontoEntregadoChange()"
+                  [min]="0"
+                  step="0.01"
                   [ngClass]="themeService.theme() === 'dark' 
-                    ? 'text-red-400 hover:text-red-300' 
-                    : 'text-red-600 hover:text-red-800'"
-                  class="hover:underline text-xs font-medium">Quitar</button>
+                    ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-500' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'"
+                  class="w-full border rounded-lg px-4 py-2"
+                  placeholder="Ingrese el efectivo entregado">
+              </div>
+              
+              <div class="flex justify-between items-center">
+                <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
+                      class="font-semibold">Total a Pagar:</span>
+                <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'" 
+                      class="text-lg font-bold">{{ totalFinal() | monedaArs }}</span>
+              </div>
+              
+              <div *ngIf="montoEntregado() > 0" 
+                   [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'"
+                   class="flex justify-between items-center pt-2 border-t">
+                <span [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
+                      class="font-semibold">Vuelto:</span>
+                <span 
+                  class="text-lg font-bold"
+                  [class.text-red-600]="vuelto() < 0"
+                  [class.text-green-600]="vuelto() >= 0">
+                  {{ vuelto() | monedaArs }}
+                </span>
+              </div>
+              
+              <div *ngIf="montoEntregado() > 0 && montoEntregado() < totalFinal()" 
+                   [ngClass]="themeService.theme() === 'dark' ? 'text-red-400' : 'text-red-600'"
+                   class="text-sm font-medium flex items-center space-x-1">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <span>⚠️ El monto entregado es insuficiente</span>
               </div>
             </div>
           </div>
-      
-          <div [ngClass]="themeService.theme() === 'dark' 
-            ? 'bg-gradient-to-r from-gray-800 to-gray-700' 
-            : 'bg-gradient-to-r from-gray-100 to-gray-200'"
-            class="p-3 rounded-xl">
-            <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'" 
-              class="text-right text-xl font-bold">
-              Total: {{ totalFinal | monedaArs }}
+
+          <!-- Split Payment (2 Methods) -->
+          <div *ngIf="pagoDividido()" class="space-y-3">
+            <!-- Payment Method 1 -->
+            <div class="p-4 rounded-lg border-2"
+                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-300'">
+              <label class="block text-sm font-bold mb-2"
+                     [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+                💳 Método de pago 1
+              </label>
+              
+              <select 
+                [value]="metodoPago1()"
+                (change)="metodoPago1.set($any($event.target).value); onMetodoPago1Change()"
+                class="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                [ngClass]="themeService.theme() === 'dark' 
+                  ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                  : 'bg-white border-gray-300 text-gray-900'">
+                <option value="transferencia">🏦 Transferencia</option>
+                <option value="debito">💳 Débito</option>
+                <option value="credito">💳 Crédito</option>
+                <option value="mercado_pago">📱 Mercado Pago</option>
+              </select>
+
+              <div *ngIf="metodoPago1() === 'efectivo' && !cajaAbierta()"
+                   class="mb-3 p-2 rounded-lg text-xs font-medium"
+                   [ngClass]="themeService.theme() === 'dark' ? 'bg-red-900/30 text-red-200 border border-red-800/50' : 'bg-red-100 text-red-800 border border-red-200'">
+                ⚠️ No hay caja abierta para pagos en efectivo
+              </div>
+              
+              <div class="mb-3">
+                <label class="block text-xs font-semibold mb-1"
+                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                  Monto a pagar con este método
+                </label>
+                <input 
+                  type="number"
+                  [value]="montoPago1()"
+                  (input)="montoPago1.set(+$any($event.target).value); onMontoPago1Change()"
+                  [min]="0"
+                  [max]="totalFinal()"
+                  step="0.01"
+                  placeholder="Monto"
+                  class="w-full px-3 py-2 border rounded-lg text-sm"
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-500' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'">
+              </div>
+
+              <div *ngIf="metodoPago1() === 'efectivo'" class="space-y-2">
+                <div>
+                  <label class="block text-xs font-semibold mb-1"
+                         [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                    Efectivo entregado
+                  </label>
+                  <input 
+                    type="number"
+                    [value]="efectivoEntregadoPago1()"
+                    (input)="efectivoEntregadoPago1.set(+$any($event.target).value); onEfectivoEntregadoPago1Change()"
+                    [min]="0"
+                    step="0.01"
+                    placeholder="Efectivo"
+                    class="w-full px-3 py-2 border rounded-lg text-sm"
+                    [ngClass]="themeService.theme() === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-500' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'">
+                </div>
+                
+                <div *ngIf="vueltoPago1() > 0" class="flex justify-between items-center text-xs">
+                  <span class="font-semibold text-green-600">Vuelto:</span>
+                  <span class="font-bold text-green-600">{{ vueltoPago1() | monedaArs }}</span>
+                </div>
+
+                <div *ngIf="efectivoEntregadoPago1() > 0 && efectivoEntregadoPago1() < montoPago1()"
+                     class="text-xs font-medium text-red-600 flex items-center space-x-1">
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Insuficiente</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payment Method 2 -->
+            <div class="p-4 rounded-lg border-2"
+                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-300'">
+              <label class="block text-sm font-bold mb-2"
+                     [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+                💳 Método de pago 2
+              </label>
+              
+              <select 
+                [value]="metodoPago2()"
+                (change)="metodoPago2.set($any($event.target).value); onMetodoPago2Change()"
+                class="w-full px-3 py-2 border rounded-lg mb-3 text-sm"
+                [ngClass]="themeService.theme() === 'dark' 
+                  ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                  : 'bg-white border-gray-300 text-gray-900'">
+                <option value="efectivo">💰 Efectivo</option>
+                <option value="transferencia">🏦 Transferencia</option>
+                <option value="debito">💳 Débito</option>
+                <option value="credito">💳 Crédito</option>
+                <option value="mercado_pago">📱 Mercado Pago</option>
+              </select>
+
+              <div *ngIf="metodoPago2() === 'efectivo' && !cajaAbierta()"
+                   class="mb-3 p-2 rounded-lg text-xs font-medium"
+                   [ngClass]="themeService.theme() === 'dark' ? 'bg-red-900/30 text-red-200 border border-red-800/50' : 'bg-red-100 text-red-800 border border-red-200'">
+                ⚠️ No hay caja abierta para pagos en efectivo
+              </div>
+              
+              <div class="mb-3">
+                <label class="block text-xs font-semibold mb-1"
+                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                  Monto a pagar con este método (calculado automáticamente)
+                </label>
+                <input 
+                  type="number"
+                  [value]="montoPago2()"
+                  [disabled]="true"
+                  step="0.01"
+                  placeholder="Monto"
+                  class="w-full px-3 py-2 border rounded-lg text-sm opacity-75 cursor-not-allowed"
+                  [ngClass]="themeService.theme() === 'dark' 
+                    ? 'bg-gray-700 border-gray-600 text-gray-200' 
+                    : 'bg-white border-gray-300 text-gray-900'">
+              </div>
+
+              <div *ngIf="metodoPago2() === 'efectivo'" class="space-y-2">
+                <div>
+                  <label class="block text-xs font-semibold mb-1"
+                         [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                    Efectivo entregado
+                  </label>
+                  <input 
+                    type="number"
+                    [value]="efectivoEntregadoPago2()"
+                    (input)="efectivoEntregadoPago2.set(+$any($event.target).value); onEfectivoEntregadoPago2Change()"
+                    [min]="0"
+                    step="0.01"
+                    placeholder="Efectivo"
+                    class="w-full px-3 py-2 border rounded-lg text-sm"
+                    [ngClass]="themeService.theme() === 'dark' 
+                      ? 'bg-gray-700 border-gray-600 text-gray-200 placeholder-gray-500' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'">
+                </div>
+                
+                <div *ngIf="vueltoPago2() > 0" class="flex justify-between items-center text-xs">
+                  <span class="font-semibold text-green-600">Vuelto:</span>
+                  <span class="font-bold text-green-600">{{ vueltoPago2() | monedaArs }}</span>
+                </div>
+
+                <div *ngIf="efectivoEntregadoPago2() > 0 && efectivoEntregadoPago2() < montoPago2()"
+                     class="text-xs font-medium text-red-600 flex items-center space-x-1">
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                  </svg>
+                  <span>Insuficiente</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Split Payment Summary -->
+            <div class="p-4 rounded-lg border-2"
+                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gradient-to-r from-gray-900 to-gray-800 border-gray-700' : 'bg-gradient-to-r from-white to-gray-50 border-gray-300'">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-sm font-bold"
+                      [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+                  📊 Resumen de Pago
+                </span>
+              </div>
+              
+              <div class="space-y-2 text-sm"
+                   [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                <div class="flex justify-between items-center">
+                  <span>{{ metodoPago1() === 'efectivo' ? '💰' : metodoPago1() === 'transferencia' ? '🏦' : metodoPago1() === 'debito' ? '💳' : metodoPago1() === 'credito' ? '💳' : '📱' }} {{ getMetodoLabel(metodoPago1()) }}:</span>
+                  <span class="font-semibold"
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'">
+                    {{ montoPago1() | monedaArs }}
+                  </span>
+                </div>
+
+                <div class="flex justify-between items-center">
+                  <span>{{ metodoPago2() === 'efectivo' ? '💰' : metodoPago2() === 'transferencia' ? '🏦' : metodoPago2() === 'debito' ? '💳' : metodoPago2() === 'credito' ? '💳' : '📱' }} {{ getMetodoLabel(metodoPago2()) }}:</span>
+                  <span class="font-semibold"
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'">
+                    {{ montoPago2() | monedaArs }}
+                  </span>
+                </div>
+                
+                <div class="pt-2 border-t flex justify-between items-center"
+                     [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-300'">
+                  <span class="font-bold text-base"
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'">
+                    Total:
+                  </span>
+                  <span class="font-bold text-lg"
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
+                    {{ totalFinal() | monedaArs }}
+                  </span>
+                </div>
+
+                <div *ngIf="Math.abs((montoPago1() + montoPago2()) - totalFinal()) > 0.01"
+                     class="mt-2 p-2 rounded-lg text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200">
+                  ⚠️ La suma no coincide con el total ({{ (montoPago1() + montoPago2()) | monedaArs }})
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+
+        <!-- Discount Code -->
+        <div>
+          <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
+                 class="block text-sm font-semibold mb-1">Código de descuento</label>
+          <div class="flex gap-1">
+            <input 
+              type="text" 
+              [value]="codigoDescuento()"
+              (input)="codigoDescuento.set($any($event.target).value)"
+              placeholder="PROMO10" 
+              [ngClass]="themeService.theme() === 'dark' 
+                ? 'bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500 focus:ring-green-600 hover:bg-gray-750' 
+                : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-green-500 hover:bg-white'"
+              class="flex-1 px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:border-transparent transition-all duration-200 text-sm" />
+            <button 
+              (click)="aplicarDescuento()" 
+              class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-2 px-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 transform hover:-translate-y-1 text-xs">
+              OK
+            </button>
+          </div>
+          <div *ngIf="descuentoAplicado() > 0" 
+               [ngClass]="themeService.theme() === 'dark' 
+                 ? 'bg-green-900/30 border-green-700' 
+                 : 'bg-green-50 border-green-200'"
+               class="border rounded-lg p-2 mt-1">
+            <div class="flex justify-between items-center">
+              <span [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-800'" 
+                    class="text-xs font-medium">Descuento: {{ descuentoAplicado() }}%</span>
+              <button 
+                (click)="quitarDescuento()" 
+                [ngClass]="themeService.theme() === 'dark' 
+                  ? 'text-red-400 hover:text-red-300' 
+                  : 'text-red-600 hover:text-red-800'"
+                class="hover:underline text-xs font-medium">Quitar</button>
+            </div>
+          </div>
+        </div>
+      
+        <!-- Total -->
+        <div [ngClass]="themeService.theme() === 'dark' 
+          ? 'bg-gradient-to-r from-gray-800 to-gray-700' 
+          : 'bg-gradient-to-r from-gray-100 to-gray-200'"
+             class="p-3 rounded-xl">
+          <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-900'" 
+               class="text-right text-xl font-bold">
+            Total: {{ totalFinal() | monedaArs }}
+          </div>
+        </div>
 
         <hr [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-300'" />
 
+        <!-- Client Info -->
         <div class="space-y-3">
           <div>
             <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
-              class="block text-sm font-semibold mb-1">Nombre del cliente</label>
+                   class="block text-sm font-semibold mb-1">Nombre del cliente</label>
             <input 
               type="text" 
-              [(ngModel)]="clienteNombre" 
+              [value]="clienteNombre()"
+              (input)="clienteNombre.set($any($event.target).value)"
               [ngClass]="themeService.theme() === 'dark' 
                 ? 'bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500 focus:ring-green-600 hover:bg-gray-750' 
                 : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-green-500 hover:bg-white'"
@@ -877,10 +942,11 @@
       
           <div>
             <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" 
-              class="block text-sm font-semibold mb-1">Correo electrónico</label>
+                   class="block text-sm font-semibold mb-1">Correo electrónico</label>
             <input 
               type="email" 
-              [(ngModel)]="clienteEmail" 
+              [value]="clienteEmail()"
+              (input)="clienteEmail.set($any($event.target).value)"
               [ngClass]="themeService.theme() === 'dark' 
                 ? 'bg-gray-800 border-gray-700 text-gray-200 placeholder-gray-500 focus:ring-green-600 hover:bg-gray-750' 
                 : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-green-500 hover:bg-white'"
@@ -889,17 +955,18 @@
           </div>
         </div>
       
+        <!-- Confirm Sale Button -->
         <button
           (click)="confirmarVenta()"
-          [disabled]="carrito.length === 0 || !clienteNombre || procesandoVenta"
+          [disabled]="carrito().length === 0 || !clienteNombre() || procesandoVenta()"
           class="w-full bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white py-3 rounded-xl shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm font-bold hover:shadow-xl transform hover:-translate-y-1">
-          <span *ngIf="!procesandoVenta" class="flex items-center justify-center space-x-2">
+          <span *ngIf="!procesandoVenta()" class="flex items-center justify-center space-x-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
             </svg>
             <span>Confirmar Venta</span>
           </span>
-          <span *ngIf="procesandoVenta" class="flex items-center justify-center space-x-2">
+          <span *ngIf="procesandoVenta()" class="flex items-center justify-center space-x-2">
             <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -910,91 +977,91 @@
       </div>
     </div>
 
-    <div *ngIf="toastVisible"
-      class="fixed bottom-6 left-1/2 -translate-x-1/2 px-8 py-4 rounded-2xl shadow-2xl z-50 text-white font-semibold animate-slide-up border border-white/20"
-      [ngClass]="toastColor"
-      [style.background]="toastColor === 'bg-green-600' ? 'linear-gradient(to right, rgb(34 197 94), rgb(16 185 129))' : 'linear-gradient(to right, rgb(239 68 68), rgb(220 38 38))'">
+    <!-- Toast Notification -->
+    <div *ngIf="toastVisible()"
+         class="fixed bottom-6 left-1/2 -translate-x-1/2 px-8 py-4 rounded-2xl shadow-2xl z-50 text-white font-semibold animate-slide-up border border-white/20"
+         [ngClass]="toastColor()"
+         [style.background]="toastColor() === 'bg-green-600' ? 'linear-gradient(to right, rgb(34 197 94), rgb(16 185 129))' : 'linear-gradient(to right, rgb(239 68 68), rgb(220 38 38))'">
       <div class="flex items-center space-x-3">
-        <div *ngIf="toastColor === 'bg-green-600'" class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+        <div *ngIf="toastColor() === 'bg-green-600'" class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
           </svg>
         </div>
-        <div *ngIf="toastColor === 'bg-red-600'" class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+        <div *ngIf="toastColor() === 'bg-red-600'" class="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </div>
-        <span>{{ toastMensaje }}</span>
+        <span>{{ toastMensaje() }}</span>
       </div>
     </div>
 
+    <!-- Scanner Modal -->
+    <div *ngIf="mostrarScanner()" 
+         class="fixed inset-0 z-50 flex items-center justify-center p-4"
+         (click)="cerrarScanner()">
+      <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
+      <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
+           class="relative p-6 rounded-2xl shadow-2xl max-w-2xl w-full animate-fade-in-scale"
+           (click)="$event.stopPropagation()">
+        
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-xl font-bold flex items-center gap-2"
+              [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
+            <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Escanear Código de Barras
+          </h3>
+          <button
+            (click)="cerrarScanner()"
+            class="p-2 rounded-lg transition-colors hover:bg-red-500 hover:text-white"
+            [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
 
+        <div *ngIf="!errorScanner()" class="mb-4 p-3 rounded-lg"
+             [ngClass]="themeService.theme() === 'dark' 
+               ? 'bg-purple-900/30 border border-purple-800' 
+               : 'bg-purple-50 border border-purple-200'">
+          <p class="text-sm font-medium"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-purple-300' : 'text-purple-700'">
+            📱 Apunta la cámara al código de barras del producto
+          </p>
+          <p class="text-xs mt-1"
+             [ngClass]="themeService.theme() === 'dark' ? 'text-purple-400' : 'text-purple-600'">
+            💡 Mantén el código dentro del área visible y espera el escaneo automático
+          </p>
+        </div>
 
-    <div *ngIf="mostrarScanner" 
-     class="fixed inset-0 z-50 flex items-center justify-center p-4"
-     (click)="cerrarScanner()">
-  <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
-  <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
-       class="relative p-6 rounded-2xl shadow-2xl max-w-2xl w-full animate-fade-in-scale"
-       (click)="$event.stopPropagation()">
-    
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="text-xl font-bold flex items-center gap-2"
-          [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
-        <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-        Escanear Código de Barras
-      </h3>
-      <button
-        (click)="cerrarScanner()"
-        class="p-2 rounded-lg transition-colors hover:bg-red-500 hover:text-white"
-        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
+        <div *ngIf="errorScanner()" class="mb-4 p-4 rounded-lg bg-red-100 border-2 border-red-300">
+          <p class="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Error al acceder a la cámara
+          </p>
+          <p class="text-sm text-red-700">{{ errorScanner() }}</p>
+        </div>
+
+        <div id="scanner-container" class="relative w-full h-80 bg-black rounded-lg overflow-hidden border-4 border-purple-500"></div>
+
+        <div class="mt-4 flex justify-center">
+          <button
+            (click)="cerrarScanner()"
+            class="px-6 py-3 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl"
+            [ngClass]="themeService.theme() === 'dark' 
+              ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+              : 'bg-gray-300 hover:bg-gray-400 text-gray-800'">
+            Cerrar Scanner
+          </button>
+        </div>
+      </div>
     </div>
-
-    <div *ngIf="!errorScanner" class="mb-4 p-3 rounded-lg"
-         [ngClass]="themeService.theme() === 'dark' 
-           ? 'bg-purple-900/30 border border-purple-800' 
-           : 'bg-purple-50 border border-purple-200'">
-      <p class="text-sm font-medium"
-         [ngClass]="themeService.theme() === 'dark' ? 'text-purple-300' : 'text-purple-700'">
-        📱 Apunta la cámara al código de barras del producto
-      </p>
-      <p class="text-xs mt-1"
-         [ngClass]="themeService.theme() === 'dark' ? 'text-purple-400' : 'text-purple-600'">
-        💡 Mantén el código dentro del área visible y espera el escaneo automático
-      </p>
-    </div>
-
-    <div *ngIf="errorScanner" class="mb-4 p-4 rounded-lg bg-red-100 border-2 border-red-300">
-      <p class="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        Error al acceder a la cámara
-      </p>
-      <p class="text-sm text-red-700">{{ errorScanner }}</p>
-    </div>
-
-    <div id="scanner-container" class="relative w-full h-80 bg-black rounded-lg overflow-hidden border-4 border-purple-500"></div>
-
-    <div class="mt-4 flex justify-center">
-      <button
-        (click)="cerrarScanner()"
-        class="px-6 py-3 rounded-lg font-medium transition-all shadow-lg hover:shadow-xl"
-        [ngClass]="themeService.theme() === 'dark' 
-          ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
-          : 'bg-gray-300 hover:bg-gray-400 text-gray-800'">
-        Cerrar Scanner
-      </button>
-    </div>
-  </div>
-</div>
   </div>
 </div>

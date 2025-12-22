@@ -5,34 +5,32 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../services/theme.service';
 
-// Interfaces
+// --- INTERFACES ---
 interface Vendedor {
   id: string;
   nombre: string;
   dni: string;
   activo: boolean;
   created_at: string;
+  usuario_id?: string; 
 }
 
-interface Permiso {
+interface PermisoGestion {
   vista: string;
   label: string;
-  tiene_acceso: boolean;
+  ver: boolean;
+  crear: boolean;
+  editar: boolean;
+  eliminar: boolean;
 }
 
-interface PermisoEmpleado {
-  id?: string;
+interface PermisoDB {
   empleado_id: string;
   vista: string;
   puede_ver: boolean;
   puede_crear: boolean;
   puede_editar: boolean;
   puede_eliminar: boolean;
-}
-
-interface VistaDisponible {
-  vista: string;
-  label: string;
 }
 
 @Component({
@@ -47,17 +45,18 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
   nuevoNombre: string = '';
   nuevoDni: string = '';
   
+  // ✅ VARIABLES AGREGADAS PARA LA CREACIÓN AUTOMÁTICA
+  nuevoEmail: string = '';
+  nuevoPassword: string = '';
+  
   // Datos
   vendedores: Vendedor[] = [];
   
   // Estados UI
   isLoading: boolean = false;
-  error: string | null = null;
-  
-  // SISTEMA DE TOAST (Corregido nombres para evitar colisión)
-  isToastVisible: boolean = false; // Renombrado de mostrarToast a isToastVisible
-  mensajeToast: string = '';       // Renombrado de mensaje a mensajeToast para claridad
-  tipoMensajeToast: 'success' | 'error' | 'warning' = 'success'; // Renombrado
+  isToastVisible: boolean = false;
+  mensajeToast: string = '';
+  tipoMensajeToast: 'success' | 'error' | 'warning' = 'success';
   private toastTimeout: any;
   
   // Modales
@@ -66,10 +65,16 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
 
   showPermisosModal: boolean = false;
   empleadoSeleccionado: Vendedor | null = null;
-  permisosEmpleado: Permiso[] = [];
   
-  // Configuración
-  readonly permisosDisponibles: VistaDisponible[] = [
+  showEditModal: boolean = false;
+  vendedorAEditar: Vendedor | null = null;
+  editNombre: string = '';
+  editDni: string = '';
+
+  // Matriz de permisos
+  permisosGestion: PermisoGestion[] = [];
+  
+  readonly vistasDelSistema = [
     { vista: 'ventas', label: 'Ventas' },
     { vista: 'productos', label: 'Productos' },
     { vista: 'stock', label: 'Stock' },
@@ -79,7 +84,9 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
     { vista: 'aumento', label: 'Aumento' },
     { vista: 'historial', label: 'Historial' },
     { vista: 'deposito', label: 'Depósito' },
-    { vista: 'caja', label: 'Caja' }
+    { vista: 'caja', label: 'Caja' },
+    { vista: 'configuracion', label: 'Configuración' },
+    { vista: 'empleados', label: 'Empleados' }
   ];
 
   constructor(
@@ -97,14 +104,11 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
   }
 
   // --- LÓGICA DE FORMULARIO ---
-
   onDniInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const valorLimpio = input.value.replace(/\D/g, '').substring(0, 8);
     this.nuevoDni = valorLimpio;
-    if (input.value !== valorLimpio) {
-      input.value = valorLimpio;
-    }
+    if (input.value !== valorLimpio) input.value = valorLimpio;
   }
 
   validarDni(): boolean {
@@ -115,25 +119,19 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
     return true;
   }
 
-  // --- TOAST SYSTEM (Método para llamar al toast) ---
   mostrarToast(message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-
     this.mensajeToast = message;
     this.tipoMensajeToast = type;
     this.isToastVisible = true;
-
-    this.toastTimeout = setTimeout(() => {
-      this.cerrarToast();
-    }, 3000);
+    this.toastTimeout = setTimeout(() => this.cerrarToast(), 3000);
   }
 
   cerrarToast(): void {
     this.isToastVisible = false;
   }
 
-  // --- GESTIÓN DE DATOS ---
-
+  // --- GESTIÓN DE VENDEDORES ---
   async cargarVendedores(): Promise<void> {
     this.isLoading = true;
     try {
@@ -144,7 +142,7 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
 
       if (error) throw error;
       this.vendedores = (data as Vendedor[]) || [];
-    } catch (error: unknown) {
+    } catch (error) {
       this.mostrarToast('Error al cargar vendedores', 'error');
     } finally {
       this.isLoading = false;
@@ -152,59 +150,51 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
   }
 
   async crearVendedor(): Promise<void> {
-    if (!this.nuevoNombre.trim() || !this.nuevoDni) {
-      this.mostrarToast('Nombre y DNI son obligatorios', 'warning');
+    // Validaciones
+    if (!this.nuevoNombre.trim() || !this.nuevoDni || !this.nuevoEmail.trim() || !this.nuevoPassword) {
+      this.mostrarToast('Todos los campos son obligatorios', 'warning');
       return;
     }
-
-    if (!this.validarDni()) return;
+    
+    if (this.nuevoPassword.length < 6) {
+      this.mostrarToast('La contraseña debe tener al menos 6 caracteres', 'warning');
+      return;
+    }
 
     this.isLoading = true;
     
     try {
-      const { data: vendedor, error: errorVendedor } = await this.supabase.getClient()
-        .from('vendedores')
-        .insert({
+      // ============================================================
+      // CAMBIO: USAR EDGE FUNCTION EN LUGAR DE RPC SQL
+      // ============================================================
+      const { data, error } = await this.supabase.getClient().functions.invoke('crear-empleado', {
+        body: {
           nombre: this.nuevoNombre.trim(),
           dni: this.nuevoDni,
-          activo: true,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+          email: this.nuevoEmail.trim(),
+          password: this.nuevoPassword
+        }
+      });
 
-      if (errorVendedor) throw errorVendedor;
-
-      if (vendedor) {
-        await this.supabase.getClient()
-          .from('permisos_empleado')
-          .insert({
-            empleado_id: vendedor.id,
-            vista: 'ventas',
-            puede_ver: true,
-            puede_crear: true,
-            puede_editar: true,
-            puede_eliminar: true
-          });
+      if (error) throw error;
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Error al crear empleado');
       }
 
-      this.mostrarToast(`Vendedor "${this.nuevoNombre}" creado`, 'success');
+      this.mostrarToast('Empleado creado y vinculado correctamente', 'success');
+      
+      // Limpiar
       this.nuevoNombre = '';
       this.nuevoDni = '';
-      
-      if (vendedor) {
-        this.vendedores = [vendedor as Vendedor, ...this.vendedores];
-      } else {
-        await this.cargarVendedores();
-      }
+      this.nuevoEmail = '';
+      this.nuevoPassword = '';
 
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : 'Error desconocido';
-      if (typeof msg === 'string' && msg.includes('duplicate')) {
-         this.mostrarToast('Ya existe un vendedor con ese DNI', 'error');
-      } else {
-         this.mostrarToast('Error al crear vendedor', 'error');
-      }
+      this.cargarVendedores();
+
+    } catch (error: any) {
+      console.error('Error:', error);
+      this.mostrarToast(error.message || 'Error desconocido', 'error');
     } finally {
       this.isLoading = false;
     }
@@ -213,25 +203,17 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
   async toggleEstado(vendedor: Vendedor): Promise<void> {
     const estadoOriginal = vendedor.activo;
     vendedor.activo = !vendedor.activo;
-
     try {
       const { error } = await this.supabase.getClient()
         .from('vendedores')
         .update({ activo: vendedor.activo })
         .eq('id', vendedor.id);
-
       if (error) throw error;
-
-      const msg = vendedor.activo ? 'Activado' : 'Desactivado';
-      this.mostrarToast(`Vendedor ${msg}`, 'success');
-
     } catch (error) {
       vendedor.activo = estadoOriginal;
-      this.mostrarToast('No se pudo cambiar el estado', 'error');
+      this.mostrarToast('Error al actualizar estado', 'error');
     }
   }
-
-  // --- ELIMINACIÓN ---
 
   confirmarEliminar(vendedor: Vendedor): void {
     this.vendedorAEliminar = vendedor;
@@ -243,34 +225,75 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
     this.vendedorAEliminar = null;
   }
 
-  async eliminarVendedor(): Promise<void> {
-    if (!this.vendedorAEliminar) return;
+  // --- EDICIÓN DE DATOS ---
+  abrirModalEditar(vendedor: Vendedor): void {
+    this.vendedorAEditar = vendedor;
+    this.editNombre = vendedor.nombre;
+    this.editDni = vendedor.dni;
+    this.showEditModal = true;
+  }
 
-    const id = this.vendedorAEliminar.id;
+  cerrarModalEditar(): void {
+    this.showEditModal = false;
+    this.vendedorAEditar = null;
+    this.editNombre = '';
+    this.editDni = '';
+  }
+
+  async actualizarVendedor(): Promise<void> {
+    if (!this.vendedorAEditar || !this.editNombre.trim() || !this.editDni) return;
+
     this.isLoading = true;
-    
     try {
       const { error } = await this.supabase.getClient()
         .from('vendedores')
-        .delete()
-        .eq('id', id);
+        .update({
+          nombre: this.editNombre.trim(),
+          dni: this.editDni
+        })
+        .eq('id', this.vendedorAEditar.id);
 
       if (error) throw error;
 
-      this.vendedores = this.vendedores.filter(v => v.id !== id);
-      
-      this.mostrarToast('Vendedor eliminado', 'success');
-      this.cancelarEliminar();
+      const index = this.vendedores.findIndex(v => v.id === this.vendedorAEditar!.id);
+      if (index !== -1) {
+        this.vendedores[index] = { 
+          ...this.vendedores[index], 
+          nombre: this.editNombre.trim(), 
+          dni: this.editDni 
+        };
+      }
 
+      this.mostrarToast('Datos actualizados correctamente', 'success');
+      this.cerrarModalEditar();
     } catch (error) {
-      this.mostrarToast('Error al eliminar vendedor', 'error');
+      this.mostrarToast('Error al actualizar vendedor', 'error');
     } finally {
       this.isLoading = false;
     }
   }
 
-  // --- PERMISOS ---
+  async eliminarVendedor(): Promise<void> {
+    if (!this.vendedorAEliminar) return;
+    this.isLoading = true;
+    try {
+      const { error } = await this.supabase.getClient()
+        .from('vendedores')
+        .delete()
+        .eq('id', this.vendedorAEliminar.id);
 
+      if (error) throw error;
+      this.vendedores = this.vendedores.filter(v => v.id !== this.vendedorAEliminar!.id);
+      this.mostrarToast('Vendedor eliminado', 'success');
+      this.showDeleteModal = false;
+    } catch (error) {
+      this.mostrarToast('Error al eliminar', 'error');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  // --- GESTIÓN DE PERMISOS ---
   async abrirModalPermisos(empleado: Vendedor): Promise<void> {
     this.empleadoSeleccionado = empleado;
     this.showPermisosModal = true;
@@ -280,34 +303,36 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
   cerrarModalPermisos(): void {
     this.showPermisosModal = false;
     this.empleadoSeleccionado = null;
-    this.permisosEmpleado = [];
+    this.permisosGestion = [];
   }
 
   async cargarPermisosEmpleado(): Promise<void> {
     if (!this.empleadoSeleccionado) return;
     this.isLoading = true;
-    
+
     try {
       const { data, error } = await this.supabase.getClient()
         .from('permisos_empleado')
-        .select('vista, puede_ver')
+        .select('*')
         .eq('empleado_id', this.empleadoSeleccionado.id);
 
       if (error) throw error;
+      const permisosDB = (data as PermisoDB[]) || [];
 
-      const permisosDB = data || [];
-
-      this.permisosEmpleado = this.permisosDisponibles.map(pd => {
-        const existe = permisosDB.find((p: any) => p.vista === pd.vista);
+      this.permisosGestion = this.vistasDelSistema.map(sys => {
+        const pDB = permisosDB.find(p => p.vista === sys.vista);
         return {
-          vista: pd.vista,
-          label: pd.label,
-          tiene_acceso: existe ? existe.puede_ver : (pd.vista === 'ventas')
+          vista: sys.vista,
+          label: sys.label,
+          ver: pDB?.puede_ver || false,
+          crear: pDB?.puede_crear || false,
+          editar: pDB?.puede_editar || false,
+          eliminar: pDB?.puede_eliminar || false
         };
       });
 
     } catch (error) {
-      this.mostrarToast('Error cargando permisos', 'error');
+      this.mostrarToast('Error al cargar permisos', 'error');
       this.cerrarModalPermisos();
     } finally {
       this.isLoading = false;
@@ -317,48 +342,44 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
   async guardarPermisos(): Promise<void> {
     if (!this.empleadoSeleccionado) return;
     this.isLoading = true;
-    
+
     try {
       const empleadoId = this.empleadoSeleccionado.id;
       const client = this.supabase.getClient();
-      
+
       const { error: delError } = await client
         .from('permisos_empleado')
         .delete()
         .eq('empleado_id', empleadoId);
-        
+      
       if (delError) throw delError;
 
-      const nuevosPermisos = this.permisosEmpleado
-        .filter(p => p.tiene_acceso)
+      const permisosAGuardar = this.permisosGestion
+        .filter(p => p.ver) 
         .map(p => ({
           empleado_id: empleadoId,
           vista: p.vista,
-          puede_ver: true,
-          puede_crear: true,
-          puede_editar: true,
-          puede_eliminar: true
+          puede_ver: p.ver,
+          puede_crear: p.crear,
+          puede_editar: p.editar,
+          puede_eliminar: p.eliminar
         }));
 
-      if (nuevosPermisos.length > 0) {
+      if (permisosAGuardar.length > 0) {
         const { error: insError } = await client
           .from('permisos_empleado')
-          .insert(nuevosPermisos);
-          
+          .insert(permisosAGuardar);
+        
         if (insError) throw insError;
       }
 
-      this.mostrarToast('Permisos actualizados', 'success');
+      this.mostrarToast('Permisos actualizados correctamente', 'success');
       this.cerrarModalPermisos();
 
     } catch (error) {
-      this.mostrarToast('Error guardando permisos', 'error');
+      this.mostrarToast('Error al guardar permisos', 'error');
     } finally {
       this.isLoading = false;
     }
-  }
-
-  togglePermiso(permiso: Permiso): void {
-    permiso.tiene_acceso = !permiso.tiene_acceso;
   }
 }

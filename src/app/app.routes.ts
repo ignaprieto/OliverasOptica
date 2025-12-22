@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { roleGuard } from './guards/role.guard';
-
+import { redirectGuard } from './guards/redirect.guard'; // <--- Importar esto
 export const routes: Routes = [
   // Ruta raíz - redirige a login (el login manejará la redirección según rol)
   { 
@@ -15,6 +15,7 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () =>
       import('./pages/login/login.component').then((m) => m.LoginComponent),
+    canActivate: [redirectGuard],
   },
 
   // Dashboard - Requiere autenticación y permisos

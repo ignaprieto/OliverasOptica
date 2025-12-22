@@ -17,33 +17,27 @@ export class LoginComponent implements OnInit {
   password: string = '';
   error: string | null = null;
   
-  // Estados de carga
-  isLoading: boolean = false;       // Para el botón de submit
-  isLoadingInitial: boolean = true; // NUEVO: Para la carga inicial de la página
-
+  isLoading: boolean = false;
+  isLoadingInitial: boolean = true;
   showPassword: boolean = false;
-  dni: string = '';
 
-  constructor(private supabase: SupabaseService, private router: Router,
-    public themeService: ThemeService) {}
+  constructor(
+    private supabase: SupabaseService, 
+    private router: Router,
+    public themeService: ThemeService
+  ) {}
 
   async ngOnInit() {
-    // Verificar si ya está logueado al cargar el componente
     try {
       const currentAppUser = await this.supabase.getCurrentAppUser();
       if (currentAppUser) {
-        // Si ya está autenticado, redirigir según el rol
         await this.redirectByRole();
       } else {
-        // Si no hay usuario, terminamos la carga inicial para mostrar el form
         this.isLoadingInitial = false;
       }
     } catch (e) {
-      // Si falla la verificación, mostramos el form igual
       this.isLoadingInitial = false;
     }
-    
-    this.error = null;
   }
 
   togglePasswordVisibility() {
@@ -55,94 +49,43 @@ export class LoginComponent implements OnInit {
     this.isLoading = true;
 
     if (!this.email || !this.password) {
-      this.error = 'Todos los campos son obligatorios';
+      this.error = 'Por favor ingresa usuario y contraseña';
       this.isLoading = false;
       return;
     }
 
     try {
-      // Corregido: No desestructuramos { error } porque el servicio maneja errores internamente o devuelve datos
       await this.supabase.signInWithPassword(this.email, this.password);
-      
-      // Redirigir según el rol después del login exitoso
+      // La redirección ocurre después de que el servicio actualiza el usuario
       await this.redirectByRole();
       
-    } catch (error: unknown) {
-      const err = error as { message: string };
-      console.error('❌ Error en login:', err);
-      if (err.message?.includes('Invalid login credentials')) {
+    } catch (error: any) {
+      console.error('❌ Error en login:', error);
+      if (error.message?.includes('Invalid login credentials')) {
         this.error = 'Credenciales incorrectas';
       } else {
-        this.error = 'Error inesperado. Inténtalo de nuevo.';
+        this.error = 'Error de conexión. Intenta nuevamente.';
       }
-      this.isLoading = false; // Solo desactivar carga si hubo error
+      this.isLoading = false;
     }
   }
 
   private async redirectByRole() {
     try {
       const userRole = await this.supabase.getCurrentUserRole();
-
+      
       if (userRole === 'admin') {
         this.router.navigate(['/dashboard'], { replaceUrl: true });
       } else if (userRole === 'vendedor') {
+        // Redirigir a Ventas (su pantalla principal)
         this.router.navigate(['/ventas'], { replaceUrl: true });
       } else {
-        // Fallback: si no se reconoce el rol, ir a dashboard
         this.router.navigate(['/dashboard'], { replaceUrl: true });
       }
 
     } catch (error) {
-      console.error('Error en redirectByRole:', error);
-      // Por defecto ir al dashboard
-      this.router.navigate(['/dashboard'], { replaceUrl: true });
-    }
-  }
-
-  // CORREGIDO: Eliminado el parámetro 'dni' porque ya usamos this.dni del ngModel
-  async loginVendedorPorDni() {
-    this.error = null;
-    this.isLoading = true;
-
-    if (!this.dni) {
-      this.error = 'El DNI es obligatorio';
-      this.isLoading = false;
-      return;
-    }
-
-    try {
-      const { data, error } = await this.supabase.getClient()
-        .from('vendedores')
-        .select('*')
-        .eq('dni', this.dni)
-        .eq('activo', true)
-        .single();
-
-      if (error || !data) {
-        this.error = 'DNI no encontrado o vendedor inactivo';
-        this.isLoading = false;
-        return;
-      }
-
-      // Crear sesión de vendedor en localStorage
-      const vendedorSession = {
-        id: data.id,
-        rol: 'vendedor',
-        nombre: data.nombre,
-        dni: data.dni
-      };
-      localStorage.setItem('user', JSON.stringify(vendedorSession));
-
-      // Marcar en el servicio
-      this.supabase.setVendedorTemp(vendedorSession);
-
-      // Redirigir a ventas
+      console.error('Error redirección:', error);
       this.router.navigate(['/ventas'], { replaceUrl: true });
-
-    } catch (e) {
-      this.error = 'Error al intentar ingresar como vendedor';
-      console.error('Error en loginVendedorPorDni:', e);
-      this.isLoading = false;
     }
   }
 }

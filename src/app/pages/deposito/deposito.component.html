@@ -11,11 +11,8 @@
 
       <button routerLink="/dashboard"
         class="group px-4 py-2.5 rounded-xl border transition-all duration-300 font-medium text-sm shadow-sm hover:shadow-md flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
-        [ngClass]="themeService.theme() === 'dark' 
-          ? 'bg-gray-800 hover:bg-gray-700 border-gray-700 text-gray-200' 
-          : 'bg-white hover:bg-gray-50 border-gray-200 text-gray-700'">
-        <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-        <span>Volver al Panel</span>
+        [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'">
+        Volver al Panel
       </button>
     </div>
 
@@ -23,47 +20,47 @@
       <nav class="-mb-px flex space-x-8">
         <button (click)="cambiarVista('deposito')"
           class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
-          [ngClass]="vistaActiva === 'deposito' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
+          [ngClass]="vistaActiva() === 'deposito' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
           Inventario
         </button>
-        <button (click)="cambiarVista('transferir')"
+        
+        <button *appPermiso="['deposito', 'crear']" 
+          (click)="cambiarVista('transferir')"
           class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
-          [ngClass]="vistaActiva === 'transferir' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
+          [ngClass]="vistaActiva() === 'transferir' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
           Transferencia Masiva
         </button>
+        
         <button (click)="cambiarVista('historial')"
           class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
-          [ngClass]="vistaActiva === 'historial' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
+          [ngClass]="vistaActiva() === 'historial' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
           Historial
         </button>
       </nav>
     </div>
 
-    @if (vistaActiva === 'deposito') {
+    @if (vistaActiva() === 'deposito') {
       <div class="space-y-6 animate-fade-in">
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="md:col-span-2 relative">
-            <span class="absolute left-3 top-1/2 -translate-y-1/2 opacity-50">
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </span>
-            <input type="text" [ngModel]="filtroTexto" (ngModelChange)="onSearchInput($event)"
+             <input type="text" [ngModel]="filtroTexto()" (ngModelChange)="onSearchInput($event)"
               placeholder="Buscar por nombre, código, marca..."
-              class="w-full pl-10 pr-4 py-2.5 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-transparent"
-              [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 focus:border-blue-500' : 'border-gray-300 focus:border-blue-500'">
+              class="w-full pl-4 pr-4 py-2.5 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-transparent"
+              [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-300'">
           </div>
           
-          <select [(ngModel)]="filtroCategoria" (ngModelChange)="onCategoriaChange()"
-            class="w-full px-4 py-2.5 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-transparent cursor-pointer"
+          <select [ngModel]="filtroCategoria()" (ngModelChange)="cambiarFiltroCategoria($event)"
+            class="w-full px-4 py-2.5 rounded-xl border outline-none bg-transparent"
             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 [&>option]:bg-gray-800' : 'border-gray-300'">
             <option value="todas">Todas las categorías</option>
-            @for (cat of categorias; track cat) {
+            @for (cat of categorias(); track cat) {
               <option [value]="cat">{{ cat }}</option>
             }
           </select>
         </div>
 
-        <div class="rounded-xl border overflow-hidden flex flex-col shadow-sm" style="max-height: 600px;"
+        <div class="rounded-xl border overflow-hidden flex flex-col shadow-sm max-h-[600px]"
              [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'">
           
           <div class="grid grid-cols-12 gap-4 p-4 font-bold text-xs uppercase tracking-wider opacity-60 border-b shrink-0"
@@ -76,14 +73,12 @@
           </div>
 
           <div class="overflow-y-auto custom-scrollbar flex-1 relative" (scroll)="onTableScroll($event)">
-            
-            @if (isLoadingProducts) {
-              <div class="flex flex-col items-center justify-center h-64 opacity-70">
-                 <div class="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent mb-3"></div>
-                 <span class="text-sm font-medium">Cargando productos...</span>
-              </div>
+            @if (cargandoProductos()) {
+               <div class="flex flex-col items-center justify-center h-64 opacity-70">
+                  <div class="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent mb-3"></div>
+               </div>
             } @else {
-              @for (producto of productos; track producto.id) {
+              @for (producto of productos(); track trackByProducto($index, producto)) {
                 <div class="grid grid-cols-12 gap-4 p-4 items-center border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
                      [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
                   
@@ -91,50 +86,43 @@
                     <div class="font-medium text-sm">{{ producto.nombre }}</div>
                     <div class="text-xs opacity-60">{{ producto.codigo }} • {{ producto.marca }}</div>
                   </div>
-                  
                   <div class="col-span-3 text-sm opacity-80 truncate">{{ producto.categoria }}</div>
                   
                   <div class="col-span-2 text-center">
                     <span class="px-2.5 py-1 rounded-full text-xs font-bold"
-                      [ngClass]="producto.cantidad_deposito > 0 
-                        ? (themeService.theme() === 'dark' ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-700') 
-                        : 'opacity-40'">
+                      [ngClass]="producto.cantidad_deposito > 0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' : 'opacity-40'">
                       {{ producto.cantidad_deposito }}
                     </span>
                   </div>
                   
                   <div class="col-span-2 text-center">
                     <span class="px-2.5 py-1 rounded-full text-xs font-bold"
-                      [ngClass]="producto.cantidad_stock > 0 
-                        ? (themeService.theme() === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-700') 
-                        : 'opacity-40'">
+                      [ngClass]="producto.cantidad_stock > 0 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'opacity-40'">
                       {{ producto.cantidad_stock }}
                     </span>
                   </div>
                   
                   <div class="col-span-1 flex justify-end gap-1">
                     @if (producto.cantidad_deposito > 0) {
-                      <button (click)="abrirModalTransferencia(producto, 'deposito_a_stock')" 
-                        class="p-1.5 rounded hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors" title="A Mostrador">
+                      <button *appPermiso="['deposito', 'editar']" 
+                        (click)="abrirModalTransferencia(producto, 'deposito_a_stock')" 
+                        class="p-1.5 rounded hover:bg-blue-50 text-blue-600" title="A Mostrador">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
                       </button>
                     }
                     @if (producto.cantidad_stock > 0) {
-                      <button (click)="abrirModalTransferencia(producto, 'stock_a_deposito')"
-                        class="p-1.5 rounded hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600 dark:text-green-400 transition-colors" title="A Depósito">
+                      <button *appPermiso="['deposito', 'editar']"
+                        (click)="abrirModalTransferencia(producto, 'stock_a_deposito')"
+                        class="p-1.5 rounded hover:bg-green-50 text-green-600" title="A Depósito">
                         <svg class="w-5 h-5 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
                       </button>
                     }
                   </div>
                 </div>
-              } @empty {
-                <div class="p-10 text-center opacity-60">No se encontraron productos.</div>
               }
-
-              @if (isLoadingMore) {
-                <div class="p-4 flex justify-center items-center bg-gray-50/50 dark:bg-gray-800/50">
+              @if (cargandoMas()) {
+                <div class="p-4 flex justify-center items-center opacity-70">
                   <div class="animate-spin h-6 w-6 border-2 border-blue-500 rounded-full border-t-transparent mr-3"></div>
-                  <span class="text-xs opacity-70">Cargando más...</span>
                 </div>
               }
             }
@@ -143,13 +131,15 @@
       </div>
     }
 
-    @if (vistaActiva === 'transferir') {
+    @if (vistaActiva() === 'transferir') {
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
         <div class="p-6 rounded-2xl border bg-white dark:bg-gray-800 shadow-sm h-fit"
              [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
           <h3 class="text-lg font-bold mb-2">Transferencia por Categoría</h3>
           <p class="text-sm opacity-60 mb-6">Mueve todos los productos de una categoría completa.</p>
-          <button (click)="abrirModalCategoria()"
+          
+          <button *appPermiso="['deposito', 'crear']" 
+            (click)="abrirModalCategoria()"
             class="w-full py-4 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all"
             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-600'">
             <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
@@ -161,33 +151,26 @@
       </div>
     }
 
-    @if (vistaActiva === 'historial') {
+    @if (vistaActiva() === 'historial') {
       <div class="space-y-4 animate-fade-in">
-        
         <div class="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border shadow-sm"
              [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
            <div class="flex-1">
              <label class="text-xs font-bold uppercase opacity-60 mb-1 block">Desde</label>
-             <input type="date" [(ngModel)]="filtroFechaDesde" (change)="aplicarFiltroHistorial()"
-               class="w-full px-3 py-2 rounded-lg border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+             <input type="date" [ngModel]="filtroFechaDesde()" (ngModelChange)="filtroFechaDesde.set($event); cargarHistorial()"
+               class="w-full px-3 py-2 rounded-lg border bg-transparent"
                [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
            </div>
            <div class="flex-1">
              <label class="text-xs font-bold uppercase opacity-60 mb-1 block">Hasta</label>
-             <input type="date" [(ngModel)]="filtroFechaHasta" (change)="aplicarFiltroHistorial()"
-               class="w-full px-3 py-2 rounded-lg border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+             <input type="date" [ngModel]="filtroFechaHasta()" (ngModelChange)="filtroFechaHasta.set($event); cargarHistorial()"
+               class="w-full px-3 py-2 rounded-lg border bg-transparent"
                [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
-           </div>
-           <div class="flex items-end">
-             <button (click)="limpiarFiltroHistorial()" class="px-4 py-2 rounded-lg border hover:bg-gray-100 dark:hover:bg-gray-700 h-[42px] transition-colors"
-               [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
-               Limpiar
-             </button>
            </div>
         </div>
 
-        <div class="overflow-hidden rounded-xl border shadow-sm"
-             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'">
+        <div class="overflow-hidden rounded-xl border shadow-sm bg-white dark:bg-gray-800"
+             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
           <table class="min-w-full divide-y" [ngClass]="themeService.theme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
             <thead [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900/50' : 'bg-gray-50'">
               <tr>
@@ -199,190 +182,137 @@
               </tr>
             </thead>
             <tbody class="divide-y" [ngClass]="themeService.theme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
-              @for (item of historial; track item.id) {
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+              @for (item of historial(); track trackByHistorial($index, item)) {
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td class="px-6 py-4 whitespace-nowrap text-xs font-mono opacity-70">
                     {{ (item.fecha_transferencia || item.created_at) | date:'dd/MM/yy HH:mm' }}
                   </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm font-medium">{{ item.producto?.nombre || 'Producto eliminado' }}</div>
-                  </td>
+                  <td class="px-6 py-4 text-sm font-medium">{{ item.producto?.nombre || 'Producto eliminado' }}</td>
                   <td class="px-6 py-4 text-center">
                     <span class="px-2 py-1 rounded-md text-xs font-bold"
-                      [ngClass]="item.tipo_transferencia === 'deposito_a_stock' 
-                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' 
-                        : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'">
+                      [ngClass]="item.tipo_transferencia === 'deposito_a_stock' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'">
                       {{ getNombreTipoTransferencia(item.tipo_transferencia) }}
                     </span>
                   </td>
                   <td class="px-6 py-4 text-center font-bold text-sm">{{ item.cantidad }}</td>
                   <td class="px-6 py-4 text-sm opacity-80">{{ getUsuarioDisplay(item.usuario_nombre) }}</td>
                 </tr>
-              } @empty {
-                <tr><td colspan="5" class="px-6 py-8 text-center opacity-60">Sin historial reciente</td></tr>
               }
             </tbody>
           </table>
         </div>
         
         <div class="flex justify-center gap-4 items-center pt-2">
-           <button (click)="cambiarPaginaHistorial(paginaActualHistorial - 1)" 
-             [disabled]="paginaActualHistorial === 1"
-             class="px-4 py-2 rounded-lg border hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors text-sm"
-             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
-             Anterior
-           </button>
-           <span class="text-sm font-medium">Página {{ paginaActualHistorial }} de {{ totalPaginasHistorial }}</span>
-           <button (click)="cambiarPaginaHistorial(paginaActualHistorial + 1)" 
-             [disabled]="paginaActualHistorial === totalPaginasHistorial"
-             class="px-4 py-2 rounded-lg border hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors text-sm"
-             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
-             Siguiente
-           </button>
+           <button (click)="cambiarPaginaHistorial(paginaHistorial() - 1)" [disabled]="paginaHistorial() === 1"
+             class="btn-secondary">Anterior</button>
+           <span class="text-sm font-medium">Página {{ paginaHistorial() }} de {{ totalPaginasHistorial() }}</span>
+           <button (click)="cambiarPaginaHistorial(paginaHistorial() + 1)" [disabled]="paginaHistorial() === totalPaginasHistorial()"
+             class="btn-secondary">Siguiente</button>
         </div>
       </div>
     }
 
   </div>
 
-  @if (mostrarModalTransferencia) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
-         (click)="cerrarModalTransferencia()">
-      
-      <div class="relative transform overflow-hidden rounded-2xl shadow-2xl w-full max-w-md transition-all animate-bounce-in scale-95"
-           [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 border border-gray-700' : 'bg-white'"
-           (click)="$event.stopPropagation()">
-        
-        <div class="p-6">
-          <h3 class="text-xl font-bold mb-1">
-            {{ tipoTransferencia === 'deposito_a_stock' ? 'Mover a Mostrador' : 'Mover a Depósito' }}
-          </h3>
-          <p class="text-sm opacity-60 mb-6">{{ productoSeleccionado?.nombre }}</p>
-
-          <div class="space-y-4">
-            <div class="p-4 rounded-xl border flex justify-between items-center"
-                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'">
-              <span class="text-xs font-bold uppercase opacity-60">Disponible</span>
-              <span class="text-xl font-bold">{{ cantidadMaximaTransferir }}</span>
+  @if (mostrarModalTransferencia()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border dark:border-gray-700">
+         <h3 class="text-xl font-bold mb-1">{{ tipoTransferencia() === 'deposito_a_stock' ? 'Mover a Mostrador' : 'Mover a Depósito' }}</h3>
+         <p class="text-sm opacity-60 mb-6">{{ productoSeleccionado()?.nombre }}</p>
+         
+         <div class="space-y-4">
+            <div class="p-4 rounded-xl border flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+               <span class="text-xs font-bold uppercase opacity-60">Disponible</span>
+               <span class="text-xl font-bold">{{ cantidadMaximaTransferir() }}</span>
             </div>
-
             <div>
-              <label class="block text-sm font-bold mb-2 opacity-80">Cantidad a mover</label>
-              <input type="number" [(ngModel)]="cantidadTransferir" [min]="1" [max]="cantidadMaximaTransferir"
-                class="w-full px-4 py-3 rounded-xl border-2 bg-transparent focus:ring-2 focus:border-transparent outline-none transition-all text-lg font-bold"
-                [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 focus:border-blue-500 text-white' : 'border-gray-200 focus:border-blue-500 text-gray-900'">
+               <label class="block text-sm font-bold mb-2 opacity-80">Cantidad a mover</label>
+               <input type="number" [ngModel]="cantidadTransferir()" (ngModelChange)="cantidadTransferir.set($event)"
+                 class="w-full px-4 py-3 rounded-xl border-2 bg-transparent text-lg font-bold">
             </div>
-
             <div>
                <label class="block text-sm font-bold mb-2 opacity-80">Observación</label>
-               <input type="text" [(ngModel)]="observaciones" placeholder="Opcional..."
-                class="w-full px-4 py-3 rounded-xl border bg-transparent focus:ring-2 focus:border-transparent outline-none transition-all"
-                [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 focus:border-blue-500 text-white' : 'border-gray-200 focus:border-blue-500 text-gray-900'">
+               <input type="text" [ngModel]="observaciones()" (ngModelChange)="observaciones.set($event)"
+                 class="w-full px-4 py-3 rounded-xl border bg-transparent">
             </div>
-          </div>
-
-          <div class="flex gap-3 mt-8">
-            <button (click)="cerrarModalTransferencia()" class="flex-1 px-4 py-3 rounded-xl border font-bold transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
-              [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'">
-              Cancelar
+         </div>
+         
+         <div class="flex gap-3 mt-8">
+            <button (click)="cerrarModalTransferencia()" class="flex-1 py-3 rounded-xl border font-bold">Cancelar</button>
+            <button (click)="confirmarTransferencia()" [disabled]="cargandoGeneral() || cantidadTransferir() > cantidadMaximaTransferir()"
+               class="flex-1 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
+               Confirmar
             </button>
-            <button (click)="confirmarTransferencia()" 
-              [disabled]="cargandoGeneral || cantidadTransferir > cantidadMaximaTransferir || cantidadTransferir < 1"
-              class="flex-1 px-4 py-3 rounded-xl font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-              [ngClass]="tipoTransferencia === 'deposito_a_stock' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'">
-              Confirmar
-            </button>
-          </div>
-        </div>
+         </div>
       </div>
     </div>
   }
 
-  @if (mostrarModalCategoria) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
-         (click)="cerrarModalCategoria()">
-      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border dark:border-gray-700 flex flex-col max-h-[80vh] transition-all scale-95"
-           (click)="$event.stopPropagation()">
-        <div class="p-6 border-b dark:border-gray-700">
-          <h3 class="text-xl font-bold">Seleccionar Categoría</h3>
-        </div>
-        <div class="p-6 overflow-y-auto custom-scrollbar">
-          @if (!categoriaSeleccionada) {
-            <div class="grid grid-cols-2 gap-3">
-              @for (cat of categorias; track cat) {
-                <button (click)="seleccionarCategoria(cat)"
-                  class="p-4 rounded-xl border text-center font-medium transition-all hover:scale-105 hover:shadow-md"
-                  [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'">
-                  {{ cat }}
-                </button>
-              }
-            </div>
-          } @else {
-             @if (cargandoGeneral) {
-                <div class="p-10 flex justify-center"><div class="animate-spin h-8 w-8 border-2 border-blue-500 rounded-full border-t-transparent"></div></div>
-             } @else {
-                <div class="space-y-6">
-                  <div class="flex items-center justify-between">
-                    <h4 class="font-bold text-lg text-blue-500">{{ categoriaSeleccionada }}</h4>
-                    <button (click)="categoriaSeleccionada = ''; productosCategoria = []" class="text-xs underline opacity-60">Cambiar</button>
-                  </div>
-                  <div class="space-y-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
-                     @for (prod of productosCategoria; track prod.id) {
-                       <div class="flex justify-between text-sm p-2 rounded border dark:border-gray-700">
-                         <span>{{ prod.nombre }}</span>
-                         <div class="flex gap-3 font-mono text-xs">
-                            <span class="text-blue-500">Deposito:{{prod.cantidad_deposito}}</span>
-                            <span class="text-green-500">Mostrador:{{prod.cantidad_stock}}</span>
-                         </div>
+  @if (mostrarModalCategoria()) {
+     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border dark:border-gray-700">
+           <div class="p-6 border-b dark:border-gray-700 flex justify-between">
+              <h3 class="text-xl font-bold">Seleccionar Categoría</h3>
+              <button (click)="mostrarModalCategoria.set(false)" class="text-2xl">&times;</button>
+           </div>
+           
+           <div class="p-6 overflow-y-auto custom-scrollbar">
+              @if (!categoriaSeleccionada()) {
+                 <div class="grid grid-cols-2 gap-3">
+                    @for (cat of categorias(); track cat) {
+                       <button (click)="seleccionarCategoria(cat)" class="p-4 rounded-xl border text-center font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
+                          {{ cat }}
+                       </button>
+                    }
+                 </div>
+              } @else {
+                 @if (cargandoGeneral()) {
+                    <div class="flex justify-center p-10"><div class="animate-spin h-8 w-8 border-2 border-blue-500 rounded-full border-t-transparent"></div></div>
+                 } @else {
+                    <div class="space-y-6">
+                       <h4 class="font-bold text-lg text-blue-500">{{ categoriaSeleccionada() }}</h4>
+                       <div class="max-h-48 overflow-y-auto space-y-2">
+                          @for (prod of productosCategoria(); track prod.id) {
+                             <div class="flex justify-between text-sm p-2 rounded border dark:border-gray-700">
+                                <span>{{ prod.nombre }}</span>
+                                <div class="flex gap-3 text-xs font-mono">
+                                   <span class="text-blue-500">Dep:{{prod.cantidad_deposito}}</span>
+                                   <span class="text-green-500">Stk:{{prod.cantidad_stock}}</span>
+                                </div>
+                             </div>
+                          }
                        </div>
-                     }
-                  </div>
-                  <div class="grid grid-cols-1 gap-3">
-                    <button (click)="abrirConfirmacionTransferencia('deposito_a_stock')"
-                      class="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg transition-all">
-                      Mover TODO a Mostrador
-                    </button>
-                    <button (click)="abrirConfirmacionTransferencia('stock_a_deposito')"
-                      class="w-full py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold shadow-lg transition-all">
-                      Mover TODO a Depósito
-                    </button>
-                  </div>
-                </div>
-             }
-          }
+                       <div class="grid grid-cols-1 gap-3">
+                          <button (click)="abrirConfirmacionTransferencia('deposito_a_stock')" class="w-full py-3 rounded-xl bg-blue-600 text-white font-bold">Mover TODO a Mostrador</button>
+                          <button (click)="abrirConfirmacionTransferencia('stock_a_deposito')" class="w-full py-3 rounded-xl bg-green-600 text-white font-bold">Mover TODO a Depósito</button>
+                       </div>
+                    </div>
+                 }
+              }
+           </div>
         </div>
-      </div>
-    </div>
+     </div>
   }
 
-  @if (mostrarModalConfirmacion) {
-    <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
-      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-bounce-in border dark:border-gray-700 p-6 text-center scale-95 transition-all">
-        <div class="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 text-yellow-600">
-           <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+  @if (mostrarModalConfirmacion()) {
+     <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 text-center max-w-sm w-full border dark:border-gray-700">
+           <h3 class="text-xl font-bold mb-2">¿Estás seguro?</h3>
+           <p class="text-sm opacity-70 mb-6">Se moverán <strong class="text-blue-500">{{ productosATransferir() }} productos</strong>.</p>
+           <div class="flex gap-3">
+              <button (click)="mostrarModalConfirmacion.set(false)" class="flex-1 py-3 rounded-xl border font-bold">Cancelar</button>
+              <button (click)="confirmarTransferenciaCategoria()" class="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700">
+                 {{ cargandoGeneral() ? 'Procesando...' : 'Sí, Mover' }}
+              </button>
+           </div>
         </div>
-        <h3 class="text-xl font-bold mb-2">¿Estás seguro?</h3>
-        <p class="text-sm opacity-70 mb-6">
-          Se moverán <strong class="text-blue-500">{{ productosATransferir }} productos</strong>.
-        </p>
-        
-        <div class="flex gap-3">
-          <button (click)="cerrarModalConfirmacion()" class="flex-1 py-3 rounded-xl font-bold border hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'">Cancelar</button>
-          <button (click)="confirmarTransferenciaCategoria()" class="flex-1 py-3 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg transition-all">
-            {{ cargandoGeneral ? 'Procesando...' : 'Sí, Mover' }}
-          </button>
-        </div>
-      </div>
-    </div>
+     </div>
   }
-
-  @if (mostrarToast) {
-    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-slide-up">
-      <div class="px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 text-white font-bold backdrop-blur-md shadow-black/20"
-           [ngClass]="toastTipo === 'success' ? 'bg-green-600' : 'bg-red-600'">
-        <span>{{ mensaje || error }}</span>
-      </div>
+  
+  @if (mostrarToast()) {
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-slide-up px-6 py-3 rounded-full shadow-2xl text-white font-bold"
+         [ngClass]="tipoMensaje() === 'success' ? 'bg-green-600' : 'bg-red-600'">
+       {{ mensaje() }}
     </div>
   }
 

@@ -2,7 +2,6 @@
      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-800'">
   <div class="w-full max-w-7xl space-y-8">
 
-    <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
       <h2 class="text-3xl font-bold mb-4 sm:mb-0"
           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
@@ -22,10 +21,8 @@
       </button>
     </div>
 
-    <!-- Filtros -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       
-      <!-- Filtro por Tipo -->
       <div class="rounded-xl shadow-lg p-4"
            [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
         <h3 class="text-lg font-semibold mb-3"
@@ -72,7 +69,6 @@
         </div>
       </div>
 
-      <!-- Filtro por Método de Pago -->
       <div class="rounded-xl shadow-lg p-4"
            [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
         <h3 class="text-lg font-semibold mb-3"
@@ -152,7 +148,6 @@
         </div>
       </div>
       
-      <!-- Filtro por Período -->
       <div class="rounded-xl shadow-lg p-4"
            [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
         <h3 class="text-lg font-semibold mb-3"
@@ -205,7 +200,6 @@
         </div>
       </div>
 
-      <!-- Filtro por Búsqueda -->
       <div class="rounded-xl shadow-lg p-4"
            [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
         <h3 class="text-lg font-semibold mb-3"
@@ -227,7 +221,6 @@
       </div>
     </div> 
     
-    <!-- Fecha Específica -->
     <div class="rounded-xl shadow-lg p-6 animate-fade-in" *ngIf="filtro() === 'fechaEspecifica'"
          [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
       <div class="flex flex-col sm:flex-row items-end gap-4">
@@ -260,7 +253,6 @@
       </div>
     </div>
 
-    <!-- Rango de Fechas -->
     <div class="rounded-xl shadow-lg p-6 animate-fade-in" *ngIf="filtro() === 'rangoFechas'"
          [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
       <h3 class="font-medium mb-4 text-sm sm:text-base opacity-90"
@@ -311,7 +303,6 @@
       </div>
     </div>
 
-    <!-- Totales -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-green-500"
            [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
@@ -358,7 +349,6 @@
       </div>
     </div>
 
-    <!-- Paginación Superior -->
     <div class="flex items-center justify-center gap-2 overflow-x-auto py-4">
       <button
         class="px-3 py-1 rounded-full text-sm font-medium transition hover:bg-gray-300"
@@ -394,7 +384,6 @@
       </button>
     </div>
 
-    <!-- Loading Principal -->
     <div *ngIf="cargando()" class="flex flex-col justify-center items-center py-12 animate-fade-in">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 mb-4"
              [ngClass]="themeService.theme() === 'dark' ? 'border-blue-400' : 'border-blue-600'"></div>
@@ -404,19 +393,16 @@
         </p>
     </div>
 
-    <!-- Contenedor con Scroll Infinito -->
     <div *ngIf="!cargando()" 
          class="space-y-6 max-h-[800px] overflow-y-auto pr-2"
          (scroll)="onScroll($event)">
         
-        <!-- Cards de Historial -->
         <div *ngFor="let item of items(); trackBy: trackByFn" 
              class="rounded-xl shadow-lg transition-all duration-300 cursor-pointer"
              [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:bg-gray-50'"
              (click)="toggleCard(item.id)">
     
             <div class="p-6">
-                <!-- VENTA O VENTA ELIMINADA -->
                 <div *ngIf="item.tipo === 'venta' || item.tipo === 'ventaEliminada'" 
                      [class.opacity-50]="item.tipo === 'ventaEliminada'"
                      [class.bg-gray-100]="item.tipo === 'ventaEliminada' && themeService.theme() === 'light'"
@@ -468,7 +454,6 @@
                         Total: {{ (item.total_final || 0) | monedaArs }}
                     </p>
     
-                    <!-- Contenido Expandido VENTA -->
                     <div *ngIf="isCardExpandido(item.id)" 
                          class="mt-4 pt-4 border-t animate-fade-in"
                          [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'"
@@ -549,7 +534,8 @@
                         </div>
     
                         <div *ngIf="item.tipo === 'venta'" class="mt-6 flex justify-between">
-                            <button (click)="iniciarRecambio(item); $event.stopPropagation()"
+                            <button *appPermiso="['historial', 'crear']"
+                                    (click)="iniciarRecambio(item); $event.stopPropagation()"
                                     [disabled]="!puedeRealizarRecambio(item)"
                                     class="px-5 py-2 rounded-full font-medium transition-all"
                                     [class.bg-blue-600]="puedeRealizarRecambio(item)"
@@ -561,7 +547,8 @@
                                 <span *ngIf="!puedeRealizarRecambio(item) && !item.recambio_realizado">Fuera de plazo (>10 días)</span>
                             </button>
                             
-                            <button (click)="iniciarEliminacionVenta(item); $event.stopPropagation()"
+                            <button *appPermiso="['historial', 'eliminar']"
+                                    (click)="iniciarEliminacionVenta(item); $event.stopPropagation()"
                                     [disabled]="item.recambio_realizado"
                                     class="group/btn inline-flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1"
                                     [ngClass]="{
@@ -577,12 +564,14 @@
                         </div>
     
                         <div class="flex gap-2 mt-3" *ngIf="item.tipo === 'venta'">
-                            <button (click)="abrirModalRecibo(item); $event.stopPropagation()"
+                            <button *appPermiso="['historial', 'ver']"
+                                    (click)="abrirModalRecibo(item); $event.stopPropagation()"
                                     class="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1"
                                     [ngClass]="themeService.theme() === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'">
                                 <span>Recibo</span>
                             </button>
-                            <button (click)="abrirModalEmail(item); $event.stopPropagation()"
+                            <button *appPermiso="['historial', 'ver']"
+                                    (click)="abrirModalEmail(item); $event.stopPropagation()"
                                     class="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1"
                                     [ngClass]="themeService.theme() === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'">
                                 <span>Enviar detalle</span>
@@ -591,7 +580,6 @@
                     </div>
                 </div>
     
-                <!-- RECAMBIO -->
                 <div *ngIf="item.tipo === 'recambio'">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex items-center space-x-3">
@@ -626,7 +614,6 @@
                         Diferencia: {{ ((item.total_recambio || 0) - (item.total_devuelto || 0)) | monedaArs }}
                     </p>
     
-                    <!-- Contenido Expandido RECAMBIO -->
                     <div *ngIf="isCardExpandido(item.id)" 
                          class="mt-4 pt-4 border-t animate-fade-in"
                          [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'"
@@ -699,13 +686,11 @@
             </div>
         </div>
 
-        <!-- Indicador de carga para scroll infinito -->
         <div *ngIf="cargandoMas()" class="flex justify-center py-4">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2"
                  [ngClass]="themeService.theme() === 'dark' ? 'border-blue-400' : 'border-blue-600'"></div>
         </div>
 
-        <!-- Mensaje de fin de datos -->
         <div *ngIf="!hayMasDatos() && items().length > 0" 
              class="text-center py-4"
              [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
@@ -713,7 +698,6 @@
         </div>
     </div>
 
-    <!-- Mensaje cuando no hay registros -->
     <div *ngIf="!cargando() && items().length === 0" 
          [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
          class="text-center py-12 rounded-xl shadow-lg">
@@ -725,13 +709,11 @@
         </p>
     </div>
 
-    <!-- MODAL RECAMBIO -->
     <div *ngIf="mostrarModalRecambio()" 
          class="fixed inset-0 bg-black/10 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
            class="rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto transform transition-all duration-300">
         
-        <!-- Header Modal -->
         <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
              class="sticky top-0 border-b px-6 py-4 flex justify-between items-center">
           <h3 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
@@ -742,7 +724,6 @@
         </div>
 
         <div class="p-6">
-          <!-- Venta Original -->
           <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50 border-blue-500' : 'bg-gray-100 border-blue-500'"
                class="rounded-xl p-4 mb-6 border-l-4">
             <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-800'"
@@ -757,7 +738,6 @@
             </div>
           </div>
 
-          <!-- Productos a Devolver -->
           <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-750 border-red-500' : 'bg-white border-red-500'"
                class="rounded-xl shadow-md p-6 mb-8 border-l-4">
             <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-red-400' : 'text-red-700'"
@@ -799,7 +779,6 @@
             </div>
           </div>
 
-          <!-- Productos de Recambio -->
           <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-750 border-green-500' : 'bg-white border-green-500'"
                class="rounded-xl shadow-md p-6 mb-8 border-l-4">
             <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-700'"
@@ -884,13 +863,11 @@
             </div>
           </div>
 
-          <!-- Resumen y Confirmación -->
           <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-750 border-blue-500' : 'bg-white border-blue-500'"
                class="rounded-xl shadow-md p-6 mb-8 border-l-4">
             <h4 [ngClass]="themeService.theme() === 'dark' ? 'text-blue-400' : 'text-blue-700'"
                 class="font-bold text-lg mb-4">3. Resumen y Confirmación</h4>
 
-            <!-- Descuento -->
             <div class="mb-6">
               <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'"
                  class="font-semibold mb-2">Descuento (opcional)</p>
@@ -955,7 +932,6 @@
               </button>
             </div>
 
-            <!-- Detalle Totales -->
             <div [ngClass]="themeService.theme() === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'"
                  class="rounded-lg p-4 mb-6 text-sm">
               <p [ngClass]="themeService.theme() === 'dark' ? 'text-blue-300' : 'text-blue-800'"
@@ -995,7 +971,6 @@
               </div>
             </div>
 
-            <!-- Método de pago diferencia -->
             <div *ngIf="diferencia() > 0" class="mb-6">
               <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'"
                  class="font-semibold mb-2">Método de pago para la diferencia</p>
@@ -1015,7 +990,6 @@
               </div>
             </div>
 
-            <!-- Motivo y Observaciones -->
             <div class="space-y-4">
               <div>
                 <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'"
@@ -1043,7 +1017,6 @@
           </div>
         </div>
 
-        <!-- Footer Modal Recambio -->
         <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'"
              class="sticky bottom-0 border-t px-6 py-4 flex flex-col sm:flex-row-reverse justify-between items-center space-y-3 sm:space-y-0 sm:space-x-3">
           <button 
@@ -1068,14 +1041,12 @@
       </div>
     </div>
 
-    <!-- TOAST -->
     <div *ngIf="toastVisible()" 
          [ngClass]="toastColor()"
          class="fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-xl shadow-lg z-50 text-white font-medium animate-slide-up">
       {{ toastMensaje() }}
     </div>
 
-    <!-- MODAL EMAIL -->
     <div *ngIf="mostrarModalEmail()" 
          class="fixed inset-0 z-50 flex items-center justify-center p-4">
       
@@ -1147,7 +1118,6 @@
       </div>
     </div>
 
-    <!-- MODAL RECIBO -->
     <div *ngIf="mostrarModalRecibo()" 
          class="fixed inset-0 z-50 flex items-center justify-center p-4">
       
@@ -1239,7 +1209,6 @@
       </div>
     </div>
 
-    <!-- MODAL CONFIRMAR ELIMINACIÓN -->
     <div *ngIf="mostrandoConfirmacionEliminar()" 
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/10 backdrop-blur-sm">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 animate-fade-in-scale">

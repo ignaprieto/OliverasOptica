@@ -15,8 +15,9 @@
           Volver al Panel
         </button>
         
-        @if (!clienteSeleccionado) {
-          <button (click)="abrirModalNuevo()"
+        @if (!clienteSeleccionado()) {
+          <button *appPermiso="['clientes', 'crear']" 
+            (click)="abrirModalNuevo()"
             class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-lg shadow-blue-500/20 font-medium transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Nuevo Cliente
@@ -25,7 +26,7 @@
       </div>
     </div>
 
-    @if (!clienteSeleccionado) {
+    @if (!clienteSeleccionado()) {
       <div class="space-y-6 animate-fade-in">
         
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -37,7 +38,7 @@
             <input type="text" 
                    name="search_global_unique_id" 
                    autocomplete="off"
-                   [ngModel]="busqueda" 
+                   [ngModel]="busqueda()" 
                    (ngModelChange)="onSearchInput($event)"
                    placeholder="Buscar por nombre, DNI, email..."
                    class="w-full pl-10 pr-4 py-3 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-transparent"
@@ -46,87 +47,96 @@
           
           <div class="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl border dark:border-gray-700">
             <button (click)="cambiarFiltroEstado('todos')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-              [ngClass]="filtroEstado === 'todos' ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400' : 'text-gray-500'">Todos</button>
+              [ngClass]="filtroEstado() === 'todos' ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400' : 'text-gray-500'">Todos</button>
             <button (click)="cambiarFiltroEstado('activos')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-              [ngClass]="filtroEstado === 'activos' ? 'bg-white dark:bg-gray-700 shadow text-green-600 dark:text-green-400' : 'text-gray-500'">Activos</button>
+              [ngClass]="filtroEstado() === 'activos' ? 'bg-white dark:bg-gray-700 shadow text-green-600 dark:text-green-400' : 'text-gray-500'">Activos</button>
             <button (click)="cambiarFiltroEstado('inactivos')" class="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-              [ngClass]="filtroEstado === 'inactivos' ? 'bg-white dark:bg-gray-700 shadow text-red-600 dark:text-red-400' : 'text-gray-500'">Inactivos</button>
+              [ngClass]="filtroEstado() === 'inactivos' ? 'bg-white dark:bg-gray-700 shadow text-red-600 dark:text-red-400' : 'text-gray-500'">Inactivos</button>
           </div>
         </div>
 
-        <div class="rounded-xl border overflow-hidden shadow-sm"
+        <div class="rounded-xl border overflow-hidden shadow-sm flex flex-col max-h-[75vh]"
              [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'">
           
-          @if (cargando) {
-            <div class="p-12 flex justify-center">
-              <div class="animate-spin h-10 w-10 border-4 border-blue-500 rounded-full border-t-transparent"></div>
-            </div>
-          } @else {
-            <div class="overflow-x-auto">
-              <table class="min-w-full divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
-                <thead [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-900/50' : 'bg-gray-50'">
-                  <tr>
-                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider opacity-60">Cliente</th>
-                    <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider opacity-60 hidden sm:table-cell">Contacto</th>
-                    <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider opacity-60">Deuda</th>
-                    <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider opacity-60">Estado</th>
-                    <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider opacity-60">Acciones</th>
+          <div class="overflow-y-auto custom-scrollbar flex-1" (scroll)="onScroll($event)">
+            <table class="min-w-full divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
+              <thead class="sticky top-0 z-10 backdrop-blur-md" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-900/90' : 'bg-gray-50/90'">
+                <tr>
+                  <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider opacity-60">Cliente</th>
+                  <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider opacity-60 hidden sm:table-cell">Contacto</th>
+                  <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider opacity-60">Deuda</th>
+                  <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider opacity-60">Estado</th>
+                  <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider opacity-60">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
+                @for (cliente of clientes(); track trackByCliente($index, cliente)) {
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group cursor-pointer" 
+                      (click)="verDetalleCliente(cliente)">
+                    <td class="px-6 py-4">
+                      <div class="font-bold text-base">{{ cliente.nombre }}</div>
+                      <div class="text-xs opacity-60 font-mono">{{ cliente.dni || 'Sin DNI' }}</div>
+                    </td>
+                    <td class="px-6 py-4 hidden sm:table-cell">
+                      <div class="text-sm">{{ cliente.email || '-' }}</div>
+                      <div class="text-xs opacity-60">{{ cliente.telefono || '-' }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <span class="font-bold font-mono" 
+                            [ngClass]="cliente.saldo_actual > 0 ? 'text-red-500' : 'text-green-500'">
+                        {{ formatearPrecio(cliente.saldo_actual) }}
+                      </span>
+                      @if (cliente.limite_credito > 0) {
+                        <div class="text-xs opacity-50 mt-1">Límite: {{ formatearPrecio(cliente.limite_credito) }}</div>
+                      }
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="px-2.5 py-1 rounded-full text-xs font-bold"
+                        [ngClass]="cliente.activo 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'">
+                        {{ cliente.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
+                        
+                        <button *appPermiso="['clientes', 'editar']" 
+                          (click)="abrirModalEditar(cliente)" 
+                          class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-blue-500" 
+                          title="Editar">
+                          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        
+                        <button *appPermiso="['clientes', 'editar']"
+                          (click)="toggleEstadoCliente(cliente)" 
+                          class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                          [ngClass]="cliente.activo ? 'text-red-500' : 'text-green-500'" title="Cambiar Estado">
+                          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            @if (cliente.activo) {
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                            } @else {
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            }
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody class="divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
-                  @for (cliente of clientes; track cliente.id) {
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group cursor-pointer" 
-                        (click)="verDetalleCliente(cliente)">
-                      <td class="px-6 py-4">
-                        <div class="font-bold text-base">{{ cliente.nombre }}</div>
-                        <div class="text-xs opacity-60 font-mono">{{ cliente.dni || 'Sin DNI' }}</div>
-                      </td>
-                      <td class="px-6 py-4 hidden sm:table-cell">
-                        <div class="text-sm">{{ cliente.email || '-' }}</div>
-                        <div class="text-xs opacity-60">{{ cliente.telefono || '-' }}</div>
-                      </td>
-                      <td class="px-6 py-4 text-right">
-                        <span class="font-bold font-mono" 
-                              [ngClass]="cliente.saldo_actual > 0 ? 'text-red-500' : 'text-green-500'">
-                          {{ formatearPrecio(cliente.saldo_actual) }}
-                        </span>
-                        @if (cliente.limite_credito > 0) {
-                          <div class="text-xs opacity-50 mt-1">Límite: {{ formatearPrecio(cliente.limite_credito) }}</div>
-                        }
-                      </td>
-                      <td class="px-6 py-4 text-center">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold"
-                          [ngClass]="cliente.activo 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'">
-                          {{ cliente.activo ? 'Activo' : 'Inactivo' }}
-                        </span>
-                      </td>
-                      <td class="px-6 py-4 text-right">
-                        <div class="flex justify-end gap-2" (click)="$event.stopPropagation()">
-                          <button (click)="abrirModalEditar(cliente)" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-blue-500" title="Editar">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                          </button>
-                          <button (click)="toggleEstadoCliente(cliente)" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                            [ngClass]="cliente.activo ? 'text-red-500' : 'text-green-500'" title="Cambiar Estado">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              @if (cliente.activo) {
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-                              } @else {
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                              }
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr><td colspan="5" class="px-6 py-12 text-center opacity-60">No se encontraron clientes.</td></tr>
+                } @empty {
+                  @if (!cargando()) {
+                     <tr><td colspan="5" class="px-6 py-12 text-center opacity-60">No se encontraron clientes.</td></tr>
                   }
-                </tbody>
-              </table>
-            </div>
-          }
+                }
+              </tbody>
+            </table>
+            
+            @if (cargando() || cargandoMas()) {
+               <div class="p-6 flex justify-center">
+                 <div class="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+               </div>
+            }
+          </div>
         </div>
       </div>
     } @else {
@@ -142,23 +152,23 @@
              [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
           <div class="flex flex-col md:flex-row justify-between gap-6">
             <div>
-              <h2 class="text-3xl font-bold">{{ clienteSeleccionado.nombre }}</h2>
+              <h2 class="text-3xl font-bold">{{ clienteSeleccionado()?.nombre }}</h2>
               <div class="flex flex-wrap gap-4 mt-3 text-sm opacity-70">
-                <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg> {{ clienteSeleccionado.telefono || 'N/A' }}</span>
-                <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> {{ clienteSeleccionado.email || 'N/A' }}</span>
+                <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg> {{ clienteSeleccionado()?.telefono || 'N/A' }}</span>
+                <span class="flex items-center gap-1"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> {{ clienteSeleccionado()?.email || 'N/A' }}</span>
               </div>
             </div>
             <div class="flex gap-4">
               <div class="text-right">
                 <p class="text-xs font-bold uppercase opacity-60">Deuda Total</p>
-                <p class="text-3xl font-bold" [ngClass]="clienteSeleccionado.saldo_actual > 0 ? 'text-red-500' : 'text-green-500'">
-                  {{ formatearPrecio(clienteSeleccionado.saldo_actual) }}
+                <p class="text-3xl font-bold" [ngClass]="clienteSeleccionado()!.saldo_actual > 0 ? 'text-red-500' : 'text-green-500'">
+                  {{ formatearPrecio(clienteSeleccionado()?.saldo_actual) }}
                 </p>
               </div>
               <div class="text-right pl-4 border-l dark:border-gray-700">
                 <p class="text-xs font-bold uppercase opacity-60">Disponible</p>
                 <p class="text-2xl font-bold text-blue-500">
-                  {{ formatearPrecio(Math.max(0, clienteSeleccionado.limite_credito - clienteSeleccionado.saldo_actual)) }}
+                  {{ formatearPrecio(Math.max(0, (clienteSeleccionado()?.limite_credito || 0) - (clienteSeleccionado()?.saldo_actual || 0))) }}
                 </p>
               </div>
             </div>
@@ -169,21 +179,21 @@
             <div class="flex flex-col sm:flex-row gap-4 w-full">
                 <div class="flex-1">
                     <label class="block text-xs font-bold mb-1 opacity-60">Desde</label>
-                    <input type="date" [(ngModel)]="filtroFechaDesde" (change)="aplicarFiltroFechas()" class="w-full px-3 py-2 rounded-lg border bg-transparent">
+                    <input type="date" [ngModel]="filtroFechaDesde()" (ngModelChange)="filtroFechaDesde.set($event); aplicarFiltroFechas()" class="w-full px-3 py-2 rounded-lg border bg-transparent">
                 </div>
                 <div class="flex-1">
                     <label class="block text-xs font-bold mb-1 opacity-60">Hasta</label>
-                    <input type="date" [(ngModel)]="filtroFechaHasta" (change)="aplicarFiltroFechas()" class="w-full px-3 py-2 rounded-lg border bg-transparent">
+                    <input type="date" [ngModel]="filtroFechaHasta()" (ngModelChange)="filtroFechaHasta.set($event); aplicarFiltroFechas()" class="w-full px-3 py-2 rounded-lg border bg-transparent">
                 </div>
             </div>
             <button (click)="limpiarFiltroFechas()" class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm">Limpiar</button>
         </div>
 
         <div class="space-y-6">
-           @if (cargandoDetalle) {
+           @if (cargandoDetalle()) {
                <div class="p-10 flex justify-center"><div class="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div></div>
            } @else {
-              @for (venta of ventasCreditoPaginadas; track venta.id) {
+              @for (venta of ventasCredito(); track trackByVenta($index, venta)) {
                   <div class="p-5 rounded-xl border transition-all hover:shadow-md bg-white dark:bg-gray-800"
                        [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
                     
@@ -219,10 +229,10 @@
                     </div>
 
                     <div class="mb-4">
-                        @if (tienePagos(venta.id)) {
+                        @if (tienePagos(venta.id!)) {
                             <p class="text-xs font-bold uppercase opacity-60 mb-2">Historial de Pagos</p>
                             <div class="space-y-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-2">
-                                @for (pago of getPagosDeVenta(venta.id!); track pago.id) {
+                                @for (pago of getPagosDeVenta(venta.id!); track trackByPago($index, pago)) {
                                     <div class="flex justify-between items-center text-sm p-2 border-b last:border-0 border-gray-200 dark:border-gray-700">
                                         <div class="flex items-center gap-2">
                                             <span class="font-bold text-green-600 dark:text-green-400">+{{ formatearPrecio(pago.monto_pagado) }}</span>
@@ -245,7 +255,8 @@
                             Ver Productos
                         </button>
                         @if (getSaldoPendienteConRecambio(venta) > 0) {
-                            <button (click)="abrirModalPago(venta)" class="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg shadow transition-colors">
+                            <button *appPermiso="['clientes', 'editar']"
+                              (click)="abrirModalPago(venta)" class="px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg shadow transition-colors">
                                 Registrar Pago
                             </button>
                         }
@@ -254,18 +265,6 @@
               } @empty {
                   <div class="p-12 text-center opacity-50 border-2 border-dashed rounded-xl">No hay ventas a crédito en este período.</div>
               }
-
-              @if (totalPaginas > 1) {
-                <div class="flex justify-center gap-1 mt-6">
-                  @for (pag of getPaginasArray(); track pag) {
-                    <button (click)="cambiarPagina(pag)" 
-                      class="w-8 h-8 rounded-lg text-sm font-bold flex items-center justify-center transition-all"
-                      [ngClass]="pag === paginaActual ? 'bg-blue-600 text-white shadow-lg' : 'bg-white dark:bg-gray-800 border dark:border-gray-700 hover:bg-gray-100'">
-                      {{ pag }}
-                    </button>
-                  }
-                </div>
-              }
            }
         </div>
       </div>
@@ -273,51 +272,64 @@
 
   </div>
 
-  @if (mostrarModal) {
+  @if (mostrarModal()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border dark:border-gray-700">
         <div class="p-6 border-b dark:border-gray-700">
-          <h3 class="text-xl font-bold">{{ modoEdicion ? 'Editar Cliente' : 'Nuevo Cliente' }}</h3>
+          <h3 class="text-xl font-bold">{{ modoEdicion() ? 'Editar Cliente' : 'Nuevo Cliente' }}</h3>
         </div>
         
         <form (ngSubmit)="guardarCliente()" autocomplete="off">
             <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
             <div>
                 <label class="block text-sm font-bold mb-1 opacity-80">Nombre Completo *</label>
-                <input type="text" name="cliente_nombre" autocomplete="name" [(ngModel)]="nuevoCliente.nombre" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 focus:border-transparent outline-none transition-all"
+                <input type="text" name="cliente_nombre" autocomplete="name" 
+                       [ngModel]="nuevoCliente().nombre" (ngModelChange)="actualizarNuevoCliente('nombre', $event)" 
+                       class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 focus:border-transparent outline-none transition-all"
                     [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600 focus:ring-blue-500' : 'border-gray-300 focus:ring-blue-500'">
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                 <label class="block text-sm font-bold mb-1 opacity-80">DNI</label>
-                <input type="text" name="cliente_dni" autocomplete="off" [(ngModel)]="nuevoCliente.dni" maxlength="8" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
+                <input type="text" name="cliente_dni" autocomplete="off" 
+                       [ngModel]="nuevoCliente().dni" (ngModelChange)="actualizarNuevoCliente('dni', $event)" 
+                       maxlength="8" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
                         [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
                 </div>
                 <div>
                 <label class="block text-sm font-bold mb-1 opacity-80">Teléfono</label>
-                <input type="tel" name="cliente_telefono" autocomplete="tel" [(ngModel)]="nuevoCliente.telefono" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
+                <input type="tel" name="cliente_telefono" autocomplete="tel" 
+                       [ngModel]="nuevoCliente().telefono" (ngModelChange)="actualizarNuevoCliente('telefono', $event)"
+                       class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
                         [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
                 </div>
             </div>
             <div>
                 <label class="block text-sm font-bold mb-1 opacity-80">Email</label>
-                <input type="email" name="cliente_email" autocomplete="email" [(ngModel)]="nuevoCliente.email" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
+                <input type="email" name="cliente_email" autocomplete="email" 
+                       [ngModel]="nuevoCliente().email" (ngModelChange)="actualizarNuevoCliente('email', $event)"
+                       class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
                     [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
             </div>
             <div>
                 <label class="block text-sm font-bold mb-1 opacity-80">Dirección</label>
-                <input type="text" name="cliente_direccion" autocomplete="street-address" [(ngModel)]="nuevoCliente.direccion" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
+                <input type="text" name="cliente_direccion" autocomplete="street-address" 
+                       [ngModel]="nuevoCliente().direccion" (ngModelChange)="actualizarNuevoCliente('direccion', $event)"
+                       class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
                     [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
             </div>
             <div class="grid grid-cols-2 gap-4">
                 <div>
                 <label class="block text-sm font-bold mb-1 opacity-80">Límite Crédito</label>
-                <input type="number" name="cliente_limite" [(ngModel)]="nuevoCliente.limite_credito" step="0.01" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
+                <input type="number" name="cliente_limite" 
+                       [ngModel]="nuevoCliente().limite_credito" (ngModelChange)="actualizarNuevoCliente('limite_credito', $event)"
+                       step="0.01" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
                         [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
                 </div>
                 <div>
                 <label class="block text-sm font-bold mb-1 opacity-80">Estado</label>
-                <select [(ngModel)]="nuevoCliente.activo" name="cliente_estado" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all appearance-none"
+                <select [ngModel]="nuevoCliente().activo" (ngModelChange)="actualizarNuevoCliente('activo', $event)"
+                        name="cliente_estado" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all appearance-none"
                         [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'">
                     <option [ngValue]="true" class="text-gray-900 bg-white dark:text-white dark:bg-gray-800">Activo</option>
                     <option [ngValue]="false" class="text-gray-900 bg-white dark:text-white dark:bg-gray-800">Inactivo</option>
@@ -326,14 +338,17 @@
             </div>
             <div>
                 <label class="block text-sm font-bold mb-1 opacity-80">Observaciones</label>
-                <textarea [(ngModel)]="nuevoCliente.observaciones" name="cliente_obs" rows="3" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
+                <textarea [ngModel]="nuevoCliente().observaciones" (ngModelChange)="actualizarNuevoCliente('observaciones', $event)"
+                          name="cliente_obs" rows="3" class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
                         [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600' : 'border-gray-300'"></textarea>
             </div>
             </div>
             <div class="p-6 border-t dark:border-gray-700 flex justify-end gap-3 bg-gray-50 dark:bg-gray-800/50">
-            <button type="button" (click)="cerrarModal()" [disabled]="cargando" class="px-4 py-2 rounded-lg border font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Cancelar</button>
-            <button type="submit" [disabled]="cargando" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 transition-all">
-                {{ cargando ? 'Guardando...' : 'Guardar' }}
+            <button type="button" (click)="cerrarModal()" [disabled]="cargando()" class="px-4 py-2 rounded-lg border font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Cancelar</button>
+            
+            <button *appPermiso="['clientes', modoEdicion() ? 'editar' : 'crear']"
+              type="submit" [disabled]="cargando()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 transition-all">
+                {{ cargando() ? 'Guardando...' : 'Guardar' }}
             </button>
             </div>
         </form>
@@ -341,25 +356,26 @@
     </div>
   }
 
-  @if (mostrarModalPago) {
+  @if (mostrarModalPago()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border dark:border-gray-700">
         <div class="p-6">
           <h2 class="text-xl font-bold mb-6">Registrar Pago</h2>
           <div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800 flex justify-between items-center">
              <span class="text-sm font-bold text-blue-800 dark:text-blue-300 uppercase">Saldo Pendiente</span>
-             <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ formatearPrecio(getSaldoVentaSeleccionada()) }}</span>
+             <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ formatearPrecio(saldoVentaSeleccionada()) }}</span>
           </div>
 
           <div class="space-y-4">
             <div>
               <label class="block text-sm font-bold mb-2">Monto a Pagar</label>
-              <input [(ngModel)]="nuevoPago.monto_pagado" (ngModelChange)="calcularVuelto()" type="number" step="0.01"
+              <input [ngModel]="nuevoPago().monto_pagado" (ngModelChange)="actualizarNuevoPago('monto_pagado', $event)"
+                     type="number" step="0.01"
                 class="w-full px-4 py-3 rounded-xl border-2 bg-transparent focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all font-bold text-lg"
                 [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
             </div>
 
-            @if (!cajaAbierta) {
+            @if (!cajaAbierta()) {
                 <div class="p-3 rounded-lg bg-orange-50 border border-orange-200 text-orange-800 text-sm flex items-center gap-2 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-300">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                   <span class="font-medium">Caja cerrada: Solo medios electrónicos.</span>
@@ -368,15 +384,15 @@
             <div>
               <label class="block text-sm font-bold mb-2">Método de Pago</label>
               
-              <select [(ngModel)]="nuevoPago.metodo_pago" (ngModelChange)="calcularVuelto()"
+              <select [ngModel]="nuevoPago().metodo_pago" (ngModelChange)="actualizarNuevoPago('metodo_pago', $event)"
                 class="w-full px-4 py-2.5 rounded-xl border bg-transparent focus:ring-2 outline-none transition-all"
                 [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'">
                 
-                <option value="efectivo" [disabled]="!cajaAbierta" 
+                <option value="efectivo" [disabled]="!cajaAbierta()" 
                         [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'"
-                        [class.text-gray-400]="!cajaAbierta && themeService.getCurrentTheme() === 'dark'"
-                        [class.text-gray-500]="!cajaAbierta && themeService.getCurrentTheme() !== 'dark'">
-                    Efectivo {{ !cajaAbierta ? '(Requiere Caja Abierta)' : '' }}
+                        [class.text-gray-400]="!cajaAbierta() && themeService.getCurrentTheme() === 'dark'"
+                        [class.text-gray-500]="!cajaAbierta() && themeService.getCurrentTheme() !== 'dark'">
+                    Efectivo {{ !cajaAbierta() ? '(Requiere Caja Abierta)' : '' }}
                 </option>
 
                 <option value="transferencia" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'">Transferencia</option>
@@ -386,18 +402,19 @@
               </select>
             </div>
 
-            @if (nuevoPago.metodo_pago === 'efectivo') {
+            @if (nuevoPago().metodo_pago === 'efectivo') {
               <div class="grid grid-cols-2 gap-4 animate-fade-in">
                 <div>
                   <label class="block text-xs font-bold uppercase opacity-60 mb-1">Entrega</label>
-                  <input [(ngModel)]="nuevoPago.efectivo_entregado" (ngModelChange)="calcularVuelto()" type="number" 
+                  <input [ngModel]="nuevoPago().efectivo_entregado" (ngModelChange)="actualizarNuevoPago('efectivo_entregado', $event)" 
+                         type="number" 
                     class="w-full px-3 py-2 rounded-lg border bg-transparent outline-none font-mono"
                     [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
                 </div>
                 <div>
                   <label class="block text-xs font-bold uppercase opacity-60 mb-1">Vuelto</label>
                   <div class="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 font-mono font-bold text-green-600">
-                    {{ formatearPrecio(nuevoPago.vuelto) }}
+                    {{ formatearPrecio(nuevoPago().vuelto) }}
                   </div>
                 </div>
               </div>
@@ -405,8 +422,10 @@
           </div>
           <div class="flex justify-end gap-3 mt-8">
             <button (click)="cerrarModalPago()" class="px-4 py-2 rounded-lg border font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">Cancelar</button>
-            <button (click)="registrarPago()" [disabled]="cargando" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 transition-all">
-              {{ cargando ? 'Procesando...' : 'Confirmar Pago' }}
+            
+            <button *appPermiso="['clientes', 'editar']" 
+              (click)="registrarPago()" [disabled]="cargando()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg disabled:opacity-50 transition-all">
+              {{ cargando() ? 'Procesando...' : 'Confirmar Pago' }}
             </button>
           </div>
         </div>
@@ -414,7 +433,7 @@
     </div>
   }
 
-  @if (mostrarDetalleVenta) {
+  @if (mostrarDetalleVenta()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-fade-in">
       <div [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-800' : 'bg-white'" 
         class="rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-fade-in-scale border dark:border-gray-700">
@@ -427,7 +446,7 @@
             </button>
            </div>
 
-           @if (recambioVenta) {
+           @if (recambioVenta()) {
              <div class="mb-8 space-y-4">
                 <div class="p-4 rounded-xl border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-500/50 flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
                     <div>
@@ -436,16 +455,16 @@
                             Recambio Realizado
                         </h4>
                         <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                            Por: {{ recambioVenta.realizado_por }} • {{ formatearFechaRecambio(recambioVenta.fecha_recambio) }}
+                            Por: {{ recambioVenta()!.realizado_por }} • {{ formatearFechaRecambio(recambioVenta()!.fecha_recambio) }}
                         </p>
-                        @if (recambioVenta.observaciones) {
-                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1 italic">"{{ recambioVenta.observaciones }}"</p>
+                        @if (recambioVenta()!.observaciones) {
+                            <p class="text-xs text-blue-600 dark:text-blue-400 mt-1 italic">"{{ recambioVenta()!.observaciones }}"</p>
                         }
                     </div>
                     <div class="text-right">
                         <p class="text-xs uppercase font-bold text-blue-800 dark:text-blue-300">Diferencia Abonada</p>
-                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ formatearPrecio(recambioVenta.diferencia_abonada) }}</p>
-                        <p class="text-xs opacity-70 capitalize">{{ recambioVenta.metodo_pago_diferencia.replace('_', ' ') }}</p>
+                        <p class="text-xl font-bold text-blue-600 dark:text-blue-400">{{ formatearPrecio(recambioVenta()!.diferencia_abonada) }}</p>
+                        <p class="text-xs opacity-70 capitalize">{{ recambioVenta()!.metodo_pago_diferencia.replace('_', ' ') }}</p>
                     </div>
                 </div>
 
@@ -456,10 +475,10 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"/></svg>
                                 Productos Devueltos
                             </span>
-                            <span class="text-xs font-bold text-red-600 dark:text-red-400">{{ formatearPrecio(recambioVenta.total_devuelto) }}</span>
+                            <span class="text-xs font-bold text-red-600 dark:text-red-400">{{ formatearPrecio(recambioVenta()!.total_devuelto) }}</span>
                         </div>
                         <div class="p-3 space-y-3">
-                            @for (prod of recambioVenta.productos_devueltos_json; track $index) {
+                            @for (prod of recambioVenta()!.productos_devueltos_json; track trackByProducto($index, prod)) {
                                 <div class="flex justify-between items-start text-sm">
                                     <div>
                                         <p class="font-medium text-gray-800 dark:text-gray-200">{{ prod.nombre }}</p>
@@ -480,10 +499,10 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                                 Productos Llevados
                             </span>
-                            <span class="text-xs font-bold text-green-600 dark:text-green-400">{{ formatearPrecio(recambioVenta.total_recambio) }}</span>
+                            <span class="text-xs font-bold text-green-600 dark:text-green-400">{{ formatearPrecio(recambioVenta()!.total_recambio) }}</span>
                         </div>
                         <div class="p-3 space-y-3">
-                            @for (prod of recambioVenta.productos_recambio_json; track $index) {
+                            @for (prod of recambioVenta()!.productos_recambio_json; track trackByProducto($index, prod)) {
                                 <div class="flex justify-between items-start text-sm">
                                     <div>
                                         <p class="font-medium text-gray-800 dark:text-gray-200">{{ prod.nombre }}</p>
@@ -503,7 +522,7 @@
 
            <h3 class="text-sm font-bold uppercase opacity-60 mb-3">Ticket de Venta Original</h3>
            <div class="space-y-3">
-            @for (item of detalleVentaActual; track item) {
+            @for (item of detalleVentaActual(); track trackByProducto($index, item)) {
               <div class="p-4 rounded-xl border transition-all" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-700/30 border-gray-600' : 'bg-gray-50 border-gray-200'">
                 <div class="flex justify-between items-start">
                    <div>
@@ -535,13 +554,12 @@
     </div>
   }
 
-  @if (mostrarToast) {
+  @if (mostrarToast()) {
     <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-slide-up">
       <div class="px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 text-white font-bold backdrop-blur-md shadow-black/20"
-           [ngClass]="tipoMensaje === 'success' ? 'bg-green-600' : 'bg-red-600'">
-        <span>{{ mensaje }}</span>
+           [ngClass]="tipoMensaje() === 'success' ? 'bg-green-600' : 'bg-red-600'">
+        <span>{{ mensaje() }}</span>
       </div>
     </div>
   }
-
 </div>

@@ -9,6 +9,7 @@ import { ThemeService } from '../../services/theme.service';
 import { ClientesService, Cliente } from '../../services/clientes.service';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { PermisoDirective } from '../../directives/permiso.directive';
 
 type VendedorTemp = {
   id: string;
@@ -93,7 +94,7 @@ declare global {
 
 @Component({
   selector: 'app-ventas',
-  imports: [FormsModule, CommonModule, RouterModule, MonedaArsPipe],
+  imports: [FormsModule, CommonModule, RouterModule, MonedaArsPipe,PermisoDirective],
   templateUrl: './ventas.component.html',
   styleUrl: './ventas.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush // ✅ CAMBIO 1: OnPush Strategy

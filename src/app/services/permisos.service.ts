@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { SupabaseService } from './supabase.service';
+import { SupabaseService, AppUser } from './supabase.service';
 import { BehaviorSubject } from 'rxjs';
 
 export interface Permiso {
@@ -18,55 +18,48 @@ export class PermisosService {
   public permisos$ = this.permisosSubject.asObservable();
 
   constructor(private supabase: SupabaseService) {
-    // 1. Cargar inicial
     this.cargarPermisos();
 
-    // 2. ESCUCHAR CAMBIOS DE SESIÓN (Login/Logout)
-    // Esto es crítico para que al cambiar de usuario se actualicen los permisos
-    this.supabase.getClient().auth.onAuthStateChange((event, session) => {
+    this.supabase.getClient().auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
         this.cargarPermisos();
       } else if (event === 'SIGNED_OUT') {
-        this.permisosSubject.next([]); // Limpiar permisos al salir
+        this.permisosSubject.next([]);
       }
     });
   }
 
   async cargarPermisos() {
-    const user = await this.supabase.getCurrentUser();
+    const user: AppUser | null = await this.supabase.getCurrentAppUser();
+    
     if (!user) {
+      console.warn('PermisosService: No hay usuario activo.');
       this.permisosSubject.next([]);
       return;
     }
 
-    // 1. Verificar si es SUPER ADMIN por metadata
-    const rol = user.user_metadata?.['rol'];
-    if (rol === 'admin') {
+    // 1. Detección de ADMIN
+    if (user.rol === 'admin') {
       this.permisosSubject.next([{ 
         vista: 'SUPER_ADMIN', 
-        puede_ver: true, 
-        puede_crear: true, 
-        puede_editar: true, 
-        puede_eliminar: true 
+        puede_ver: true, puede_crear: true, puede_editar: true, puede_eliminar: true 
       }]);
       return;
     }
 
-    // 2. Buscar perfil de Vendedor vinculado
-    // Ahora esto funcionará porque ya agregaste la columna usuario_id
-    const { data: vendedor, error } = await this.supabase.getClient()
+    // 2. Lógica Vendedor
+    const { data: vendedor } = await this.supabase.getClient()
       .from('vendedores')
       .select('id')
       .eq('usuario_id', user.id)
-      .maybeSingle(); // Usamos maybeSingle() para no lanzar error si es null
+      .maybeSingle();
 
     if (!vendedor) {
-      console.warn('Usuario autenticado pero sin perfil de vendedor vinculado.');
+      console.warn('⚠️ PermisosService: Usuario sin perfil de vendedor.');
       this.permisosSubject.next([]);
       return;
     }
 
-    // 3. Cargar permisos explícitos desde la tabla
     const { data: permisos } = await this.supabase.getClient()
       .from('permisos_empleado')
       .select('*')
@@ -80,12 +73,10 @@ export class PermisosService {
   puede(vista: string, accion: 'ver' | 'crear' | 'editar' | 'eliminar'): boolean {
     const actuales = this.permisosSubject.value;
     
-    // Acceso total para Admin
+    // Chequeo de Super Admin
     if (actuales.some(p => p.vista === 'SUPER_ADMIN')) return true;
 
     const permiso = actuales.find(p => p.vista === vista);
-    
-    // Si no existe registro de permiso para esa vista, se asume falso
     if (!permiso) return false;
 
     switch (accion) {

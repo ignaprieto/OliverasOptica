@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
@@ -7,60 +7,94 @@ import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
 import { ThemeService } from '../../services/theme.service';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { PermisoDirective } from '../../directives/permiso.directive';
+
+interface ProductoAumento {
+  id: string;
+  codigo: string;
+  nombre: string;
+  marca: string;
+  categoria: string;
+  precio: number;
+  cantidad_stock: number;
+  cantidad_deposito: number;
+  activo: boolean;
+}
 
 @Component({
   selector: 'app-aumento',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MonedaArsPipe],
+  imports: [CommonModule, FormsModule, RouterModule, MonedaArsPipe, PermisoDirective],
   templateUrl: './aumento.component.html',
-  styleUrl: './aumento.component.css'
+  styleUrl: './aumento.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class AumentoComponent implements OnInit, OnDestroy {
-  // Estado de carga
-  isLoading: boolean = true;
-  cargandoProductosCategoria: { [key: string]: boolean } = {};
+  private supabase = inject(SupabaseService);
+  public themeService = inject(ThemeService);
+
+  // Columnas específicas para consultas optimizadas
+  private readonly COLUMNAS_CATEGORIA = 'categoria';
+  private readonly COLUMNAS_PRODUCTO = 'id, codigo, nombre, marca, categoria, precio, cantidad_stock, cantidad_deposito, activo';
+
+  // --- SIGNALS PARA ESTADO DEL COMPONENTE ---
+  isLoading = signal(true);
+  cargandoProductosCategoria = signal<{ [key: string]: boolean }>({});
 
   // Datos
-  categorias: string[] = [];
-  productosPorCategoria: { [key: string]: any[] } = {};
+  categorias = signal<string[]>([]);
+  productosPorCategoria = signal<{ [key: string]: ProductoAumento[] }>({});
   
-  // Selección y Lógica
-  seleccionados: Set<string> = new Set();
-  aumentarTodaCategoria: { [key: string]: boolean } = {};
-  expandido: { [key: string]: boolean } = {};
+  // Selección
+  seleccionados = signal<Set<string>>(new Set());
+  aumentarTodaCategoria = signal<{ [key: string]: boolean }>({});
+  expandido = signal<{ [key: string]: boolean }>({});
   
   // Configuración del Aumento
-  valorAumento: number | null = null;
-  tipoAumento: 'precio' | 'porcentaje' | null = null;
+  valorAumento = signal<number | null>(null);
+  tipoAumento = signal<'precio' | 'porcentaje' | null>(null);
   
   // UI
-  paso = 1;
-  confirmando: boolean = false;
-  toastVisible = false;
-  toastMensaje = '';
-  toastColor: string = '';
-  resumenAumento: string[] = [];
-  errorAumentoInvalido = false;
+  paso = signal(1);
+  confirmando = signal(false);
+  toastVisible = signal(false);
+  toastMensaje = signal('');
+  toastColor = signal('');
+  resumenAumento = signal<string[]>([]);
+  errorAumentoInvalido = signal(false);
 
   // Filtro Global
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription | null = null;
-  filtroTexto: string = '';
+  private _filtroTexto = signal('');
+  
+  // Getter/Setter para mantener compatibilidad con ngModel
+  get filtroTexto(): string {
+    return this._filtroTexto();
+  }
+  set filtroTexto(value: string) {
+    this._filtroTexto.set(value);
+  }
 
   // Paginación de Categorías
-  paginaActual: number = 1;
-  categoriasPorPagina: number = 10;
+  paginaActual = signal(1);
+  readonly categoriasPorPagina = 10;
 
   private toastTimeout?: any;
   Math = Math;
 
-  constructor(
-    private supabase: SupabaseService,
-    public themeService: ThemeService
-  ) {}
+  // --- COMPUTED SIGNALS ---
+  totalPaginas = computed(() => 
+    Math.ceil(this.categorias().length / this.categoriasPorPagina)
+  );
+
+  categoriasVisibles = computed(() => {
+    const inicio = (this.paginaActual() - 1) * this.categoriasPorPagina;
+    return this.categorias().slice(inicio, inicio + this.categoriasPorPagina);
+  });
 
   async ngOnInit() {
-    this.isLoading = true;
+    this.isLoading.set(true);
     
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(500),
@@ -70,7 +104,7 @@ export class AumentoComponent implements OnInit, OnDestroy {
     });
 
     await this.cargarCategoriasUnicas();
-    this.isLoading = false;
+    this.isLoading.set(false);
   }
 
   ngOnDestroy() {
@@ -84,14 +118,14 @@ export class AumentoComponent implements OnInit, OnDestroy {
     try {
       const { data, error } = await this.supabase.getClient()
         .from('productos')
-        .select('categoria')
+        .select(this.COLUMNAS_CATEGORIA)
         .eq('activo', true)
         .eq('eliminado', false);
 
       if (error) throw error;
 
       const categoriasUnicas = new Set((data || []).map((p: any) => p.categoria));
-      this.categorias = Array.from(categoriasUnicas).sort();
+      this.categorias.set(Array.from(categoriasUnicas).sort());
       
     } catch (error) {
       console.error('Error cargando categorías:', error);
@@ -100,21 +134,29 @@ export class AumentoComponent implements OnInit, OnDestroy {
   }
 
   async toggleCategoria(categoria: string) {
-    this.expandido[categoria] = !this.expandido[categoria];
+    this.expandido.update(exp => ({
+      ...exp,
+      [categoria]: !exp[categoria]
+    }));
 
-    if (this.expandido[categoria] && !this.productosPorCategoria[categoria]) {
+    const expandidoActual = this.expandido();
+    const productosActuales = this.productosPorCategoria();
+    
+    if (expandidoActual[categoria] && !productosActuales[categoria]) {
       await this.cargarProductosDeCategoria(categoria);
     }
   }
 
   async cargarProductosDeCategoria(categoria: string) {
-    this.cargandoProductosCategoria[categoria] = true;
+    this.cargandoProductosCategoria.update(cargando => ({
+      ...cargando,
+      [categoria]: true
+    }));
     
     try {
-      // CORRECCIÓN 1: Traemos TODOS los campos necesarios para que el upsert no falle por 'codigo null'
       const { data, error } = await this.supabase.getClient()
         .from('productos')
-        .select('*') // Traemos todo para evitar problemas de constraints
+        .select(this.COLUMNAS_PRODUCTO)
         .eq('categoria', categoria)
         .eq('activo', true)
         .eq('eliminado', false)
@@ -122,9 +164,13 @@ export class AumentoComponent implements OnInit, OnDestroy {
 
       if (error) throw error;
 
-      this.productosPorCategoria[categoria] = data || [];
+      this.productosPorCategoria.update(prods => ({
+        ...prods,
+        [categoria]: data || []
+      }));
 
-      if (this.aumentarTodaCategoria[categoria]) {
+      const aumentarToda = this.aumentarTodaCategoria();
+      if (aumentarToda[categoria]) {
         this.marcarTodosEnCategoria(categoria, true);
       }
 
@@ -132,26 +178,42 @@ export class AumentoComponent implements OnInit, OnDestroy {
       console.error(`Error cargando productos de ${categoria}:`, error);
       this.mostrarError(`Error al cargar productos de ${categoria}`);
     } finally {
-      this.cargandoProductosCategoria[categoria] = false;
+      this.cargandoProductosCategoria.update(cargando => ({
+        ...cargando,
+        [categoria]: false
+      }));
     }
   }
 
   // ==================== LÓGICA DE SELECCIÓN ====================
 
   toggleSeleccion(id: string, categoria: string) {
-    if (this.seleccionados.has(id)) {
-      this.seleccionados.delete(id);
-      this.aumentarTodaCategoria[categoria] = false;
-    } else {
-      this.seleccionados.add(id);
-    }
+    this.seleccionados.update(sel => {
+      const nuevaSeleccion = new Set(sel);
+      if (nuevaSeleccion.has(id)) {
+        nuevaSeleccion.delete(id);
+        this.aumentarTodaCategoria.update(atc => ({
+          ...atc,
+          [categoria]: false
+        }));
+      } else {
+        nuevaSeleccion.add(id);
+      }
+      return nuevaSeleccion;
+    });
   }
 
   async toggleTodos(categoria: string) {
-    const nuevoEstado = !this.aumentarTodaCategoria[categoria];
-    this.aumentarTodaCategoria[categoria] = nuevoEstado;
+    const aumentarTodaActual = this.aumentarTodaCategoria();
+    const nuevoEstado = !aumentarTodaActual[categoria];
+    
+    this.aumentarTodaCategoria.update(atc => ({
+      ...atc,
+      [categoria]: nuevoEstado
+    }));
 
-    if (!this.productosPorCategoria[categoria]) {
+    const productosActuales = this.productosPorCategoria();
+    if (!productosActuales[categoria]) {
       await this.cargarProductosDeCategoria(categoria);
     }
 
@@ -159,18 +221,23 @@ export class AumentoComponent implements OnInit, OnDestroy {
   }
 
   marcarTodosEnCategoria(categoria: string, seleccionar: boolean) {
-    const productos = this.productosPorCategoria[categoria] || [];
-    productos.forEach(p => {
-      if (seleccionar) {
-        this.seleccionados.add(p.id);
-      } else {
-        this.seleccionados.delete(p.id);
-      }
+    const productos = this.productosPorCategoria()[categoria] || [];
+    
+    this.seleccionados.update(sel => {
+      const nuevaSeleccion = new Set(sel);
+      productos.forEach(p => {
+        if (seleccionar) {
+          nuevaSeleccion.add(p.id);
+        } else {
+          nuevaSeleccion.delete(p.id);
+        }
+      });
+      return nuevaSeleccion;
     });
   }
 
   estaProductoSeleccionado(id: string): boolean {
-    return this.seleccionados.has(id);
+    return this.seleccionados().has(id);
   }
 
   // ==================== FILTRADO Y PAGINACIÓN ====================
@@ -183,18 +250,17 @@ export class AumentoComponent implements OnInit, OnDestroy {
   async filtrarProductosGlobal(termino: string) {
     if (!termino.trim()) {
       this.resetearPaginacion();
-      if (this.categorias.length === 0) await this.cargarCategoriasUnicas();
+      if (this.categorias().length === 0) await this.cargarCategoriasUnicas();
       return;
     }
     
     try {
-      this.isLoading = true;
+      this.isLoading.set(true);
       const t = termino.trim();
 
-      // CORRECCIÓN 2: También aquí traemos todo (*) para que si se actualiza desde el filtro no falle
       const { data, error } = await this.supabase.getClient()
         .from('productos')
-        .select('*') 
+        .select(this.COLUMNAS_PRODUCTO)
         .eq('activo', true)
         .eq('eliminado', false)
         .or(`nombre.ilike.%${t}%,marca.ilike.%${t}%,categoria.ilike.%${t}%`)
@@ -203,123 +269,135 @@ export class AumentoComponent implements OnInit, OnDestroy {
       if (error) throw error;
 
       const resultados = data || [];
-      this.productosPorCategoria = {};
+      const nuevoProductosPorCategoria: { [key: string]: ProductoAumento[] } = {};
       const categoriasEncontradas = new Set<string>();
 
       resultados.forEach((prod: any) => {
         categoriasEncontradas.add(prod.categoria);
-        if (!this.productosPorCategoria[prod.categoria]) {
-          this.productosPorCategoria[prod.categoria] = [];
+        if (!nuevoProductosPorCategoria[prod.categoria]) {
+          nuevoProductosPorCategoria[prod.categoria] = [];
         }
-        this.productosPorCategoria[prod.categoria].push(prod);
+        nuevoProductosPorCategoria[prod.categoria].push(prod);
       });
 
-      this.categorias = Array.from(categoriasEncontradas).sort();
-      this.categorias.forEach(c => this.expandido[c] = true);
+      this.productosPorCategoria.set(nuevoProductosPorCategoria);
+      this.categorias.set(Array.from(categoriasEncontradas).sort());
+      
+      const nuevosExpandidos: { [key: string]: boolean } = {};
+      Array.from(categoriasEncontradas).forEach(c => nuevosExpandidos[c] = true);
+      this.expandido.set(nuevosExpandidos);
       
       this.resetearPaginacion();
 
     } catch (error) {
       console.error('Error en búsqueda:', error);
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
 
-  get totalPaginas(): number {
-    return Math.ceil(this.categorias.length / this.categoriasPorPagina);
-  }
-
-  get categoriasVisibles(): string[] {
-    const inicio = (this.paginaActual - 1) * this.categoriasPorPagina;
-    return this.categorias.slice(inicio, inicio + this.categoriasPorPagina);
-  }
-
   cambiarPagina(pagina: number) {
-    if (pagina >= 1 && pagina <= this.totalPaginas) {
-      this.paginaActual = pagina;
+    const total = this.totalPaginas();
+    if (pagina >= 1 && pagina <= total) {
+      this.paginaActual.set(pagina);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }
 
   resetearPaginacion() {
-    this.paginaActual = 1;
+    this.paginaActual.set(1);
   }
 
   // ==================== CONFIRMACIÓN Y APLICACIÓN ====================
 
   pasarAPasoConfirmacion() {
-    if (this.seleccionados.size === 0) {
+    const cantidadSeleccionados = this.seleccionados().size;
+    
+    if (cantidadSeleccionados === 0) {
       this.mostrarAdvertencia("Selecciona al menos un producto para continuar");
       return;
     }
 
-    this.resumenAumento = [];
+    const nuevoResumen: string[] = [];
     let contadorProductos = 0;
 
-    Object.keys(this.productosPorCategoria).forEach(cat => {
-      const productos = this.productosPorCategoria[cat];
-      const seleccionadosEnCat = productos.filter(p => this.seleccionados.has(p.id));
+    const productosPorCat = this.productosPorCategoria();
+    Object.keys(productosPorCat).forEach(cat => {
+      const productos = productosPorCat[cat];
+      const seleccionadosEnCat = productos.filter(p => this.seleccionados().has(p.id));
       
       if (seleccionadosEnCat.length > 0) {
         contadorProductos += seleccionadosEnCat.length;
         
         if (seleccionadosEnCat.length === productos.length && productos.length > 1) {
-           this.resumenAumento.push(`Todos los productos de: ${cat}`);
+          nuevoResumen.push(`Todos los productos de: ${cat}`);
         } else {
-           seleccionadosEnCat.forEach(p => {
-             if (this.resumenAumento.length < 10) {
-                this.resumenAumento.push(`${p.nombre} (${p.marca})`);
-             }
-           });
+          seleccionadosEnCat.forEach(p => {
+            if (nuevoResumen.length < 10) {
+              nuevoResumen.push(`${p.nombre} (${p.marca})`);
+            }
+          });
         }
       }
     });
 
     if (contadorProductos > 10) {
-       this.resumenAumento.push(`... y ${contadorProductos - 10} productos más.`);
+      nuevoResumen.push(`... y ${contadorProductos - 10} productos más.`);
     }
 
-    this.confirmando = true;
+    this.resumenAumento.set(nuevoResumen);
+    this.confirmando.set(true);
   }
 
   calcularPrecioFinal(precioBase: number): number {
-    if (!this.valorAumento) return precioBase;
+    const valor = this.valorAumento();
+    const tipo = this.tipoAumento();
     
-    if (this.tipoAumento === 'precio') {
-      return precioBase + this.valorAumento;
+    if (!valor) return precioBase;
+    
+    if (tipo === 'precio') {
+      return precioBase + valor;
     } else {
-      return Math.round(precioBase * (1 + this.valorAumento / 100));
+      return Math.round(precioBase * (1 + valor / 100));
     }
   }
 
   async aplicarAumento() {
-    if (!this.tipoAumento || this.valorAumento === null) {
-      this.errorAumentoInvalido = true;
-      setTimeout(() => this.errorAumentoInvalido = false, 3000);
+    const tipo = this.tipoAumento();
+    const valor = this.valorAumento();
+    
+    if (!tipo || valor === null) {
+      this.errorAumentoInvalido.set(true);
+      setTimeout(() => this.errorAumentoInvalido.set(false), 3000);
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     let errores = 0;
 
     try {
-      const todasLasCategorias = Object.keys(this.productosPorCategoria);
+      const productosPorCat = this.productosPorCategoria();
+      const todasLasCategorias = Object.keys(productosPorCat);
       let productosParaActualizar: any[] = [];
 
       todasLasCategorias.forEach(cat => {
-        const prods = this.productosPorCategoria[cat].filter(p => this.seleccionados.has(p.id));
+        const prods = productosPorCat[cat].filter(p => this.seleccionados().has(p.id));
         prods.forEach(p => {
-          // CORRECCIÓN 3: Enviamos TODO el objeto producto (...p)
-          // Esto asegura que 'codigo' y otros campos NOT NULL estén presentes en el payload
           productosParaActualizar.push({
-            ...p, 
-            precio: this.calcularPrecioFinal(p.precio)
+            id: p.id,
+            codigo: p.codigo,
+            nombre: p.nombre,
+            marca: p.marca,
+            categoria: p.categoria,
+            precio: this.calcularPrecioFinal(p.precio),
+            cantidad_stock: p.cantidad_stock,
+            cantidad_deposito: p.cantidad_deposito,
+            activo: p.activo
           });
         });
       });
 
-      const CHUNK_SIZE = 500; 
+      const CHUNK_SIZE = 500;
       for (let i = 0; i < productosParaActualizar.length; i += CHUNK_SIZE) {
         const lote = productosParaActualizar.slice(i, i + CHUNK_SIZE);
         
@@ -337,7 +415,7 @@ export class AumentoComponent implements OnInit, OnDestroy {
       if (errores === 0) {
         this.mostrarExito(`Se actualizaron ${productosParaActualizar.length} productos correctamente.`);
         this.reset();
-        this.ngOnInit();
+        await this.ngOnInit();
       } else {
         this.mostrarError(`Hubo errores en ${errores} lotes de actualización.`);
       }
@@ -346,48 +424,67 @@ export class AumentoComponent implements OnInit, OnDestroy {
       console.error('Error crítico:', error);
       this.mostrarError('Error al aplicar el aumento');
     } finally {
-      this.isLoading = false;
-      this.confirmando = false;
+      this.isLoading.set(false);
+      this.confirmando.set(false);
     }
   }
 
   // ==================== UTILS & UI ====================
 
   reset() {
-    this.paso = 1;
-    this.seleccionados.clear();
-    this.aumentarTodaCategoria = {};
-    this.valorAumento = null;
-    this.tipoAumento = null;
-    this.expandido = {};
-    this.filtroTexto = '';
-    this.productosPorCategoria = {};
-    this.resumenAumento = [];
+    this.paso.set(1);
+    this.seleccionados.set(new Set());
+    this.aumentarTodaCategoria.set({});
+    this.valorAumento.set(null);
+    this.tipoAumento.set(null);
+    this.expandido.set({});
+    this._filtroTexto.set('');
+    this.productosPorCategoria.set({});
+    this.resumenAumento.set([]);
   }
 
   cancelar() {
-    this.confirmando = false;
+    this.confirmando.set(false);
   }
 
   mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'info' | 'warning' = 'info', duracion = 3000) {
-    this.toastMensaje = mensaje;
+    this.toastMensaje.set(mensaje);
+    
+    let color = '';
     switch (tipo) {
-      case 'success': this.toastColor = 'bg-green-600'; break;
-      case 'error': this.toastColor = 'bg-red-600'; break;
-      case 'info': this.toastColor = 'bg-blue-600'; break;
-      case 'warning': this.toastColor = 'bg-yellow-600'; break;
-      default: this.toastColor = 'bg-gray-800';
+      case 'success': color = 'bg-green-600'; break;
+      case 'error': color = 'bg-red-600'; break;
+      case 'info': color = 'bg-blue-600'; break;
+      case 'warning': color = 'bg-yellow-600'; break;
+      default: color = 'bg-gray-800';
     }
-    this.toastVisible = true;
+    this.toastColor.set(color);
+    
+    this.toastVisible.set(true);
+    
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
     this.toastTimeout = setTimeout(() => this.ocultarToast(), duracion);
   }
 
   ocultarToast() {
-    this.toastVisible = false;
+    this.toastVisible.set(false);
   }
 
   mostrarExito(msg: string) { this.mostrarToast(msg, 'success'); }
   mostrarError(msg: string) { this.mostrarToast(msg, 'error', 4000); }
   mostrarAdvertencia(msg: string) { this.mostrarToast(msg, 'warning'); }
+
+  // --- TRACKBY FUNCTIONS ---
+  
+  trackByCategoria(index: number, categoria: string): string {
+    return categoria;
+  }
+
+  trackByProductoId(index: number, producto: ProductoAumento): string {
+    return producto.id;
+  }
+
+  trackByResumen(index: number, item: string): number {
+    return index;
+  }
 }

@@ -1,10 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { 
+  Component, 
+  OnInit, 
+  ChangeDetectionStrategy, 
+  signal, 
+  computed, 
+  WritableSignal, 
+  inject,
+  effect
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 import { ClientesService, Cliente, VentaCredito, PagoCliente } from '../../services/clientes.service';
 import { ThemeService } from '../../services/theme.service';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { PermisoDirective } from '../../directives/permiso.directive';
 
 // Interfaces
 interface DetalleVenta {
@@ -56,96 +66,112 @@ interface Usuario {
   nombre: string;
 }
 
-// Tipo unión para métodos de pago válidos
 type MetodoPago = 'efectivo' | 'transferencia' | 'tarjeta_debito' | 'tarjeta_credito' | 'mercado_pago';
 
 @Component({
   selector: 'app-clientes',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, PermisoDirective],
   templateUrl: './clientes.component.html',
-  styleUrl: './clientes.component.css'
+  styleUrl: './clientes.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ClientesComponent implements OnInit {
-  // Datos principales
-  clientes: Cliente[] = [];
-  clienteSeleccionado: Cliente | null = null;
-  ventasCredito: VentaCreditoExtendida[] = [];
-  historialPagos: PagoCliente[] = [];
+  private clientesService = inject(ClientesService);
+  public themeService = inject(ThemeService);
+
+  // Columnas optimizadas para Supabase
+  private readonly COLUMNAS_CLIENTES = 'id, nombre, email, telefono, dni, direccion, limite_credito, saldo_actual, activo, observaciones';
+  private readonly COLUMNAS_RECIBO = 'venta_id, diferencia_abonada, metodo_pago_diferencia';
+
+  // Signals de Estado
+  clientes = signal<Cliente[]>([]);
+  clienteSeleccionado = signal<Cliente | null>(null);
+  ventasCredito = signal<VentaCreditoExtendida[]>([]);
+  historialPagos = signal<PagoCliente[]>([]);
   
-  // Buscador reactivo
+  // UI Signals
+  cargando = signal(false);
+  cargandoMas = signal(false);
+  cargandoDetalle = signal(false);
+  mostrarModal = signal(false);
+  mostrarModalPago = signal(false);
+  mostrarDetalleVenta = signal(false);
+  modoEdicion = signal(false);
+  cajaAbierta = signal(false);
+  
+  // Toast Signals
+  mensaje = signal('');
+  tipoMensaje = signal<'success' | 'error'>('success');
+  mostrarToast = signal(false);
+  private toastTimeout: any;
+
+  // Filtros y Búsqueda
+  busqueda = signal('');
+  filtroEstado = signal<'todos' | 'activos' | 'inactivos'>('activos');
+  filtroFechaDesde = signal('');
+  filtroFechaHasta = signal('');
   searchSubject = new Subject<string>();
-  busqueda = '';
+
+  // Paginación Infinita
+  page = signal(0);
+  pageSize = 15;
+  hayMasDatos = signal(true);
+
+  // Datos Temporales
+  ventaCreditoSeleccionada = signal<VentaCreditoExtendida | null>(null);
+  detalleVentaActual = signal<DetalleVenta[]>([]);
+  recambioVenta = signal<RecambioVenta | null>(null);
+
+  // Formularios (Signals)
+  nuevoCliente = signal<Cliente>(this.inicializarCliente());
   
-  // UI States
-  mostrarModal = false;
-  mostrarModalPago = false;
-  mostrarDetalleVenta = false;
-  modoEdicion = false;
-  cargando = false;
-  cargandoDetalle = false;
-  
-  // Datos temporales
-  ventaCreditoSeleccionada: VentaCredito | null = null;
-  detalleVentaActual: DetalleVenta[] = [];
-  recambioVenta: RecambioVenta | null = null;
-  
-  // Filtros
-  filtroEstado: 'todos' | 'activos' | 'inactivos' = 'activos';
-  filtroFechaDesde = '';
-  filtroFechaHasta = '';
-  
-  // Formularios
-  nuevoCliente: Cliente = this.inicializarCliente();
-  
-  // Definición estricta para evitar el error de tipos en el select
-  nuevoPago: {
+  nuevoPago = signal<{
     monto_pagado: number;
     metodo_pago: MetodoPago;
     observaciones: string;
     efectivo_entregado: number;
     vuelto: number;
-  } = {
+  }>({
     monto_pagado: 0,
     metodo_pago: 'efectivo',
     observaciones: '',
     efectivo_entregado: 0,
     vuelto: 0
-  };
-  
-  // Toast
-  mensaje = '';
-  tipoMensaje: 'success' | 'error' = 'success';
-  mostrarToast = false;
-  private toastTimeout: any; // Para controlar el cierre del toast
+  });
 
-  // Paginación (Clientes y Ventas)
-  paginaActual = 1;
-  elementosPorPagina = 10;
-  totalClientes = 0;
-  totalPaginas = 0; // Variable agregada
-  
-  Math = Math; 
+  Math = Math;
 
-cajaAbierta: boolean = false;
-
-  constructor(
-    private clientesService: ClientesService,
-    public themeService: ThemeService
-  ) {
-    // Configurar debounce para búsqueda optimizada
+  constructor() {
     this.searchSubject.pipe(
       debounceTime(500),
       distinctUntilChanged()
     ).subscribe((valor) => {
-      this.busqueda = valor;
-      this.paginaActual = 1;
+      this.busqueda.set(valor);
+      this.resetearPaginacion();
       this.cargarClientes();
     });
   }
 
   ngOnInit() {
     this.cargarClientes();
+  }
+
+  // TrackBy Functions
+  trackByCliente(index: number, item: Cliente): string {
+    return item.id || index.toString();
+  }
+
+  trackByVenta(index: number, item: VentaCreditoExtendida): string {
+    return item.id || index.toString();
+  }
+
+  trackByPago(index: number, item: PagoCliente): string {
+    return item.id || index.toString();
+  }
+
+  trackByProducto(index: number, item: any): string {
+    return item.nombre || index.toString();
   }
 
   private inicializarCliente(): Cliente {
@@ -162,257 +188,339 @@ cajaAbierta: boolean = false;
     };
   }
 
-  // ========== CARGA DE CLIENTES ==========
+  // ========== CARGA DE CLIENTES E INFINITE SCROLL ==========
 
   onSearchInput(valor: string) {
     this.searchSubject.next(valor);
   }
 
+  resetearPaginacion() {
+    this.page.set(0);
+    this.clientes.set([]);
+    this.hayMasDatos.set(true);
+  }
+
+  onScroll(event: any) {
+    const element = event.target;
+    if (element.scrollHeight - element.scrollTop <= element.clientHeight + 50) {
+      this.cargarClientes();
+    }
+  }
+
   async cargarClientes() {
-    this.cargando = true;
+    if ((this.cargando() || this.cargandoMas()) || !this.hayMasDatos()) return;
+
+    const esPrimeraPagina = this.page() === 0;
+    if (esPrimeraPagina) this.cargando.set(true);
+    else this.cargandoMas.set(true);
+
     try {
-      const params: any = { busqueda: this.busqueda };
-      if (this.filtroEstado !== 'todos') {
-        params.activo = this.filtroEstado === 'activos';
+      const from = this.page() * this.pageSize;
+      const to = from + this.pageSize - 1;
+
+      let query = this.clientesService['supabase'].getClient()
+        .from('clientes')
+        .select(this.COLUMNAS_CLIENTES)
+        .range(from, to)
+        .order('nombre', { ascending: true });
+
+      if (this.busqueda()) {
+        const term = this.busqueda();
+        query = query.or(`nombre.ilike.%${term}%,dni.ilike.%${term}%,email.ilike.%${term}%`);
       }
 
-      const data = await this.clientesService.obtenerClientes(params);
-      this.clientes = data;
-      
+      if (this.filtroEstado() !== 'todos') {
+        query = query.eq('activo', this.filtroEstado() === 'activos');
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        this.clientes.update(actuales => [...actuales, ...data]);
+        this.page.update(p => p + 1);
+        if (data.length < this.pageSize) this.hayMasDatos.set(false);
+      } else {
+        this.hayMasDatos.set(false);
+      }
+
     } catch (error: any) {
-      this.mostrarMensaje('Error al cargar clientes: ' + error.message, 'error');
+      this.mostrarMensajeToast('Error al cargar clientes: ' + error.message, 'error');
     } finally {
-      this.cargando = false;
+      this.cargando.set(false);
+      this.cargandoMas.set(false);
     }
   }
 
   cambiarFiltroEstado(estado: 'todos' | 'activos' | 'inactivos') {
-    this.filtroEstado = estado;
+    this.filtroEstado.set(estado);
+    this.resetearPaginacion();
     this.cargarClientes();
   }
 
   // ========== DETALLE CLIENTE ==========
 
   async verDetalleCliente(cliente: Cliente) {
-    this.clienteSeleccionado = cliente;
-    this.cargandoDetalle = true;
+    this.clienteSeleccionado.set(cliente);
+    this.cargandoDetalle.set(true);
     
     try {
       if (!cliente.id) throw new Error("ID de cliente inválido");
 
-      // Carga paralela de ventas y pagos
       await Promise.all([
         this.cargarVentasCredito(cliente.id),
         this.cargarHistorialPagos(cliente.id)
       ]);
     } catch (error: any) {
-      this.mostrarMensaje('Error al cargar detalles', 'error');
+      this.mostrarMensajeToast('Error al cargar detalles', 'error');
     } finally {
-      this.cargandoDetalle = false;
+      this.cargandoDetalle.set(false);
     }
   }
 
   async cargarVentasCredito(clienteId: string) {
     let ventas = await this.clientesService.obtenerVentasCredito(clienteId);
     
-    // Filtros de fecha en memoria
-    if (this.filtroFechaDesde) {
-      const d = new Date(this.filtroFechaDesde); d.setHours(0,0,0,0);
+    if (this.filtroFechaDesde()) {
+      const d = new Date(this.filtroFechaDesde()); d.setHours(0,0,0,0);
       ventas = ventas.filter(v => new Date(v.fecha_venta) >= d);
     }
-    if (this.filtroFechaHasta) {
-      const h = new Date(this.filtroFechaHasta); h.setHours(23,59,59,999);
+    if (this.filtroFechaHasta()) {
+      const h = new Date(this.filtroFechaHasta()); h.setHours(23,59,59,999);
       ventas = ventas.filter(v => new Date(v.fecha_venta) <= h);
     }
 
-    // Enriquecer con datos de recambio
-    const ventasExtendidas = await Promise.all(ventas.map(async (venta) => {
-       const vExt = { ...venta } as VentaCreditoExtendida;
-       const { data } = await this.clientesService['supabase'].getClient()
-         .from('recambios')
-         .select('diferencia_abonada, metodo_pago_diferencia')
-         .eq('venta_id', venta.venta_id)
-         .single();
-       
-       if (data) {
-         vExt.recambio_diferencia = data.diferencia_abonada;
-         vExt.recambio_metodo_pago = data.metodo_pago_diferencia;
-       }
-       return vExt;
-    }));
+    // Optimización N+1: Una sola consulta para todos los recambios
+    const ventaIds = ventas.map(v => v.venta_id);
+    let mapaRecambios: any = {};
 
-    this.ventasCredito = ventasExtendidas;
-    this.paginaActual = 1; // Reset paginación de ventas
-    this.calcularTotalPaginas();
+    if (ventaIds.length > 0) {
+      const { data: recambios } = await this.clientesService['supabase'].getClient()
+        .from('recambios')
+        .select(this.COLUMNAS_RECIBO)
+        .in('venta_id', ventaIds);
+      
+      if (recambios) {
+        recambios.forEach((r: any) => {
+          mapaRecambios[r.venta_id] = r;
+        });
+      }
+    }
+
+    const ventasExtendidas = ventas.map(venta => {
+      const recambio = mapaRecambios[venta.venta_id];
+      const vExt = { ...venta } as VentaCreditoExtendida;
+      if (recambio) {
+        vExt.recambio_diferencia = recambio.diferencia_abonada;
+        vExt.recambio_metodo_pago = recambio.metodo_pago_diferencia;
+      }
+      return vExt;
+    });
+
+    this.ventasCredito.set(ventasExtendidas);
   }
 
   async cargarHistorialPagos(clienteId: string) {
-    this.historialPagos = await this.clientesService.obtenerPagosCliente(clienteId);
+    const pagos = await this.clientesService.obtenerPagosCliente(clienteId);
+    this.historialPagos.set(pagos);
   }
 
   // ========== ABM CLIENTES ==========
 
   abrirModalNuevo() {
-    this.modoEdicion = false;
-    this.nuevoCliente = this.inicializarCliente();
-    this.mostrarModal = true;
+    this.modoEdicion.set(false);
+    this.nuevoCliente.set(this.inicializarCliente());
+    this.mostrarModal.set(true);
   }
 
   abrirModalEditar(cliente: Cliente) {
-    this.modoEdicion = true;
-    this.nuevoCliente = { ...cliente };
-    this.mostrarModal = true;
+    this.modoEdicion.set(true);
+    this.nuevoCliente.set({ ...cliente });
+    this.mostrarModal.set(true);
   }
 
   cerrarModal() {
-    this.mostrarModal = false;
-    this.nuevoCliente = this.inicializarCliente();
+    this.mostrarModal.set(false);
+    this.nuevoCliente.set(this.inicializarCliente());
+  }
+
+  actualizarNuevoCliente(campo: keyof Cliente, valor: any) {
+    this.nuevoCliente.update(state => ({ ...state, [campo]: valor }));
   }
 
   async guardarCliente() {
-    if (!this.nuevoCliente.nombre.trim()) {
-      this.mostrarMensaje('El nombre es obligatorio', 'error');
+    const cliente = this.nuevoCliente();
+    if (!cliente.nombre.trim()) {
+      this.mostrarMensajeToast('El nombre es obligatorio', 'error');
       return;
     }
 
-    this.cargando = true;
+    this.cargando.set(true);
     try {
-      if (this.modoEdicion && this.nuevoCliente.id) {
-        await this.clientesService.actualizarCliente(this.nuevoCliente.id, this.nuevoCliente);
-        this.mostrarMensaje('Cliente actualizado', 'success');
+      if (this.modoEdicion() && cliente.id) {
+        await this.clientesService.actualizarCliente(cliente.id, cliente);
+        this.mostrarMensajeToast('Cliente actualizado', 'success');
+        
+        // Actualizar optimista en la lista
+        this.clientes.update(lista => lista.map(c => c.id === cliente.id ? { ...c, ...cliente } : c));
+        
+        if (this.clienteSeleccionado()?.id === cliente.id) {
+          this.clienteSeleccionado.set({ ...this.clienteSeleccionado()!, ...cliente });
+        }
+
       } else {
-        await this.clientesService.crearCliente(this.nuevoCliente);
-        this.mostrarMensaje('Cliente creado', 'success');
+        await this.clientesService.crearCliente(cliente);
+        this.mostrarMensajeToast('Cliente creado', 'success');
+        this.resetearPaginacion();
+        this.cargarClientes();
       }
       
       this.cerrarModal();
-      this.cargarClientes();
       
     } catch (error: any) {
-      // Manejo de error específico para DNI duplicado
       const errMessage = error.message || JSON.stringify(error);
       if (errMessage.includes('clientes_dni_key') || errMessage.includes('unique constraint')) {
-        this.mostrarMensaje('Ya existe un cliente registrado con este DNI', 'error');
+        this.mostrarMensajeToast('Ya existe un cliente registrado con este DNI', 'error');
       } else {
-        this.mostrarMensaje('Error al guardar: ' + errMessage, 'error');
+        this.mostrarMensajeToast('Error al guardar: ' + errMessage, 'error');
       }
     } finally {
-      this.cargando = false;
+      this.cargando.set(false);
     }
   }
 
-async toggleEstadoCliente(cliente: Cliente) {
+  async toggleEstadoCliente(cliente: Cliente) {
     if (!cliente.id) return;
-    this.cargando = true;
+    this.cargando.set(true);
     try {
       if (cliente.activo) {
         await this.clientesService.desactivarCliente(cliente.id);
-        this.mostrarMensaje('Cliente desactivado', 'success');
+        this.mostrarMensajeToast('Cliente desactivado', 'success');
       } else {
         await this.clientesService.activarCliente(cliente.id);
-        this.mostrarMensaje('Cliente activado', 'success');
+        this.mostrarMensajeToast('Cliente activado', 'success');
       }
-      if (this.filtroEstado === 'todos') {
-         cliente.activo = !cliente.activo; // Solo switch visual
-      } else {
-         this.clientes = this.clientes.filter(c => c.id !== cliente.id);
+      
+      // Actualizar estado localmente
+      this.clientes.update(lista => 
+        lista.map(c => c.id === cliente.id ? { ...c, activo: !c.activo } : c)
+      );
+
+      // Si estamos filtrando, quizás debamos removerlo de la vista
+      if (this.filtroEstado() !== 'todos') {
+        this.clientes.update(lista => lista.filter(c => c.id !== cliente.id));
       }
 
     } catch (error: any) {
-      this.mostrarMensaje('Error al cambiar estado', 'error');
+      this.mostrarMensajeToast('Error al cambiar estado', 'error');
     } finally {
-      this.cargando = false;
+      this.cargando.set(false);
     }
   }
 
   // ========== PAGOS ==========
 
-  // En clientes.component.ts
+  async abrirModalPago(venta: VentaCreditoExtendida) {
+    const estadoCaja = await this.verificarCajaAbierta();
+    this.cajaAbierta.set(estadoCaja);
+    
+    this.ventaCreditoSeleccionada.set(venta);
+    const saldo = this.getSaldoPendienteConRecambio(venta);
+    
+    this.nuevoPago.set({
+      monto_pagado: saldo,
+      metodo_pago: estadoCaja ? 'efectivo' : 'transferencia',
+      observaciones: '',
+      efectivo_entregado: saldo,
+      vuelto: 0
+    });
+    this.mostrarModalPago.set(true);
+  }
 
-async abrirModalPago(venta: VentaCreditoExtendida) {
-  this.cajaAbierta = await this.verificarCajaAbierta(); 
-  
-  this.ventaCreditoSeleccionada = venta;
-  const saldo = this.getSaldoPendienteConRecambio(venta);
-  
-  this.nuevoPago = {
-    monto_pagado: saldo,
-    // Usamos la variable de clase para definir el default
-    metodo_pago: this.cajaAbierta ? 'efectivo' : 'transferencia',
-    observaciones: '',
-    efectivo_entregado: saldo,
-    vuelto: 0
-  };
-  this.mostrarModalPago = true;
-}
   cerrarModalPago() {
-    this.mostrarModalPago = false;
-    this.ventaCreditoSeleccionada = null;
+    this.mostrarModalPago.set(false);
+    this.ventaCreditoSeleccionada.set(null);
+  }
+
+  actualizarNuevoPago(campo: string, valor: any) {
+    this.nuevoPago.update(state => {
+      const newState = { ...state, [campo]: valor };
+      
+      if (campo === 'monto_pagado' || campo === 'efectivo_entregado' || campo === 'metodo_pago') {
+        if (newState.metodo_pago === 'efectivo') {
+          newState.vuelto = Math.max(0, newState.efectivo_entregado - newState.monto_pagado);
+        } else {
+          newState.vuelto = 0;
+        }
+      }
+      return newState;
+    });
   }
 
   async registrarPago() {
-    if (!this.ventaCreditoSeleccionada || !this.clienteSeleccionado) return;
-    
-    if (this.nuevoPago.monto_pagado <= 0) return this.mostrarMensaje('Monto inválido', 'error');
-    
-if (this.nuevoPago.metodo_pago === 'efectivo') {
-    // Verificamos de nuevo por seguridad o usamos la variable local
-    const cajaEstaAbierta = await this.verificarCajaAbierta(); 
-    if (!cajaEstaAbierta) {
-      this.mostrarMensaje('❌ No hay caja abierta. No se puede en efectivo.', 'error');
-      return;
-    }
-  }
+    const pago = this.nuevoPago();
+    const venta = this.ventaCreditoSeleccionada();
+    const cliente = this.clienteSeleccionado();
 
-    // Validación de monto excedente
-    const saldoPendiente = this.getSaldoPendienteConRecambio(this.ventaCreditoSeleccionada as VentaCreditoExtendida);
-    if (this.nuevoPago.monto_pagado > saldoPendiente) {
-        return this.mostrarMensaje('El monto no puede ser mayor al saldo pendiente', 'error');
+    if (!venta || !cliente) return;
+    
+    if (pago.monto_pagado <= 0) return this.mostrarMensajeToast('Monto inválido', 'error');
+    
+    if (pago.metodo_pago === 'efectivo') {
+      const cajaEstaAbierta = await this.verificarCajaAbierta(); 
+      if (!cajaEstaAbierta) {
+        this.mostrarMensajeToast('❌ No hay caja abierta. No se puede en efectivo.', 'error');
+        return;
+      }
     }
 
-    this.cargando = true;
+    const saldoPendiente = this.getSaldoPendienteConRecambio(venta);
+    if (pago.monto_pagado > saldoPendiente) {
+        return this.mostrarMensajeToast('El monto no puede ser mayor al saldo pendiente', 'error');
+    }
+
+    this.cargando.set(true);
     try {
       await this.clientesService.registrarPago({
-        cliente_id: this.clienteSeleccionado.id!,
-        venta_credito_id: this.ventaCreditoSeleccionada.id,
-        monto_pagado: this.nuevoPago.monto_pagado,
-        metodo_pago: this.nuevoPago.metodo_pago,
-        observaciones: this.nuevoPago.observaciones
+        cliente_id: cliente.id!,
+        venta_credito_id: venta.id,
+        monto_pagado: pago.monto_pagado,
+        metodo_pago: pago.metodo_pago,
+        observaciones: pago.observaciones
       });
 
-      if (this.nuevoPago.metodo_pago === 'efectivo') {
+      if (pago.metodo_pago === 'efectivo') {
         await this.registrarMovimientosEnCaja(
-          this.nuevoPago.monto_pagado,
-          this.nuevoPago.efectivo_entregado,
-          this.nuevoPago.vuelto,
-          this.ventaCreditoSeleccionada.venta_id,
-          this.nuevoPago.observaciones || `Pago Cta Cte - ${this.clienteSeleccionado.nombre}`
+          pago.monto_pagado,
+          pago.efectivo_entregado,
+          pago.vuelto,
+          venta.venta_id,
+          pago.observaciones || `Pago Cta Cte - ${cliente.nombre}`
         );
       }
 
-      this.mostrarMensaje('Pago registrado', 'success');
+      this.mostrarMensajeToast('Pago registrado', 'success');
       this.cerrarModalPago();
       
-      // Recargar datos
-      await this.verDetalleCliente(this.clienteSeleccionado);
+      await this.verDetalleCliente(cliente);
       
     } catch (error: any) {
-      this.mostrarMensaje('Error al registrar pago', 'error');
+      this.mostrarMensajeToast('Error al registrar pago', 'error');
     } finally {
-      this.cargando = false;
+      this.cargando.set(false);
     }
   }
 
   async registrarMovimientosEnCaja(monto: number, entregado: number, vuelto: number, ventaId: string, obs: string) {
     const { data: caja } = await this.clientesService['supabase'].getClient()
-      .from('cajas').select('*').eq('estado', 'abierta').maybeSingle();
+      .from('cajas').select('id, monto_actual').eq('estado', 'abierta').maybeSingle();
       
     if (!caja) return;
 
     const usuario = await this.obtenerUsuarioActual();
     const client = this.clientesService['supabase'].getClient();
 
-    // Ingreso
     await client.from('movimientos_caja').insert({
       caja_id: caja.id,
       tipo: 'ingreso',
@@ -428,7 +536,6 @@ if (this.nuevoPago.metodo_pago === 'efectivo') {
 
     let nuevoSaldo = caja.monto_actual + entregado;
 
-    // Egreso (Vuelto)
     if (vuelto > 0) {
       await client.from('movimientos_caja').insert({
         caja_id: caja.id,
@@ -444,7 +551,6 @@ if (this.nuevoPago.metodo_pago === 'efectivo') {
       nuevoSaldo -= vuelto;
     }
 
-    // Actualizar saldo caja
     await client.from('cajas').update({ monto_actual: nuevoSaldo }).eq('id', caja.id);
   }
 
@@ -477,19 +583,10 @@ if (this.nuevoPago.metodo_pago === 'efectivo') {
 
   async verificarCajaAbierta(): Promise<boolean> {
     const { count } = await this.clientesService['supabase'].getClient()
-      .from('cajas').select('*', { count: 'exact', head: true }).eq('estado', 'abierta');
+      .from('cajas').select('id', { count: 'exact', head: true }).eq('estado', 'abierta');
     return (count || 0) > 0;
   }
 
-  calcularVuelto() {
-    if (this.nuevoPago.metodo_pago === 'efectivo') {
-      this.nuevoPago.vuelto = Math.max(0, this.nuevoPago.efectivo_entregado - this.nuevoPago.monto_pagado);
-    } else {
-      this.nuevoPago.vuelto = 0;
-    }
-  }
-
-  // Getters
   getSaldoPendienteConRecambio(venta: VentaCreditoExtendida): number {
     return venta.saldo_pendiente || 0; 
   }
@@ -501,73 +598,49 @@ if (this.nuevoPago.metodo_pago === 'efectivo') {
   getTotalVentaConRecambio(venta: VentaCreditoExtendida): number {
     return venta.monto_total || 0;
   }
-
-  getSaldoVentaSeleccionada(): number {
-    if (!this.ventaCreditoSeleccionada) return 0;
-    return this.getSaldoPendienteConRecambio(this.ventaCreditoSeleccionada as VentaCreditoExtendida);
-  }
+  
+  // Computed para el saldo en el modal
+  saldoVentaSeleccionada = computed(() => {
+    const v = this.ventaCreditoSeleccionada();
+    return v ? this.getSaldoPendienteConRecambio(v) : 0;
+  });
 
   calcularTotalVenta(): number {
-    return this.detalleVentaActual.reduce((sum, item) => sum + item.subtotal, 0);
+    return this.detalleVentaActual().reduce((sum, item) => sum + item.subtotal, 0);
   }
 
-  // Filtros y navegación
   aplicarFiltroFechas() {
-    if (this.clienteSeleccionado?.id) this.cargarVentasCredito(this.clienteSeleccionado.id);
+    if (this.clienteSeleccionado()?.id) this.cargarVentasCredito(this.clienteSeleccionado()!.id!);
   }
 
   limpiarFiltroFechas() {
-    this.filtroFechaDesde = '';
-    this.filtroFechaHasta = '';
-    if (this.clienteSeleccionado?.id) this.cargarVentasCredito(this.clienteSeleccionado.id);
+    this.filtroFechaDesde.set('');
+    this.filtroFechaHasta.set('');
+    if (this.clienteSeleccionado()?.id) this.cargarVentasCredito(this.clienteSeleccionado()!.id!);
   }
 
-  // Manejo de Toast Mejorado
-  mostrarMensaje(msg: string, tipo: 'success' | 'error') {
-    if (this.toastTimeout) {
-      clearTimeout(this.toastTimeout); // Limpiar timeout anterior
-    }
+  mostrarMensajeToast(msg: string, tipo: 'success' | 'error') {
+    if (this.toastTimeout) clearTimeout(this.toastTimeout);
     
-    this.mensaje = msg;
-    this.tipoMensaje = tipo;
-    this.mostrarToast = true;
+    this.mensaje.set(msg);
+    this.tipoMensaje.set(tipo);
+    this.mostrarToast.set(true);
     
     this.toastTimeout = setTimeout(() => {
-      this.mostrarToast = false;
-      this.mensaje = '';
+      this.mostrarToast.set(false);
+      this.mensaje.set('');
     }, 3000);
   }
 
   volverALista() {
-    this.clienteSeleccionado = null;
-    this.ventasCredito = [];
-    this.historialPagos = [];
+    this.clienteSeleccionado.set(null);
+    this.ventasCredito.set([]);
+    this.historialPagos.set([]);
   }
 
-  // Paginación
-  get ventasCreditoPaginadas(): VentaCreditoExtendida[] {
-    const inicio = (this.paginaActual - 1) * this.elementosPorPagina;
-    return this.ventasCredito.slice(inicio, inicio + this.elementosPorPagina);
-  }
-
-  calcularTotalPaginas() {
-    this.totalPaginas = Math.ceil(this.ventasCredito.length / this.elementosPorPagina);
-  }
-
-  cambiarPagina(p: number) {
-    this.paginaActual = p;
-  }
-
-  getPaginasArray(): number[] {
-    return Array(this.totalPaginas).fill(0).map((x, i) => i + 1);
-  }
-
-  // Formateadores y visualización
-  formatearPrecio(v: number | undefined) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v || 0); }
+  formatearPrecio(v: number | undefined | null) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(v || 0); }
   formatearFecha(f: string) { return new Date(f).toLocaleDateString('es-AR'); }
-  getIdCorto(id: string | undefined) { 
-    return id ? id.slice(-8) : ''; 
-  }
+  getIdCorto(id: string | undefined) { return id ? id.slice(-8) : ''; }
   
   getEstadoClass(e: string) {
       if(e==='pendiente') return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200';
@@ -581,32 +654,28 @@ if (this.nuevoPago.metodo_pago === 'efectivo') {
       return 'Pagado';
   }
 
-  // Métodos de detalle venta y recambio
   async verDetalleVenta(venta: VentaCreditoExtendida) {
-    this.detalleVentaActual = venta.ventas?.detalle_venta || [];
-    this.mostrarDetalleVenta = true;
-    this.recambioVenta = null;
+    this.detalleVentaActual.set(venta.ventas?.detalle_venta || []);
+    this.mostrarDetalleVenta.set(true);
+    this.recambioVenta.set(null);
+    
     const { data } = await this.clientesService['supabase'].getClient().from('recambios').select('*').eq('venta_id', venta.venta_id).single();
     if (data) {
-        this.recambioVenta = data as RecambioVenta;
-        if (typeof this.recambioVenta.productos_devueltos_json === 'string') this.recambioVenta.productos_devueltos_json = JSON.parse(this.recambioVenta.productos_devueltos_json);
-        if (typeof this.recambioVenta.productos_recambio_json === 'string') this.recambioVenta.productos_recambio_json = JSON.parse(this.recambioVenta.productos_recambio_json);
+        const recambio = data as RecambioVenta;
+        if (typeof recambio.productos_devueltos_json === 'string') recambio.productos_devueltos_json = JSON.parse(recambio.productos_devueltos_json);
+        if (typeof recambio.productos_recambio_json === 'string') recambio.productos_recambio_json = JSON.parse(recambio.productos_recambio_json);
+        this.recambioVenta.set(recambio);
     }
   }
   
-  cerrarDetalleVenta() { this.mostrarDetalleVenta = false; this.detalleVentaActual = []; this.recambioVenta = null; }
-  esProductoRecambiado(item: DetalleVenta): boolean { if (!this.recambioVenta?.productos_devueltos_json) return false; return this.recambioVenta.productos_devueltos_json.some(p => p.nombre === item.productos?.nombre); }
-  getProductoDevuelto(item: DetalleVenta): ProductoRecambio | undefined { return this.recambioVenta?.productos_devueltos_json.find(p => p.nombre === item.productos?.nombre); }
-  getProductoRecambio(item: DetalleVenta): ProductoRecambio | undefined { 
-    if (!this.recambioVenta?.productos_recambio_json) return undefined;
-    const devuelto = this.getProductoDevuelto(item);
-    if (!devuelto) return undefined;
-    const index = this.recambioVenta.productos_devueltos_json.indexOf(devuelto);
-    return this.recambioVenta.productos_recambio_json[index];
+  cerrarDetalleVenta() { 
+    this.mostrarDetalleVenta.set(false); 
+    this.detalleVentaActual.set([]); 
+    this.recambioVenta.set(null); 
   }
+  
   formatearFechaRecambio(fecha: string) { return new Date(fecha).toLocaleDateString('es-AR'); }
 
-  // Historial de pagos específico
-  getPagosDeVenta(vid: string) { return this.historialPagos.filter(p => p.venta_credito_id === vid); }
+  getPagosDeVenta(vid: string) { return this.historialPagos().filter(p => p.venta_credito_id === vid); }
   tienePagos(vid: string) { return this.getPagosDeVenta(vid).length > 0; }
 }

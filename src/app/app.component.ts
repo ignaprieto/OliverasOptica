@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs';
   templateUrl: './app.component.html',
 })
 export class AppComponent implements OnInit, OnDestroy {
-  // --- INYECCIÓN DE DEPENDENCIAS (Estilo Moderno) ---
+  // --- INYECCIÓN DE DEPENDENCIAS ---
   private router = inject(Router);
   private supabase = inject(SupabaseService);
   private ngZone = inject(NgZone);
@@ -26,7 +26,7 @@ export class AppComponent implements OnInit, OnDestroy {
   // Rutas donde NO queremos ver navbar/footer
   private readonly rutasOcultas = ['/login'];
 
-  // --- COMPUTED SIGNALS (Cálculos en caché) ---
+  // --- COMPUTED SIGNALS ---
   mostrarLayout = computed(() => {
     const isAuth = this.isAuthenticated();
     const route = this.currentRoute();
@@ -37,20 +37,18 @@ export class AppComponent implements OnInit, OnDestroy {
 
   // --- CONFIGURACIÓN INACTIVIDAD ---
   private readonly TIMEOUT_INACTIVIDAD = 8 * 60 * 60 * 1000; // 8 horas
-  //private readonly TIMEOUT_INACTIVIDAD = 1 * 60 * 1000; // 1 minuto
-  // Tipado estricto para el timer (NodeJS.Timeout o number dependiendo del entorno, ReturnType es lo más seguro)
+  
+  // Tipado estricto para el timer
   private inactivityTimer?: ReturnType<typeof setTimeout>;
   private userSubscription?: Subscription;
   
   // Eventos que reinician el contador
   private readonly userActivityEvents = ['mousemove', 'click', 'keydown', 'scroll', 'touchstart'];
 
-  // CORRECCIÓN DE MEMORY LEAK:
-  // Definimos el handler como una Arrow Function guardada en una propiedad.
-  // Esto mantiene la referencia estable para addEventListener y removeEventListener.
+  // Handler estable para addEventListener
   private readonly handleUserActivity = () => this.resetInactivityTimer();
 
-showSessionToast = false; // Controla la visibilidad
+  showSessionToast = false; // Controla la visibilidad
   toastMessage = '';        // Mensaje a mostrar
 
   constructor() {
@@ -58,7 +56,6 @@ showSessionToast = false; // Controla la visibilidad
     this.router.events.pipe(
       filter((event: RouterEvent): event is NavigationEnd => event instanceof NavigationEnd)
     ).subscribe((event: NavigationEnd) => {
-      // Actualizamos el Signal de la ruta
       this.currentRoute.set(event.urlAfterRedirects);
     });
   }
@@ -67,7 +64,7 @@ showSessionToast = false; // Controla la visibilidad
     // Suscripción al estado del usuario
     this.userSubscription = this.supabase.currentUser$.subscribe(user => {
       const isLogged = !!user;
-      this.isAuthenticated.set(isLogged); // Actualizamos Signal
+      this.isAuthenticated.set(isLogged);
 
       if (isLogged) {
         this.iniciarMonitorInactividad();
@@ -83,17 +80,15 @@ showSessionToast = false; // Controla la visibilidad
   }
 
   // ==========================================
-  // LÓGICA DE INACTIVIDAD (OPTIMIZADA Y SIN FUGAS)
+  // LÓGICA DE INACTIVIDAD
   // ==========================================
 
   private iniciarMonitorInactividad() {
-    // Si ya hay listeners, no los agregamos de nuevo
     this.detenerMonitorInactividad();
 
     // Ejecutamos fuera de Angular para evitar Change Detection masivo
     this.ngZone.runOutsideAngular(() => {
       this.userActivityEvents.forEach(event => {
-        // Usamos 'handleUserActivity' que es una referencia estable
         window.addEventListener(event, this.handleUserActivity, { passive: true });
       });
     });
@@ -102,7 +97,6 @@ showSessionToast = false; // Controla la visibilidad
   }
 
   private detenerMonitorInactividad() {
-    // Removemos usando la MISMA referencia de función
     this.userActivityEvents.forEach(event => {
       window.removeEventListener(event, this.handleUserActivity);
     });
@@ -119,11 +113,9 @@ showSessionToast = false; // Controla la visibilidad
     
     // Solo si hay usuario autenticado
     if (this.isAuthenticated()) {
-      // Configuramos el timeout fuera de Angular también, para que el simple hecho
-      // de que corra el tiempo no dispare detecciones.
       this.ngZone.runOutsideAngular(() => {
         this.inactivityTimer = setTimeout(() => {
-          // SOLO volvemos a entrar a la zona de Angular cuando realmente expira
+          // Volvemos a Angular solo cuando expira
           this.ngZone.run(() => this.cerrarSesionPorInactividad());
         }, this.TIMEOUT_INACTIVIDAD);
       });
@@ -135,13 +127,14 @@ showSessionToast = false; // Controla la visibilidad
     
     // 1. Cerrar sesión y redirigir
     await this.supabase.signOut();
+    // La redirección ya ocurre en signOut, pero aseguramos
     this.router.navigate(['/login']);
 
-    // 2. Mostrar el Toast en lugar del alert
+    // 2. Mostrar el Toast
     this.toastMessage = 'Tu sesión ha expirado por inactividad.';
     this.showSessionToast = true;
 
-    // 3. Ocultar automáticamente después de 5 segundos
+    // 3. Ocultar automáticamente
     setTimeout(() => {
       this.showSessionToast = false;
     }, 5000);

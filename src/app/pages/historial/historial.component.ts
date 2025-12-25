@@ -5,6 +5,7 @@ import { SupabaseService } from '../../services/supabase.service';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
 import { ThemeService } from '../../services/theme.service';
+import { PermisoDirective } from '../../directives/permiso.directive';
 
 interface ProductoOriginal {
   producto_id: string;
@@ -84,7 +85,7 @@ interface ConfigRecibo {
 
 @Component({
   selector: 'app-historial',
-  imports: [FormsModule, CommonModule, RouterModule, MonedaArsPipe],
+  imports: [FormsModule, CommonModule, RouterModule, MonedaArsPipe, PermisoDirective],
   standalone: true,
   templateUrl: './historial.component.html',
   styleUrl: './historial.component.css',

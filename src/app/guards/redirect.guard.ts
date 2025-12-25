@@ -6,24 +6,16 @@ export const redirectGuard: CanActivateFn = async (route, state) => {
   const router = inject(Router);
   const supabase = inject(SupabaseService);
 
-  const role = await supabase.getCurrentUserRole();
+  // Verificamos sesión de forma segura
+  const user = await supabase.getCurrentUser();
 
-  if (role === 'admin') {
+  if (user) {
+    // ✅ CAMBIO CRÍTICO: Todos (Admin y Vendedor) van al Dashboard.
+    // El dashboard se encargará de mostrar solo lo permitido.
     router.navigate(['/dashboard'], { replaceUrl: true });
-    return false;
+    return false; // Bloquea el acceso al login porque ya está autenticado
   }
 
-  if (role === 'vendedor') {
-    const home = await supabase.getPrimeraVistaAccesible();
-    if (home) {
-      router.navigate([`/${home}`], { replaceUrl: true });
-    } else {
-      // Vendedor sin permisos asignados
-      router.navigate(['/login'], { replaceUrl: true });
-    }
-    return false;
-  }
-
-  // Si llega aquí es que no hay sesión válida, deja pasar al login (o redirige)
+  // Si no hay usuario, deja pasar al login
   return true; 
 };

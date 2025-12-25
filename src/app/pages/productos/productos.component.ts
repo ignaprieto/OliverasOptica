@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { Producto } from '../../models/producto.model';
@@ -74,69 +74,82 @@ declare global {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule, MonedaArsPipe],
   templateUrl: './productos.component.html',
-  styleUrl: './productos.component.css'
+  styleUrl: './productos.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ProductosComponent implements OnInit, OnDestroy {
-  // Datos principales
-  productosVisibles: Producto[] = []; // Lista que se muestra en el HTML
-  Math = Math;
+  private supabase = inject(SupabaseService);
+  public themeService = inject(ThemeService);
 
-  // Búsqueda Reactiva
-  private _filtro: string = '';
+  // Columnas específicas para consultas optimizadas
+  private readonly COLUMNAS_PRODUCTOS = 'id, codigo, nombre, marca, talle, categoria, precio, cantidad_stock, cantidad_deposito, activo, created_at';
+  private readonly COLUMNAS_PROMOCIONES = 'id, porcentaje, promocion_productos(producto_id)';
+
+  // --- SIGNALS PARA ESTADO DEL COMPONENTE ---
+  productosVisibles = signal<Producto[]>([]);
+  totalRegistros = signal(0);
+  
+  // Búsqueda reactiva
+  private _filtroInterno = signal('');
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription | null = null;
-  totalRegistros: number = 0;
 
+  // Getter/Setter para mantener compatibilidad con ngModel
   get filtro(): string {
-    return this._filtro;
+    return this._filtroInterno();
   }
   set filtro(value: string) {
-    // Al escribir, enviamos al pipe de RxJS para el debounce
-    this.searchSubject.next(value); 
+    this._filtroInterno.set(value);
+    this.searchSubject.next(value);
   }
 
   // Estados de ordenamiento
-  ordenPrecio: 'asc' | 'desc' | 'none' = 'none';
-  ordenStock: 'asc' | 'desc' | 'none' = 'none';
+  ordenPrecio = signal<'asc' | 'desc' | 'none'>('none');
+  ordenStock = signal<'asc' | 'desc' | 'none'>('none');
 
   // Scanner
-  mostrarScanner: boolean = false;
-  scannerActivo: boolean = false;
-  soportaEscaner: boolean = false;
-  escaneando: boolean = false;
-  intentosScanner: number = 0;
-  errorScanner: string = '';
+  mostrarScanner = signal(false);
+  scannerActivo = signal(false);
+  soportaEscaner = signal(false);
+  escaneando = signal(false);
+  intentosScanner = signal(0);
+  errorScanner = signal('');
 
   // Filtros
-  filtroEstado: 'todos' | 'activos' | 'desactivados' = 'activos';
-  estadosFiltro: ('todos' | 'activos' | 'desactivados')[] = ['todos', 'activos', 'desactivados'];
+  filtroEstado = signal<'todos' | 'activos' | 'desactivados'>('activos');
+  readonly estadosFiltro: ('todos' | 'activos' | 'desactivados')[] = ['todos', 'activos', 'desactivados'];
 
-  // Virtual Scrolling / Paginación Servidor
-  itemsPorPagina = 20;
-  paginaActual = 0;
-  cargando = false;
-  todosLosDatosCargados = false;
+  // Virtual Scrolling / Paginación
+  readonly itemsPorPagina = 20;
+  paginaActual = signal(0);
+  cargando = signal(false);
+  todosLosDatosCargados = signal(false);
 
-  // Mapa de descuentos: ID Producto -> Porcentaje
-  mapaDescuentos: Map<string, number> = new Map();
+  // Mapa de descuentos
+  mapaDescuentos = signal<Map<string, number>>(new Map());
 
-  constructor(private supabase: SupabaseService, public themeService: ThemeService) {}
+  // Computed para verificar si hay filtros activos
+  hayFiltrosActivos = computed(() => 
+    this.ordenPrecio() !== 'none' || this.ordenStock() !== 'none'
+  );
+
+  // Exponer Math para el template
+  Math = Math;
 
   async ngOnInit() {
-    // 1. Configurar el debounce para la búsqueda
+    // Configurar debounce para búsqueda
     this.searchSubscription = this.searchSubject.pipe(
-      debounceTime(400), // Espera 400ms
-      distinctUntilChanged() // Solo si cambia el valor
-    ).subscribe(texto => {
-      this._filtro = texto;
+      debounceTime(400),
+      distinctUntilChanged()
+    ).subscribe(() => {
       this.resetearVirtualScroll();
     });
 
-    // 2. Cargar datos iniciales
+    // Cargar datos iniciales
     await this.cargarPromocionesActivas();
-    this.cargarMasProductos(); // Carga inicial
+    this.cargarMasProductos();
     this.verificarSoporteEscaner();
-    this.cargarQuagga();
+    await this.cargarQuagga();
   }
 
   ngOnDestroy(): void {
@@ -147,56 +160,58 @@ export class ProductosComponent implements OnInit, OnDestroy {
     }
   }
 
-  // --- LOGICA SERVIDOR (Server-Side) ---
+  // --- LOGICA DE CARGA OPTIMIZADA ---
 
   async cargarMasProductos(): Promise<void> {
-    if (this.cargando || this.todosLosDatosCargados) return;
+    if (this.cargando() || this.todosLosDatosCargados()) return;
 
-    this.cargando = true;
+    this.cargando.set(true);
 
-    // 1. Calcular rango
-    const from = this.paginaActual * this.itemsPorPagina;
+    const from = this.paginaActual() * this.itemsPorPagina;
     const to = from + this.itemsPorPagina - 1;
 
     try {
       let query = this.supabase.getClient()
         .from('productos')
-        .select('*', { count: 'exact' })
+        .select(this.COLUMNAS_PRODUCTOS, { count: 'exact' })
         .eq('eliminado', false);
 
-      // 2. Aplicar Filtros de Texto
-      if (this._filtro && this._filtro.trim() !== '') {
-        const termino = this._filtro.trim();
-        // Busca en codigo, nombre, marca o categoria
-        query = query.or(`codigo.ilike.%${termino}%,nombre.ilike.%${termino}%,marca.ilike.%${termino}%,categoria.ilike.%${termino}%`);
+      // Aplicar filtro de texto
+      const filtroTexto = this._filtroInterno().trim();
+      if (filtroTexto) {
+        query = query.or(`codigo.ilike.%${filtroTexto}%,nombre.ilike.%${filtroTexto}%,marca.ilike.%${filtroTexto}%,categoria.ilike.%${filtroTexto}%`);
       }
 
-      // 3. Filtro por Estado
-      if (this.filtroEstado === 'activos') {
+      // Filtro por estado
+      const estado = this.filtroEstado();
+      if (estado === 'activos') {
         query = query.eq('activo', true);
-      } else if (this.filtroEstado === 'desactivados') {
+      } else if (estado === 'desactivados') {
         query = query.eq('activo', false);
       }
 
-      // 4. Ordenamiento
-      if (this.ordenPrecio !== 'none') {
-        query = query.order('precio', { ascending: this.ordenPrecio === 'asc' });
-      } else if (this.ordenStock !== 'none') {
-        query = query.order('cantidad_stock', { ascending: this.ordenStock === 'asc' });
+      // Ordenamiento
+      const ordenP = this.ordenPrecio();
+      const ordenS = this.ordenStock();
+      
+      if (ordenP !== 'none') {
+        query = query.order('precio', { ascending: ordenP === 'asc' });
+      } else if (ordenS !== 'none') {
+        query = query.order('cantidad_stock', { ascending: ordenS === 'asc' });
       } else {
-        // Orden por defecto
         query = query.order('created_at', { ascending: false });
       }
 
-      // 5. Ejecutar consulta
       const { data, error, count } = await query.range(from, to);
 
       if (error) throw error;
 
       if (data) {
-        // 6. Procesar promociones
+        const descuentosMap = this.mapaDescuentos();
+        
+        // Procesar productos con promociones
         const productosProcesados = data.map((p: any) => {
-          const descuento = this.mapaDescuentos.get(p.id);
+          const descuento = descuentosMap.get(p.id);
           if (descuento) {
             const precioBase = p.precio || 0;
             const precioPromo = precioBase - (precioBase * (descuento / 100));
@@ -211,156 +226,174 @@ export class ProductosComponent implements OnInit, OnDestroy {
           return p;
         });
 
-        // 7. Actualizar lista visible
-        if (this.paginaActual === 0) {
-          this.productosVisibles = productosProcesados;
+        // Actualizar productos visibles
+        if (this.paginaActual() === 0) {
+          this.productosVisibles.set(productosProcesados);
         } else {
-          this.productosVisibles = [...this.productosVisibles, ...productosProcesados];
+          this.productosVisibles.update(productos => [...productos, ...productosProcesados]);
         }
 
-        this.totalRegistros = count || 0;
-        this.paginaActual++;
+        this.totalRegistros.set(count || 0);
+        this.paginaActual.update(p => p + 1);
 
-        if (this.productosVisibles.length >= this.totalRegistros) {
-          this.todosLosDatosCargados = true;
+        // Verificar si ya se cargaron todos
+        if (this.productosVisibles().length >= (count || 0)) {
+          this.todosLosDatosCargados.set(true);
         }
       }
 
     } catch (error) {
       console.error('Error cargando productos:', error);
     } finally {
-      this.cargando = false;
+      this.cargando.set(false);
     }
   }
 
   onScroll(event: Event): void {
     const el = event.target as HTMLElement;
-    // Si estamos cerca del final del scroll, cargamos más
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 100) {
       this.cargarMasProductos();
     }
   }
 
   resetearVirtualScroll(): void {
-    this.paginaActual = 0;
-    this.productosVisibles = [];
-    this.todosLosDatosCargados = false;
+    this.paginaActual.set(0);
+    this.productosVisibles.set([]);
+    this.todosLosDatosCargados.set(false);
     this.cargarMasProductos();
   }
 
-  // --- MANEJO DE PROMOS ---
+  // --- PROMOCIONES ---
+  
   async cargarPromocionesActivas() {
     const hoy = new Date().toISOString();
     try {
       const { data: promociones } = await this.supabase.getClient()
         .from('promociones')
-        .select(`id, porcentaje, promocion_productos ( producto_id )`)
+        .select(this.COLUMNAS_PROMOCIONES)
         .eq('activa', true)
         .lte('fecha_inicio', hoy)
         .gte('fecha_fin', hoy);
 
       if (promociones) {
-        this.mapaDescuentos.clear();
+        const nuevoMapa = new Map<string, number>();
+        
         promociones.forEach((promo: any) => {
           if (promo.promocion_productos) {
             promo.promocion_productos.forEach((rel: any) => {
-              const existente = this.mapaDescuentos.get(rel.producto_id) || 0;
+              const existente = nuevoMapa.get(rel.producto_id) || 0;
               if (promo.porcentaje > existente) {
-                this.mapaDescuentos.set(rel.producto_id, promo.porcentaje);
+                nuevoMapa.set(rel.producto_id, promo.porcentaje);
               }
             });
           }
         });
+        
+        this.mapaDescuentos.set(nuevoMapa);
       }
     } catch (error) {
       console.error('Error al cargar promociones:', error);
     }
   }
 
-  // --- UTILS DE ORDENAMIENTO Y FILTRO ---
+  // --- FILTROS Y ORDENAMIENTO ---
   
   cambiarFiltroEstado(estado: 'todos' | 'activos' | 'desactivados'): void {
-    this.filtroEstado = estado;
+    this.filtroEstado.set(estado);
     this.resetearVirtualScroll();
   }
 
   toggleOrdenPrecio() {
-    this.ordenStock = 'none';
-    this.ordenPrecio = this.ordenPrecio === 'none' ? 'desc' : (this.ordenPrecio === 'desc' ? 'asc' : 'none');
+    this.ordenStock.set('none');
+    const actual = this.ordenPrecio();
+    this.ordenPrecio.set(
+      actual === 'none' ? 'desc' : (actual === 'desc' ? 'asc' : 'none')
+    );
     this.resetearVirtualScroll();
   }
 
   toggleOrdenStock() {
-    this.ordenPrecio = 'none';
-    this.ordenStock = this.ordenStock === 'none' ? 'desc' : (this.ordenStock === 'desc' ? 'asc' : 'none');
+    this.ordenPrecio.set('none');
+    const actual = this.ordenStock();
+    this.ordenStock.set(
+      actual === 'none' ? 'desc' : (actual === 'desc' ? 'asc' : 'none')
+    );
     this.resetearVirtualScroll();
   }
 
   limpiarFiltros() {
-    this.ordenPrecio = 'none';
-    this.ordenStock = 'none';
-    this._filtro = ''; // Limpia la variable visual
-    this.searchSubject.next(''); // Limpia la búsqueda lógica
+    this.ordenPrecio.set('none');
+    this.ordenStock.set('none');
+    this._filtroInterno.set('');
+    this.searchSubject.next('');
     this.resetearVirtualScroll();
   }
 
-  // --- LÓGICA SCANNER ---
+  // --- SCANNER DE CÓDIGOS ---
+  
   verificarSoporteEscaner() {
-    this.soportaEscaner = 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices;
+    const soporta = 'mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices;
+    this.soportaEscaner.set(soporta);
   }
 
-  cargarQuagga(): void {
+  async cargarQuagga(): Promise<void> {
     if (typeof window.Quagga === 'undefined') {
-      const script = document.createElement('script');
-      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js';
-      script.async = true;
-      script.onerror = () => {
-        this.errorScanner = 'No se pudo cargar el scanner.';
-      };
-      document.body.appendChild(script);
+      return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js';
+        script.async = true;
+        script.onload = () => resolve();
+        script.onerror = () => {
+          this.errorScanner.set('No se pudo cargar el scanner.');
+          resolve();
+        };
+        document.body.appendChild(script);
+      });
     }
   }
 
   abrirScanner(): void {
-    this.mostrarScanner = true;
-    this.intentosScanner = 0;
-    this.errorScanner = '';
-    this.escaneando = true;
+    this.mostrarScanner.set(true);
+    this.intentosScanner.set(0);
+    this.errorScanner.set('');
+    this.escaneando.set(true);
     document.body.style.overflow = 'hidden';
     setTimeout(() => this.iniciarScanner(), 500);
   }
 
   async iniciarScanner(): Promise<void> {
     if (typeof window.Quagga === 'undefined') {
-      this.errorScanner = 'Scanner no disponible. Recargando...';
+      this.errorScanner.set('Scanner no disponible. Recargando...');
       setTimeout(() => window.location.reload(), 2000);
       return;
     }
 
     const container = document.querySelector('#scanner-container');
     if (!container) {
-      if (this.intentosScanner < 3) {
-        this.intentosScanner++;
+      if (this.intentosScanner() < 3) {
+        this.intentosScanner.update(i => i + 1);
         setTimeout(() => this.iniciarScanner(), 300);
       } else {
-        this.errorScanner = 'Error al inicializar el scanner.';
+        this.errorScanner.set('Error al inicializar el scanner.');
         this.cerrarScanner();
       }
       return;
     }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      this.errorScanner = '❌ Tu navegador no soporta el acceso a la cámara.';
+      this.errorScanner.set('❌ Tu navegador no soporta el acceso a la cámara.');
       this.cerrarScanner();
       return;
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } } });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: { ideal: "environment" } } 
+      });
       stream.getTracks().forEach(track => track.stop());
       this.inicializarQuagga();
     } catch (err: any) {
-      this.errorScanner = '❌ Error al acceder a la cámara: ' + (err.message || '');
+      this.errorScanner.set('❌ Error al acceder a la cámara: ' + (err.message || ''));
       this.cerrarScanner();
     }
   }
@@ -374,40 +407,53 @@ export class ProductosComponent implements OnInit, OnDestroy {
         name: "Live",
         type: "LiveStream",
         target: document.querySelector('#scanner-container'),
-        constraints: { width: { min: 640 }, height: { min: 480 }, facingMode: "environment", aspectRatio: { min: 1, max: 2 } },
+        constraints: { 
+          width: { min: 640 }, 
+          height: { min: 480 }, 
+          facingMode: "environment", 
+          aspectRatio: { min: 1, max: 2 } 
+        },
       },
       locator: { patchSize: "medium", halfSample: true },
-      numOfWorkers: 2, // Reducido para mejor performance móvil
+      numOfWorkers: 2,
       frequency: 5,
       decoder: {
         readers: ["ean_reader", "code_128_reader", "code_39_reader"],
-        debug: { drawBoundingBox: true, showFrequency: false, drawScanline: true, showPattern: false }
+        debug: { 
+          drawBoundingBox: true, 
+          showFrequency: false, 
+          drawScanline: true, 
+          showPattern: false 
+        }
       },
       locate: true
     }, (err: any) => {
       if (err) {
-        this.errorScanner = 'Error al iniciar Quagga: ' + err;
+        this.errorScanner.set('Error al iniciar Quagga: ' + err);
         this.cerrarScanner();
         return;
       }
       Quagga.start();
-      this.scannerActivo = true;
+      this.scannerActivo.set(true);
     });
 
     Quagga.onDetected((data: QuaggaDetectionResult) => {
       const codigo = data.codeResult.code;
       if (navigator.vibrate) navigator.vibrate(200);
       
-      // Actualiza el filtro, lo que dispara el Subject y la búsqueda en servidor
-      this.filtro = codigo; 
+      this.filtro = codigo;
       this.cerrarScanner();
     });
   }
 
   detenerScanner(): void {
-    if (this.scannerActivo && typeof window.Quagga !== 'undefined') {
-      try { window.Quagga!.stop(); } catch (err) { console.error(err); }
-      this.scannerActivo = false;
+    if (this.scannerActivo() && typeof window.Quagga !== 'undefined') {
+      try { 
+        window.Quagga!.stop(); 
+      } catch (err) { 
+        console.error(err); 
+      }
+      this.scannerActivo.set(false);
     }
     const container = document.querySelector('#scanner-container');
     if (container) container.innerHTML = '';
@@ -415,10 +461,20 @@ export class ProductosComponent implements OnInit, OnDestroy {
 
   cerrarScanner(): void {
     this.detenerScanner();
-    this.mostrarScanner = false;
-    this.escaneando = false;
-    this.intentosScanner = 0;
-    this.errorScanner = '';
-    document.body.style.overflow = ''; 
+    this.mostrarScanner.set(false);
+    this.escaneando.set(false);
+    this.intentosScanner.set(0);
+    this.errorScanner.set('');
+    document.body.style.overflow = '';
+  }
+
+  // --- TRACKBY FUNCTIONS ---
+  
+  trackByProductoId(index: number, producto: Producto): string {
+    return producto.id;
+  }
+
+  trackByEstado(index: number, estado: string): string {
+    return estado;
   }
 }

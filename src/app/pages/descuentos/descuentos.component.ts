@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { Descuento } from '../../models/descuento.model';
@@ -10,83 +10,122 @@ import { ThemeService } from '../../services/theme.service';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { PermisoDirective } from '../../directives/permiso.directive';
 
 @Component({
   selector: 'app-descuentos',
-  imports: [CommonModule, FormsModule, RouterModule, MonedaArsPipe],
+  imports: [CommonModule, FormsModule, RouterModule, MonedaArsPipe, PermisoDirective],
   standalone: true,
   templateUrl: './descuentos.component.html',
-  styleUrl: './descuentos.component.css'
+  styleUrl: './descuentos.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DescuentosComponent implements OnInit, OnDestroy {
-  // Tab activo
-  tabActivo: 'descuentos' | 'promociones' = 'descuentos';
-  
-  // Estados de Descuentos
-  descuentos: Descuento[] = [];
-  descuento: Descuento = this.nuevoDescuento();
-  modo: 'agregar' | 'editar' = 'agregar';
-  
-  // Estados de Promociones
-  promociones: PromocionConProductos[] = [];
-  
-  // CORRECCIÓN: Inicialización directa para evitar el error "does not exist"
-  promocion: Promocion = {
-    nombre: '',
-    descripcion: '',
-    porcentaje: 0,
-    fecha_inicio: new Date().toISOString().split('T')[0],
-    fecha_fin: new Date(new Date().setDate(new Date().getDate() + 7)).toISOString().split('T')[0],
-    activa: true
-  };
+  private supabase = inject(SupabaseService);
+  public themeService = inject(ThemeService);
 
-  modoPromocion: 'agregar' | 'editar' = 'agregar';
+  // Columnas específicas para consultas optimizadas
+  private readonly COLUMNAS_DESCUENTOS = '*';
+  private readonly COLUMNAS_PRODUCTOS = 'id, codigo, nombre, marca, categoria, precio, talle, cantidad_stock';
+  private readonly COLUMNAS_PROMOCIONES = `
+    *,
+    promocion_productos (
+      producto_id,
+      productos ( id, codigo, nombre, marca, categoria, precio )
+    )
+  `;
   
-  // --- LÓGICA DE SELECCIÓN DE PRODUCTOS (OPTIMIZADA) ---
+  // --- SIGNALS PARA ESTADO DEL COMPONENTE ---
+  tabActivo = signal<'descuentos' | 'promociones'>('descuentos');
   
-  // Búsqueda Global
-  busquedaProducto: string = '';
-  productosBuscados: Producto[] = [];
-  cargandoProductos = false;
+  descuentos = signal<Descuento[]>([]);
+  promociones = signal<PromocionConProductos[]>([]);
+  productosBuscados = signal<Producto[]>([]);
+  
+  cargandoProductos = signal(false);
+  isGuardando = signal(false);
+
+  // Estados de formularios (para ngModel)
+  private _descuento = signal<Descuento>(this.nuevoDescuento());
+  private _modo = signal<'agregar' | 'editar'>('agregar');
+  
+  get descuento(): Descuento {
+    return this._descuento();
+  }
+  set descuento(value: Descuento) {
+    this._descuento.set(value);
+  }
+
+  get modo(): 'agregar' | 'editar' {
+    return this._modo();
+  }
+  set modo(value: 'agregar' | 'editar') {
+    this._modo.set(value);
+  }
+  
+  private _promocion = signal<Promocion>(this.nuevaPromocion());
+  private _modoPromocion = signal<'agregar' | 'editar'>('agregar');
+
+  get promocion(): Promocion {
+    return this._promocion();
+  }
+  set promocion(value: Promocion) {
+    this._promocion.set(value);
+  }
+
+  get modoPromocion(): 'agregar' | 'editar' {
+    return this._modoPromocion();
+  }
+  set modoPromocion(value: 'agregar' | 'editar') {
+    this._modoPromocion.set(value);
+  }
+  
+  // Búsqueda
+  private _busquedaProducto = signal('');
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription | null = null;
 
-  // Categorías y Productos (Lazy Load)
-  categorias: string[] = []; 
-  productosPorCategoria: { [key: string]: Producto[] } = {}; 
-  cargandoCategoria: { [key: string]: boolean } = {};
-  expandido: { [key: string]: boolean } = {}; // Estado visual de acordeones
+  get busquedaProducto(): string {
+    return this._busquedaProducto();
+  }
+  set busquedaProducto(value: string) {
+    this._busquedaProducto.set(value);
+  }
+
+  // Categorías (Lazy Load)
+  categorias = signal<string[]>([]);
+  productosPorCategoria = signal<{ [key: string]: Producto[] }>({});
+  cargandoCategoria = signal<{ [key: string]: boolean }>({});
+  expandido = signal<{ [key: string]: boolean }>({});
   
   // Selección
-  productosSeleccionados: Set<string> = new Set(); // IDs
-  productosSeleccionadosData: Producto[] = []; // Para mostrar el resumen visual
-  seleccionarTodaCategoria: { [key: string]: boolean } = {}; // Checkbox padre
+  productosSeleccionados = signal<Set<string>>(new Set());
+  productosSeleccionadosData = signal<Producto[]>([]);
+  seleccionarTodaCategoria = signal<{ [key: string]: boolean }>({});
 
-  // UI Generales
-  mensaje = '';
-  error = '';
-  idAEliminar: string | null = null;
-  idPromocionAEliminar: string | null = null;
-  toastVisible = false;
-  toastMensaje = '';
-  toastColor = 'bg-green-600';
-  mostrarConfirmacion: boolean = false;
-  mostrarConfirmacionPromocion: boolean = false;
-  mostrarSelectorProductos: boolean = false;
-  promocionExpandida: string | null = null;
+  // UI
+  idAEliminar = signal<string | null>(null);
+  idPromocionAEliminar = signal<string | null>(null);
+  
+  toastVisible = signal(false);
+  toastMensaje = signal('');
+  toastColor = signal('bg-green-600');
+  
+  mostrarConfirmacion = signal(false);
+  mostrarConfirmacionPromocion = signal(false);
+  mostrarSelectorProductos = signal(false);
+  promocionExpandida = signal<string | null>(null);
+  
   private toastTimeout: any;
 
-  constructor(
-    private supabase: SupabaseService,
-    public themeService: ThemeService
-  ) {}
+  // Computed signals
+  cantidadProductosSeleccionados = computed(() => this.productosSeleccionados().size);
 
   ngOnInit(): void {
     this.obtenerDescuentos();
     this.obtenerPromociones();
     this.cargarCategoriasUnicas();
 
-    // Configurar buscador reactivo
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(400),
       distinctUntilChanged()
@@ -100,9 +139,21 @@ export class DescuentosComponent implements OnInit, OnDestroy {
     if (this.searchSubscription) this.searchSubscription.unsubscribe();
   }
 
-  // ==================== HELPER DE CREACIÓN ====================
+  // --- TRACKBY FUNCTIONS ---
+  trackById(index: number, item: any): string {
+    return item.id;
+  }
 
-  // Este método se usa para resetear el formulario
+  trackByCategoria(index: number, categoria: string): string {
+    return categoria;
+  }
+
+  trackByProductoId(index: number, producto: Producto): string {
+    return producto.id;
+  }
+
+  // ==================== HELPERS ====================
+
   nuevaPromocion(): Promocion {
     const hoy = new Date();
     const finSemana = new Date();
@@ -129,7 +180,7 @@ export class DescuentosComponent implements OnInit, OnDestroy {
     };
   }
 
-  // ==================== LÓGICA DE CATEGORÍAS (LAZY LOAD) ====================
+  // ==================== CATEGORÍAS ====================
 
   async cargarCategoriasUnicas() {
     try {
@@ -142,27 +193,36 @@ export class DescuentosComponent implements OnInit, OnDestroy {
       if (error) throw error;
 
       const categoriasUnicas = new Set((data || []).map((p: any) => p.categoria));
-      this.categorias = Array.from(categoriasUnicas).sort();
+      this.categorias.set(Array.from(categoriasUnicas).sort());
     } catch (error) {
       console.error('Error cargando categorías:', error);
     }
   }
 
   async toggleAcordeonCategoria(categoria: string) {
-    this.expandido[categoria] = !this.expandido[categoria];
+    this.expandido.update(exp => ({
+      ...exp,
+      [categoria]: !exp[categoria]
+    }));
 
-    // Si expandimos y no hay datos, los cargamos
-    if (this.expandido[categoria] && !this.productosPorCategoria[categoria]) {
+    const expandidoActual = this.expandido();
+    const productosActuales = this.productosPorCategoria();
+    
+    if (expandidoActual[categoria] && !productosActuales[categoria]) {
       await this.cargarProductosDeCategoria(categoria);
     }
   }
 
   async cargarProductosDeCategoria(categoria: string) {
-    this.cargandoCategoria[categoria] = true;
+    this.cargandoCategoria.update(cargando => ({
+      ...cargando,
+      [categoria]: true
+    }));
+
     try {
       const { data, error } = await this.supabase.getClient()
         .from('productos')
-        .select('id, codigo, nombre, marca, categoria, precio, talle, cantidad_stock, cantidad_deposito')
+        .select(this.COLUMNAS_PRODUCTOS)
         .eq('categoria', categoria)
         .eq('activo', true)
         .eq('eliminado', false)
@@ -170,19 +230,24 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
       if (error) throw error;
 
-      this.productosPorCategoria[categoria] = (data || []) as Producto[];
+      this.productosPorCategoria.update(prods => ({
+        ...prods,
+        [categoria]: (data || []) as Producto[]
+      }));
       
-      // Sincronizar estado visual "Seleccionar Todo"
       this.verificarEstadoCategoria(categoria);
 
     } catch (error) {
       console.error(`Error cargando productos de ${categoria}:`, error);
     } finally {
-      this.cargandoCategoria[categoria] = false;
+      this.cargandoCategoria.update(cargando => ({
+        ...cargando,
+        [categoria]: false
+      }));
     }
   }
 
-  // ==================== LÓGICA DE BÚSQUEDA GLOBAL ====================
+  // ==================== BÚSQUEDA ====================
 
   onSearchProducto(texto: string) {
     this.busquedaProducto = texto;
@@ -191,16 +256,16 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
   async buscarProductosEnServidor(termino: string) {
     if (!termino.trim()) {
-      this.productosBuscados = [];
+      this.productosBuscados.set([]);
       return;
     }
 
-    this.cargandoProductos = true;
+    this.cargandoProductos.set(true);
     try {
       const t = termino.trim();
       const { data, error } = await this.supabase.getClient()
         .from('productos')
-        .select('id, codigo, nombre, marca, categoria, talle, precio, cantidad_stock, cantidad_deposito')
+        .select(this.COLUMNAS_PRODUCTOS)
         .eq('activo', true)
         .eq('eliminado', false)
         .or(`nombre.ilike.%${t}%,codigo.ilike.%${t}%,marca.ilike.%${t}%,categoria.ilike.%${t}%`)
@@ -208,112 +273,145 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
       if (error) throw error;
       
-      this.productosBuscados = (data || []) as Producto[];
-
+      this.productosBuscados.set((data || []) as Producto[]);
     } catch (error) {
       console.error('Error buscando productos:', error);
     } finally {
-      this.cargandoProductos = false;
+      this.cargandoProductos.set(false);
     }
   }
 
-  // ==================== LÓGICA DE SELECCIÓN ====================
+  // ==================== SELECCIÓN ====================
 
   toggleProducto(producto: Producto, categoria?: string) {
     const cat = categoria || producto.categoria;
+    const seleccionados = new Set(this.productosSeleccionados());
+    let productosData = [...this.productosSeleccionadosData()];
 
-    if (this.productosSeleccionados.has(producto.id)) {
-      // Deseleccionar
-      this.productosSeleccionados.delete(producto.id);
-      this.productosSeleccionadosData = this.productosSeleccionadosData.filter(p => p.id !== producto.id);
-      // Desmarcar el "Todos" de la categoría si corresponde
-      if (cat) this.seleccionarTodaCategoria[cat] = false;
+    if (seleccionados.has(producto.id)) {
+      seleccionados.delete(producto.id);
+      productosData = productosData.filter(p => p.id !== producto.id);
+      
+      if (cat) {
+        this.seleccionarTodaCategoria.update(sel => ({
+          ...sel,
+          [cat]: false
+        }));
+      }
     } else {
-      // Seleccionar
-      this.productosSeleccionados.add(producto.id);
-      this.productosSeleccionadosData.push(producto);
-      // Verificar si ahora están todos seleccionados en esa categoría
-      if (cat) this.verificarEstadoCategoria(cat);
+      seleccionados.add(producto.id);
+      productosData.push(producto);
+      
+      if (cat) {
+        this.verificarEstadoCategoria(cat);
+      }
     }
+
+    this.productosSeleccionados.set(seleccionados);
+    this.productosSeleccionadosData.set(productosData);
   }
 
   async toggleTodaCategoria(categoria: string) {
-    // Si no están cargados los productos, hay que cargarlos primero para saber sus IDs
-    if (!this.productosPorCategoria[categoria]) {
+    const productosActuales = this.productosPorCategoria();
+    
+    if (!productosActuales[categoria]) {
       await this.cargarProductosDeCategoria(categoria);
     }
 
-    const nuevoEstado = !this.seleccionarTodaCategoria[categoria];
-    this.seleccionarTodaCategoria[categoria] = nuevoEstado;
+    const seleccionActual = this.seleccionarTodaCategoria();
+    const nuevoEstado = !seleccionActual[categoria];
+    
+    this.seleccionarTodaCategoria.update(sel => ({
+      ...sel,
+      [categoria]: nuevoEstado
+    }));
 
-    const productos = this.productosPorCategoria[categoria] || [];
+    const productos = this.productosPorCategoria()[categoria] || [];
+    const seleccionados = new Set(this.productosSeleccionados());
+    let productosData = [...this.productosSeleccionadosData()];
     
     productos.forEach(p => {
       if (nuevoEstado) {
-        if (!this.productosSeleccionados.has(p.id)) {
-            this.productosSeleccionados.add(p.id);
-            this.productosSeleccionadosData.push(p);
+        if (!seleccionados.has(p.id)) {
+          seleccionados.add(p.id);
+          productosData.push(p);
         }
       } else {
-        if (this.productosSeleccionados.has(p.id)) {
-            this.productosSeleccionados.delete(p.id);
-            this.productosSeleccionadosData = this.productosSeleccionadosData.filter(item => item.id !== p.id);
+        if (seleccionados.has(p.id)) {
+          seleccionados.delete(p.id);
+          productosData = productosData.filter(item => item.id !== p.id);
         }
       }
     });
+
+    this.productosSeleccionados.set(seleccionados);
+    this.productosSeleccionadosData.set(productosData);
   }
 
   verificarEstadoCategoria(categoria: string) {
-    const productos = this.productosPorCategoria[categoria];
+    const productos = this.productosPorCategoria()[categoria];
     if (!productos || productos.length === 0) {
-        this.seleccionarTodaCategoria[categoria] = false;
-        return;
+      this.seleccionarTodaCategoria.update(sel => ({
+        ...sel,
+        [categoria]: false
+      }));
+      return;
     }
-    const todosSeleccionados = productos.every(p => this.productosSeleccionados.has(p.id));
-    this.seleccionarTodaCategoria[categoria] = todosSeleccionados;
+    
+    const seleccionados = this.productosSeleccionados();
+    const todosSeleccionados = productos.every(p => seleccionados.has(p.id));
+    
+    this.seleccionarTodaCategoria.update(sel => ({
+      ...sel,
+      [categoria]: todosSeleccionados
+    }));
   }
 
   estaSeleccionado(id: string): boolean {
-    return this.productosSeleccionados.has(id);
+    return this.productosSeleccionados().has(id);
   }
 
   limpiarSeleccion() {
-    this.productosSeleccionados.clear();
-    this.productosSeleccionadosData = [];
-    this.seleccionarTodaCategoria = {};
-    this.expandido = {}; 
+    this.productosSeleccionados.set(new Set());
+    this.productosSeleccionadosData.set([]);
+    this.seleccionarTodaCategoria.set({});
+    this.expandido.set({});
     this.busquedaProducto = '';
-    this.productosBuscados = [];
+    this.productosBuscados.set([]);
   }
   
   deseleccionarTodos() {
-      this.limpiarSeleccion();
+    this.limpiarSeleccion();
   }
 
-  // ==================== GUARDADO Y EDICIÓN DE PROMOCIONES ====================
+  // ==================== PROMOCIONES ====================
 
   async guardarPromocion() {
-    if (!this.promocion.nombre.trim()) {
+    const promo = this.promocion;
+    
+    if (!promo.nombre.trim()) {
       this.mostrarToast('Nombre obligatorio', 'bg-red-600');
       return;
     }
-    if (this.productosSeleccionados.size === 0) {
+    if (this.productosSeleccionados().size === 0) {
       this.mostrarToast('Selecciona al menos un producto', 'bg-red-600');
       return;
     }
 
+    this.isGuardando.set(true);
+
     try {
       const client = this.supabase.getClient();
       const promoData = {
-        nombre: this.promocion.nombre.trim(),
-        descripcion: this.promocion.descripcion,
-        porcentaje: this.promocion.porcentaje,
-        fecha_inicio: new Date(this.promocion.fecha_inicio).toISOString(),
-        fecha_fin: new Date(this.promocion.fecha_fin).toISOString(),
-        activa: this.promocion.activa
+        nombre: promo.nombre.trim(),
+        descripcion: promo.descripcion,
+        porcentaje: promo.porcentaje,
+        fecha_inicio: new Date(promo.fecha_inicio).toISOString(),
+        fecha_fin: new Date(promo.fecha_fin).toISOString(),
+        activa: promo.activa
       };
 
-      let promoId = this.promocion.id;
+      let promoId = promo.id;
 
       if (this.modoPromocion === 'agregar') {
         const { data, error } = await client.from('promociones').insert(promoData).select().single();
@@ -325,7 +423,7 @@ export class DescuentosComponent implements OnInit, OnDestroy {
         await client.from('promocion_productos').delete().eq('promocion_id', promoId);
       }
 
-      const relaciones = Array.from(this.productosSeleccionados).map(prodId => ({
+      const relaciones = Array.from(this.productosSeleccionados()).map(prodId => ({
         promocion_id: promoId,
         producto_id: prodId
       }));
@@ -344,71 +442,162 @@ export class DescuentosComponent implements OnInit, OnDestroy {
     } catch (error: any) {
       console.error(error);
       this.mostrarToast('Error al guardar: ' + error.message, 'bg-red-600');
+    } finally {
+      this.isGuardando.set(false);
     }
   }
 
   async editarPromocion(promo: PromocionConProductos) {
     this.promocion = { ...promo };
     this.modoPromocion = 'editar';
-    this.promocion.fecha_inicio = new Date(promo.fecha_inicio).toISOString().split('T')[0];
-    this.promocion.fecha_fin = new Date(promo.fecha_fin).toISOString().split('T')[0];
+    
+    const promocionActual = this.promocion;
+    promocionActual.fecha_inicio = new Date(promo.fecha_inicio).toISOString().split('T')[0];
+    promocionActual.fecha_fin = new Date(promo.fecha_fin).toISOString().split('T')[0];
+    this.promocion = promocionActual;
 
     this.limpiarSeleccion();
     
     if (promo.productos) {
-        promo.productos.forEach(p => {
-            this.productosSeleccionados.add(p.id);
-            this.productosSeleccionadosData.push(p);
-        });
-
-        const categoriasAfectadas = new Set(promo.productos.map(p => p.categoria));
-        categoriasAfectadas.forEach(cat => {
-             // Opcional: aquí podríamos precargar las categorías afectadas si quisiéramos
-             // pero por rendimiento lo dejamos lazy
-        });
+      const seleccionados = new Set(this.productosSeleccionados());
+      const productosData: Producto[] = [];
+      
+      promo.productos.forEach(p => {
+        seleccionados.add(p.id);
+        productosData.push(p);
+      });
+      
+      this.productosSeleccionados.set(seleccionados);
+      this.productosSeleccionadosData.set(productosData);
     }
     
-    this.mostrarSelectorProductos = true;
+    this.mostrarSelectorProductos.set(true);
   }
 
   cancelarEdicionPromocion() {
     this.promocion = this.nuevaPromocion();
     this.modoPromocion = 'agregar';
     this.limpiarSeleccion();
-    this.mostrarSelectorProductos = false;
+    this.mostrarSelectorProductos.set(false);
   }
 
-  // ==================== GESTIÓN DE CÓDIGOS DE DESCUENTO ====================
+  async obtenerPromociones() {
+  try {
+    const { data, error } = await this.supabase.getClient()
+      .from('promociones')
+      .select(this.COLUMNAS_PROMOCIONES)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const promosProcesadas = (data || []).map((promo: any) => {
+      // Convertir las fechas para que se muestren correctamente sin desajuste de zona horaria
+      const fechaInicio = new Date(promo.fecha_inicio);
+      const fechaFin = new Date(promo.fecha_fin);
+      
+      // Ajustar sumando el offset de zona horaria
+      fechaInicio.setMinutes(fechaInicio.getMinutes() + fechaInicio.getTimezoneOffset());
+      fechaFin.setMinutes(fechaFin.getMinutes() + fechaFin.getTimezoneOffset());
+
+      const productosPlanos = promo.promocion_productos?.map((pp: any) => pp.productos) || [];
+      
+      return {
+        ...promo,
+        fecha_inicio: fechaInicio.toISOString(),
+        fecha_fin: fechaFin.toISOString(),
+        cantidad_productos: productosPlanos.length,
+        productos: productosPlanos
+      };
+    });
+
+    this.promociones.set(promosProcesadas);
+
+  } catch (error) {
+    console.error('Error al obtener promociones:', error);
+    this.mostrarToast('Error al cargar promociones', 'bg-red-600');
+  }
+}
+
+  async cambiarEstadoPromocion(promo: PromocionConProductos) {
+    try {
+      const nuevoEstado = !promo.activa;
+      
+      // Optimistic Update
+      this.promociones.update(lista => 
+        lista.map(p => p.id === promo.id ? { ...p, activa: nuevoEstado } : p)
+      );
+
+      const { error } = await this.supabase.getClient()
+        .from('promociones')
+        .update({ activa: nuevoEstado })
+        .eq('id', promo.id);
+
+      if (error) throw error;
+      
+      this.mostrarToast(`Promoción ${nuevoEstado ? 'activada' : 'desactivada'}`, 'bg-green-600');
+      
+    } catch (error) {
+      this.obtenerPromociones(); // Rollback
+      this.mostrarToast('Error al cambiar estado', 'bg-red-600');
+    }
+  }
+
+  eliminarPromocion(id: string) {
+    this.idPromocionAEliminar.set(id);
+    this.mostrarConfirmacionPromocion.set(true);
+  }
+  
+  cancelarEliminarPromocion() {
+    this.mostrarConfirmacionPromocion.set(false);
+    this.idPromocionAEliminar.set(null);
+  }
+  
+  async confirmarEliminarPromocion() {
+    const id = this.idPromocionAEliminar();
+    if (!id) return;
+    
+    await this.supabase.getClient().from('promociones').delete().eq('id', id);
+    this.mostrarToast('Promoción eliminada', 'bg-red-600');
+    this.mostrarConfirmacionPromocion.set(false);
+    this.obtenerPromociones();
+  }
+
+  // ==================== DESCUENTOS ====================
 
   async obtenerDescuentos() {
     const { data, error } = await this.supabase.getClient()
       .from('descuentos')
-      .select('*')
+      .select(this.COLUMNAS_DESCUENTOS)
       .order('fecha_creacion', { ascending: false });
     
     if (error) {
       this.mostrarToast('Error al obtener los descuentos', 'bg-red-600');
       return;
     }
-    this.descuentos = data as Descuento[];
+    
+    this.descuentos.set(data as Descuento[]);
   }
 
   async guardarDescuento() {
-    if (!this.descuento.codigo.trim()) {
+    const desc = this.descuento;
+    
+    if (!desc.codigo.trim()) {
       this.mostrarToast('El código es obligatorio', 'bg-red-600');
       return;
     }
 
+    this.isGuardando.set(true);
+
     try {
       const client = this.supabase.getClient();
       const datos = {
-          codigo: this.descuento.codigo.trim().toUpperCase(),
-          tipo: this.descuento.tipo,
-          porcentaje: this.descuento.tipo === 'porcentaje' ? this.descuento.porcentaje : null,
-          cantidad_oferta: this.descuento.tipo === 'cantidad' ? this.descuento.cantidad_oferta : null,
-          cantidad_paga: this.descuento.tipo === 'cantidad' ? this.descuento.cantidad_paga : null,
-          aplica_mas_caro: this.descuento.tipo === 'cantidad' ? (this.descuento.aplica_mas_caro || false) : false,
-          activo: true
+        codigo: desc.codigo.trim().toUpperCase(),
+        tipo: desc.tipo,
+        porcentaje: desc.tipo === 'porcentaje' ? desc.porcentaje : null,
+        cantidad_oferta: desc.tipo === 'cantidad' ? desc.cantidad_oferta : null,
+        cantidad_paga: desc.tipo === 'cantidad' ? desc.cantidad_paga : null,
+        aplica_mas_caro: desc.tipo === 'cantidad' ? (desc.aplica_mas_caro || false) : false,
+        activo: true
       };
 
       if (this.modo === 'agregar') {
@@ -416,7 +605,7 @@ export class DescuentosComponent implements OnInit, OnDestroy {
         if (error) throw error;
         this.mostrarToast('Descuento agregado', 'bg-green-600');
       } else {
-        const { error } = await client.from('descuentos').update(datos).eq('id', this.descuento.id);
+        const { error } = await client.from('descuentos').update(datos).eq('id', desc.id);
         if (error) throw error;
         this.mostrarToast('Descuento actualizado', 'bg-green-600');
       }
@@ -427,6 +616,8 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
     } catch (error: any) {
       this.mostrarToast('Error: ' + error.message, 'bg-red-600');
+    } finally {
+      this.isGuardando.set(false);
     }
   }
 
@@ -442,107 +633,73 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
   async cambiarEstado(desc: Descuento) {
     try {
+      const nuevoEstado = !desc.activo;
+      
+      // Optimistic Update
+      this.descuentos.update(lista => 
+        lista.map(d => d.id === desc.id ? { ...d, activo: nuevoEstado } : d)
+      );
+
       const { error } = await this.supabase.getClient()
         .from('descuentos')
-        .update({ activo: !desc.activo })
+        .update({ activo: nuevoEstado })
         .eq('id', desc.id);
 
       if (error) throw error;
-      this.mostrarToast(`Descuento ${!desc.activo ? 'activado' : 'desactivado'}`, 'bg-green-600');
-      this.obtenerDescuentos();
+      
+      this.mostrarToast(`Descuento ${nuevoEstado ? 'activado' : 'desactivado'}`, 'bg-green-600');
+      
     } catch (error) {
+      this.obtenerDescuentos(); // Rollback
       this.mostrarToast('Error al cambiar estado', 'bg-red-600');
     }
   }
 
   eliminarDescuento(id: string) {
-    this.idAEliminar = id;
-    this.mostrarConfirmacion = true;
+    this.idAEliminar.set(id);
+    this.mostrarConfirmacion.set(true);
   }
 
   cancelarEliminar() {
-    this.mostrarConfirmacion = false;
-    this.idAEliminar = null;
+    this.mostrarConfirmacion.set(false);
+    this.idAEliminar.set(null);
   }
 
   async confirmarEliminar() {
-    if (!this.idAEliminar) return;
-    await this.supabase.getClient().from('descuentos').delete().eq('id', this.idAEliminar);
-    this.mostrarConfirmacion = false;
+    const id = this.idAEliminar();
+    if (!id) return;
+    
+    await this.supabase.getClient().from('descuentos').delete().eq('id', id);
+    this.mostrarConfirmacion.set(false);
     this.obtenerDescuentos();
   }
 
-  // ==================== CARGA DE PROMOCIONES (LISTA) ====================
-
-  async obtenerPromociones() {
-    try {
-      const { data, error } = await this.supabase.getClient()
-        .from('promociones')
-        .select(`
-          *,
-          promocion_productos (
-            producto_id,
-            productos ( id, codigo, nombre, marca, categoria, precio )
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      this.promociones = (data || []).map((promo: any) => {
-        const productosPlanos = promo.promocion_productos?.map((pp: any) => pp.productos) || [];
-        return {
-          ...promo,
-          cantidad_productos: productosPlanos.length,
-          productos: productosPlanos
-        };
-      });
-
-    } catch (error) {
-      console.error('Error al obtener promociones:', error);
-      this.mostrarToast('Error al cargar promociones', 'bg-red-600');
-    }
-  }
-
-  // --- UTILS & UI ---
+  // ==================== UTILS ====================
 
   mostrarToast(mensaje: string, color: string = 'bg-green-600') {
-    this.toastMensaje = mensaje;
-    this.toastColor = color;
-    this.toastVisible = true;
+    this.toastMensaje.set(mensaje);
+    this.toastColor.set(color);
+    this.toastVisible.set(true);
+    
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => { this.cerrarToast(); }, 3000);
+    this.toastTimeout = setTimeout(() => { 
+      this.cerrarToast(); 
+    }, 3000);
   }
   
-  cerrarToast() { this.toastVisible = false; }
+  cerrarToast() { 
+    this.toastVisible.set(false);
+  }
 
   toggleExpansion(id: string) {
-    this.promocionExpandida = this.promocionExpandida === id ? null : id;
-  }
-  
-  eliminarPromocion(id: string) {
-    this.idPromocionAEliminar = id;
-    this.mostrarConfirmacionPromocion = true;
-  }
-  
-  cancelarEliminarPromocion() {
-    this.mostrarConfirmacionPromocion = false;
-    this.idPromocionAEliminar = null;
-  }
-  
-  async confirmarEliminarPromocion() {
-    if(!this.idPromocionAEliminar) return;
-    await this.supabase.getClient().from('promociones').delete().eq('id', this.idPromocionAEliminar);
-    this.mostrarToast('Promoción eliminada', 'bg-red-600');
-    this.mostrarConfirmacionPromocion = false;
-    this.obtenerPromociones();
+    const actual = this.promocionExpandida();
+    this.promocionExpandida.set(actual === id ? null : id);
   }
 
-  async cambiarEstadoPromocion(promo: PromocionConProductos) {
-    await this.supabase.getClient().from('promociones').update({ activa: !promo.activa }).eq('id', promo.id);
-    this.obtenerPromociones();
+  cambiarTab(tab: 'descuentos' | 'promociones') {
+    this.tabActivo.set(tab);
   }
-
+  
   esPromocionActiva(promo: PromocionConProductos): boolean {
     if (!promo.activa) return false;
     const now = new Date();

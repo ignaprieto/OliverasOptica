@@ -70,22 +70,18 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  private async redirectByRole() {
+ private async redirectByRole() {
     try {
-      const userRole = await this.supabase.getCurrentUserRole();
+      const user = await this.supabase.getCurrentUser();
       
-      if (userRole === 'admin') {
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
-      } else if (userRole === 'vendedor') {
-        // Redirigir a Ventas (su pantalla principal)
-        this.router.navigate(['/ventas'], { replaceUrl: true });
-      } else {
-        this.router.navigate(['/dashboard'], { replaceUrl: true });
+      if (user) {
+         // Todos al dashboard. El dashboard filtrará qué mostrar.
+         await this.router.navigate(['/dashboard'], { replaceUrl: true });
       }
-
     } catch (error) {
       console.error('Error redirección:', error);
-      this.router.navigate(['/ventas'], { replaceUrl: true });
+      // Fallback seguro
+      this.router.navigate(['/login'], { replaceUrl: true });
     }
   }
 }

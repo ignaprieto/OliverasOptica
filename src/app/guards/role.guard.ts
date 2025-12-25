@@ -1,11 +1,12 @@
 import { CanActivateFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { SupabaseService } from '../services/supabase.service';
+import { PermisosService } from '../services/permisos.service';
 
 const RUTA_A_VISTA: { [key: string]: string } = {
   '/dashboard': 'dashboard',
   '/ventas': 'ventas',
-  '/productos': 'productos',
+  '/productos': 'productos', 
   '/stock': 'stock',
   '/descuentos': 'descuentos',
   '/finanzas': 'finanzas',
@@ -21,35 +22,32 @@ const RUTA_A_VISTA: { [key: string]: string } = {
 export const roleGuard: CanActivateFn = async (route, state) => {
   const router = inject(Router);
   const supabase = inject(SupabaseService);
+  const permisosService = inject(PermisosService);
 
-  const role = await supabase.getCurrentUserRole();
+  await permisosService.cargarPermisos(); 
 
-  // 1. Admin pasa siempre
-  if (role === 'admin') {
-    return true;
-  }
-
-  // 2. Vendedor: Validar permiso específico
-  if (role === 'vendedor') {
-    const urlBase = state.url.split('?')[0].split('/')[1]; // ej: 'ventas'
-    const vistaRequerida = RUTA_A_VISTA[`/${urlBase}`] || urlBase;
-
-    // Si tiene permiso, pasa
-    if (await supabase.puedeVerVista(vistaRequerida)) {
-      return true;
-    }
-    
-    // Si NO tiene permiso, redirigir a su home
-    const home = await supabase.getPrimeraVistaAccesible();
-    if (home) {
-      router.navigate([`/${home}`]);
-    } else {
-      router.navigate(['/login']);
-    }
+  const user = await supabase.getCurrentUser();
+  if (!user) {
+    router.navigate(['/login']);
     return false;
   }
 
-  // 3. Guest o error
-  router.navigate(['/login']);
+  const rol = user.user_metadata?.['rol'];
+  if (rol === 'admin') return true;
+
+  const urlBase = state.url.split('?')[0].split('/')[1]; 
+  const vistaRequerida = RUTA_A_VISTA[`/${urlBase}`] || urlBase;
+
+  // ✅ CORRECCIÓN FINAL: Permitir siempre 'dashboard'
+  if (vistaRequerida === 'dashboard' || !vistaRequerida) {
+     return true; 
+  }
+
+  if (permisosService.puede(vistaRequerida, 'ver')) {
+    return true;
+  }
+  
+  // Si falla, mandar al dashboard (que es seguro), NO a la primera vista accesible
+  router.navigate(['/dashboard']); 
   return false;
 };

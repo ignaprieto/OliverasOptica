@@ -1,8 +1,9 @@
 <div class="min-h-screen p-4 sm:p-6 transition-colors duration-300" 
      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-50 to-slate-100'"
-     [class.animate-fade-in-scale]="!isLoading">
+     [class.animate-fade-in-scale]="!isLoading()">
     
-    <div *ngIf="isLoading" class="max-w-6xl mx-auto flex items-center justify-center min-h-[60vh]">
+    <!-- Loader -->
+    <div *ngIf="isLoading()" class="max-w-6xl mx-auto flex items-center justify-center min-h-[60vh]">
         <div class="flex flex-col items-center">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 mb-4"
                  [ngClass]="themeService.theme() === 'dark' ? 'border-blue-400' : 'border-blue-600'"></div>
@@ -13,8 +14,9 @@
         </div>
     </div>
 
-    <div *ngIf="!isLoading" class="max-w-6xl mx-auto space-y-6">
+    <div *ngIf="!isLoading()" class="max-w-6xl mx-auto space-y-6">
 
+        <!-- Header -->
         <div class="mb-6 sm:mb-8">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div class="flex items-center gap-3">
@@ -24,8 +26,10 @@
                         </svg>
                     </div>
                     <div>
-                        <h1 [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'" class="text-2xl sm:text-3xl font-bold">Aplicar Aumento</h1>
-                        <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'" class="text-xs sm:text-sm">Gestión masiva de precios por categoría</p>
+                        <h1 [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'" 
+                            class="text-2xl sm:text-3xl font-bold">Aplicar Aumento</h1>
+                        <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'" 
+                           class="text-xs sm:text-sm">Gestión masiva de precios por categoría</p>
                     </div>
                 </div>
                 
@@ -44,9 +48,8 @@
             </div>
         </div>
         
-        <div *ngIf="!confirmando" 
-             class="relative max-w-xl mx-auto mb-8">
-             
+        <!-- Barra de búsqueda -->
+        <div *ngIf="!confirmando()" class="relative max-w-xl mx-auto mb-8">
              <input 
                 type="text" 
                 [ngModel]="filtroTexto"
@@ -60,68 +63,80 @@
                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                  </svg>
              </div>
-             <div class="absolute right-4 top-1/2 -translate-y-1/2" *ngIf="isLoading">
+             <div class="absolute right-4 top-1/2 -translate-y-1/2" *ngIf="isLoading()">
                 <div class="animate-spin h-5 w-5 border-2 border-blue-500 rounded-full border-t-transparent"></div>
              </div>
         </div>
 
-        <div *ngIf="!confirmando">
+        <div *ngIf="!confirmando()">
             
-            <div *ngIf="totalPaginas > 1" class="flex justify-center mb-6 gap-3">
-                <button (click)="cambiarPagina(paginaActual - 1)" [disabled]="paginaActual === 1"
-                    class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 disabled:opacity-50 text-sm font-medium transition hover:bg-gray-300 dark:hover:bg-gray-600"
-                    [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+            <!-- Paginación superior -->
+            <div *ngIf="totalPaginas() > 1" class="flex justify-center mb-6 gap-3">
+                <button (click)="cambiarPagina(paginaActual() - 1)" 
+                        [disabled]="paginaActual() === 1"
+                        class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 disabled:opacity-50 text-sm font-medium transition hover:bg-gray-300 dark:hover:bg-gray-600"
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
                     Anterior
                 </button>
                 <span class="px-4 py-2 text-sm font-bold flex items-center"
                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
-                    Página {{ paginaActual }} de {{ totalPaginas }}
+                    Página {{ paginaActual() }} de {{ totalPaginas() }}
                 </span>
-                <button (click)="cambiarPagina(paginaActual + 1)" [disabled]="paginaActual === totalPaginas"
-                    class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 disabled:opacity-50 text-sm font-medium transition hover:bg-gray-300 dark:hover:bg-gray-600"
-                    [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+                <button (click)="cambiarPagina(paginaActual() + 1)" 
+                        [disabled]="paginaActual() === totalPaginas()"
+                        class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 disabled:opacity-50 text-sm font-medium transition hover:bg-gray-300 dark:hover:bg-gray-600"
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
                     Siguiente
                 </button>
             </div>
 
-            <div *ngIf="categoriasVisibles.length === 0" class="text-center py-12">
-                 <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">No se encontraron categorías o productos.</p>
+            <!-- Sin resultados -->
+            <div *ngIf="categoriasVisibles().length === 0" class="text-center py-12">
+                 <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                   No se encontraron categorías o productos.
+                 </p>
             </div>
 
+            <!-- Lista de categorías -->
             <div class="space-y-4">
-                <div *ngFor="let categoria of categoriasVisibles" 
+                <div *ngFor="let categoria of categoriasVisibles(); trackBy: trackByCategoria" 
                      class="rounded-xl border overflow-hidden transition-all duration-300 shadow-sm"
                      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
                     
+                    <!-- Header de categoría -->
                     <div class="p-4 flex items-center justify-between cursor-pointer transition-colors select-none"
                          [ngClass]="themeService.theme() === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'"
                          (click)="toggleCategoria(categoria)">
                         
                         <div class="flex items-center gap-3">
-                             <div class="w-1 h-8 rounded-full" [ngClass]="expandido[categoria] ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'"></div>
+                             <div class="w-1 h-8 rounded-full" 
+                                  [ngClass]="expandido()[categoria] ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'"></div>
                              
                              <div>
-                                 <h3 class="font-bold text-lg" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">{{ categoria }}</h3>
-                                 <span *ngIf="productosPorCategoria[categoria]" 
+                                 <h3 class="font-bold text-lg" 
+                                     [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'">
+                                   {{ categoria }}
+                                 </h3>
+                                 <span *ngIf="productosPorCategoria()[categoria]" 
                                        class="text-xs font-medium opacity-70"
                                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
-                                     {{ productosPorCategoria[categoria].length }} productos
+                                      {{ productosPorCategoria()[categoria].length }} productos
                                  </span>
                              </div>
                         </div>
 
                         <div class="flex items-center gap-4">
-                            <button *ngIf="expandido[categoria]" 
+                            <button *ngIf="expandido()[categoria]" 
                                     (click)="$event.stopPropagation(); toggleTodos(categoria)"
                                     class="text-sm font-medium px-3 py-1.5 rounded-lg transition-colors"
-                                    [ngClass]="aumentarTodaCategoria[categoria] 
+                                    [ngClass]="aumentarTodaCategoria()[categoria] 
                                         ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' 
                                         : 'text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30'">
-                               {{ aumentarTodaCategoria[categoria] ? 'Deseleccionar todos' : 'Seleccionar todos' }}
+                               {{ aumentarTodaCategoria()[categoria] ? 'Deseleccionar todos' : 'Seleccionar todos' }}
                             </button>
                             
                             <svg class="w-6 h-6 transition-transform duration-300" 
-                                 [class.rotate-180]="expandido[categoria]"
+                                 [class.rotate-180]="expandido()[categoria]"
                                  [ngClass]="themeService.theme() === 'dark' ? 'text-gray-500' : 'text-gray-400'"
                                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -129,16 +144,21 @@
                         </div>
                     </div>
 
-                    <div *ngIf="expandido[categoria]" class="border-t"
+                    <!-- Lista de productos -->
+                    <div *ngIf="expandido()[categoria]" class="border-t"
                          [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 bg-gray-900/30' : 'border-gray-100 bg-gray-50'">
                         
-                        <div *ngIf="cargandoProductosCategoria[categoria]" class="py-8 flex justify-center items-center flex-col gap-2">
+                        <!-- Loader de productos -->
+                        <div *ngIf="cargandoProductosCategoria()[categoria]" 
+                             class="py-8 flex justify-center items-center flex-col gap-2">
                              <div class="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent"></div>
                              <p class="text-xs text-gray-500">Cargando productos...</p>
                         </div>
 
-                        <div *ngIf="!cargandoProductosCategoria[categoria]" class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                             <div *ngFor="let prod of productosPorCategoria[categoria]"
+                        <!-- Grid de productos -->
+                        <div *ngIf="!cargandoProductosCategoria()[categoria]" 
+                             class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                             <div *ngFor="let prod of productosPorCategoria()[categoria]; trackBy: trackByProductoId"
                                   (click)="toggleSeleccion(prod.id, categoria)"
                                   class="p-3 rounded-lg border cursor-pointer transition-all relative overflow-hidden group"
                                   [ngClass]="{
@@ -148,17 +168,26 @@
                                   
                                 <div class="flex justify-between items-start relative z-10">
                                     <div class="flex-1 pr-2">
-                                        <p class="font-medium text-sm" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">{{ prod.nombre }}</p>
-                                        <p class="text-xs opacity-70" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">{{ prod.marca }}</p>
+                                        <p class="font-medium text-sm" 
+                                           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+                                          {{ prod.nombre }}
+                                        </p>
+                                        <p class="text-xs opacity-70" 
+                                           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+                                          {{ prod.marca }}
+                                        </p>
                                     </div>
-                                    <span class="font-bold text-sm" [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-600'">
+                                    <span class="font-bold text-sm" 
+                                          [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-600'">
                                         {{ prod.precio | monedaArs }}
                                     </span>
                                 </div>
 
                                 <div *ngIf="estaProductoSeleccionado(prod.id)" 
                                      class="absolute bottom-2 right-2 text-blue-500 animate-fade-in-scale">
-                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                    </svg>
                                 </div>
                              </div>
                         </div>
@@ -166,26 +195,39 @@
                 </div>
             </div>
 
-            <div *ngIf="totalPaginas > 1" class="flex justify-center mt-8 gap-2 pb-24">
-                <button (click)="cambiarPagina(paginaActual - 1)" [disabled]="paginaActual === 1"
-                    class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 disabled:opacity-50 text-sm transition"
-                    [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">Anterior</button>
+            <!-- Paginación inferior -->
+            <div *ngIf="totalPaginas() > 1" class="flex justify-center mt-8 gap-2 pb-24">
+                <button (click)="cambiarPagina(paginaActual() - 1)" 
+                        [disabled]="paginaActual() === 1"
+                        class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 disabled:opacity-50 text-sm transition"
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+                  Anterior
+                </button>
                 
-                <button (click)="cambiarPagina(paginaActual + 1)" [disabled]="paginaActual === totalPaginas"
-                    class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 disabled:opacity-50 text-sm transition"
-                    [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">Siguiente</button>
+                <button (click)="cambiarPagina(paginaActual() + 1)" 
+                        [disabled]="paginaActual() === totalPaginas()"
+                        class="px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 disabled:opacity-50 text-sm transition"
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-800'">
+                  Siguiente
+                </button>
             </div>
 
+            <!-- Barra inferior fija -->
             <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 w-[95%] max-w-3xl bg-white dark:bg-gray-800 p-3 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center gap-3 sm:gap-6 animate-slide-up">
                 
                 <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start px-2 border-r-0 sm:border-r border-gray-200 dark:border-gray-700 sm:pr-4">
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-sm">
-                            {{ seleccionados.size }}
+                            {{ seleccionados().size }}
                         </div>
-                        <span class="text-sm font-medium" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">seleccionados</span>
+                        <span class="text-sm font-medium" 
+                              [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
+                          seleccionados
+                        </span>
                     </div>
-                    <button (click)="reset()" class="text-xs text-red-500 hover:text-red-600 hover:underline font-medium" *ngIf="seleccionados.size > 0">
+                    <button (click)="reset()" 
+                            class="text-xs text-red-500 hover:text-red-600 hover:underline font-medium" 
+                            *ngIf="seleccionados().size > 0">
                         Limpiar todo
                     </button>
                 </div>
@@ -200,12 +242,15 @@
                             <option value="precio">$ Precio Fijo</option>
                         </select>
                         
-                        <input type="number" [(ngModel)]="valorAumento" placeholder="0.00" 
+                        <input type="number" 
+                               [(ngModel)]="valorAumento" 
+                               placeholder="0.00" 
                                class="w-24 px-3 py-2 rounded-lg border-none text-sm focus:ring-2 focus:ring-blue-500 text-center font-bold"
                                [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 text-white placeholder-gray-500' : 'bg-gray-100 text-gray-900 placeholder-gray-400'">
                     </div>
                     
-                    <button (click)="pasarAPasoConfirmacion()" 
+                    <button *appPermiso="['aumento', 'crear']"
+                            (click)="pasarAPasoConfirmacion()" 
                             class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-2 rounded-lg font-bold text-sm shadow-lg transition-all hover:scale-105 hover:shadow-blue-500/30 whitespace-nowrap">
                         Aplicar
                     </button>
@@ -213,32 +258,46 @@
             </div>
         </div>
 
-        <div *ngIf="confirmando" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <!-- Modal de confirmación -->
+        <div *ngIf="confirmando()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" (click)="cancelar()"></div>
 
             <div class="relative rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-fade-in-scale"
                  [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'">
                 
-                <div class="px-6 py-4 border-b" [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
-                    <h3 class="text-xl font-bold" [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'">Confirmar Aumento</h3>
+                <div class="px-6 py-4 border-b" 
+                     [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+                    <h3 class="text-xl font-bold" 
+                        [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'">
+                      Confirmar Aumento
+                    </h3>
                 </div>
                 
                 <div class="p-6">
                     <div class="p-4 rounded-xl mb-4 text-center border"
                          [ngClass]="themeService.theme() === 'dark' ? 'bg-blue-900/20 border-blue-800' : 'bg-blue-50 border-blue-100'">
-                        <p class="text-sm opacity-80 mb-1" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">Se aplicará un aumento de</p>
-                        <p class="text-3xl font-black tracking-tight" [ngClass]="themeService.theme() === 'dark' ? 'text-blue-400' : 'text-blue-600'">
-                            {{ valorAumento }} {{ tipoAumento === 'porcentaje' ? '%' : '$' }}
+                        <p class="text-sm opacity-80 mb-1" 
+                           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">
+                          Se aplicará un aumento de
                         </p>
-                        <p class="text-xs mt-2 font-medium" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
-                            Afectando a {{ seleccionados.size }} productos
+                        <p class="text-3xl font-black tracking-tight" 
+                           [ngClass]="themeService.theme() === 'dark' ? 'text-blue-400' : 'text-blue-600'">
+                            {{ valorAumento() }} {{ tipoAumento() === 'porcentaje' ? '%' : '$' }}
+                        </p>
+                        <p class="text-xs mt-2 font-medium" 
+                           [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+                            Afectando a {{ seleccionados().size }} productos
                         </p>
                     </div>
 
-                    <p class="text-xs font-semibold mb-2 uppercase tracking-wider opacity-70" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">Detalle de cambios:</p>
+                    <p class="text-xs font-semibold mb-2 uppercase tracking-wider opacity-70" 
+                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+                      Detalle de cambios:
+                    </p>
                     <div class="max-h-48 overflow-y-auto mb-6 rounded-lg p-2 space-y-1" 
                          [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900/50' : 'bg-gray-50'">
-                        <p *ngFor="let item of resumenAumento" class="text-sm px-2 py-1 rounded"
+                        <p *ngFor="let item of resumenAumento(); trackBy: trackByResumen" 
+                           class="text-sm px-2 py-1 rounded"
                            [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-200'">
                            {{ item }}
                         </p>
@@ -250,20 +309,24 @@
                                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
                             Cancelar
                         </button>
-                        <button (click)="aplicarAumento()" [disabled]="isLoading"
+                        
+                        <button *appPermiso="['aumento', 'crear']"
+                                (click)="aplicarAumento()" 
+                                [disabled]="isLoading()"
                                 class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg transition-all transform active:scale-95 flex justify-center items-center gap-2">
-                            <div *ngIf="isLoading" class="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
-                            <span>{{ isLoading ? 'Aplicando...' : 'Confirmar' }}</span>
+                            <div *ngIf="isLoading()" class="animate-spin h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+                            <span>{{ isLoading() ? 'Aplicando...' : 'Confirmar' }}</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div *ngIf="toastVisible" 
+        <!-- Toast notification -->
+        <div *ngIf="toastVisible()" 
              class="fixed top-24 left-1/2 -translate-x-1/2 z-[80] px-6 py-3 rounded-full shadow-2xl text-white font-medium animate-slide-up flex items-center gap-2"
-             [ngClass]="toastColor">
-             <span>{{ toastMensaje }}</span>
+             [ngClass]="toastColor()">
+             <span>{{ toastMensaje() }}</span>
         </div>
 
     </div>

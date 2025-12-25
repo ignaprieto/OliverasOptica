@@ -9,21 +9,23 @@
         <h1 class="text-3xl font-bold tracking-tight">Gestión de Caja</h1>
         <div class="flex items-center gap-2 mt-1">
           <span class="relative flex h-3 w-3">
-            @if (cajaAbierta) {
+            @if (cajaAbierta()) {
               <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
             }
             <span class="relative inline-flex rounded-full h-3 w-3" 
-                  [ngClass]="cajaAbierta ? 'bg-green-500' : 'bg-red-500'"></span>
+                  [ngClass]="cajaAbierta() ? 'bg-green-500' : 'bg-red-500'"></span>
           </span>
           <p class="text-sm opacity-70 font-medium">
-            Estado: {{ cajaAbierta ? 'Abierta' : 'Cerrada' }}
+            Estado: {{ cajaAbierta() ? 'Abierta' : 'Cerrada' }}
           </p>
 
-          <div *ngIf="cajaDeFechaAnterior" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
-  <p class="font-bold">¡Cuidado!</p>
-  <p>Esta caja quedó abierta desde una fecha anterior ({{ cajaActual?.fecha_apertura | date:'dd/MM/yyyy' }}). 
-     Por favor, realiza el <strong>Cierre de Caja</strong> para comenzar el día correctamente.</p>
-</div>
+          @if (cajaDeFechaAnterior()) {
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+               <p class="font-bold">¡Cuidado!</p>
+               <p>Esta caja quedó abierta desde una fecha anterior ({{ cajaActual()?.fecha_apertura | date:'dd/MM/yyyy' }}). 
+                  Por favor, realiza el <strong>Cierre de Caja</strong> para comenzar el día correctamente.</p>
+            </div>
+          }
         </div>
       </div>
 
@@ -44,21 +46,24 @@
 
         <div class="w-px h-8 bg-gray-300 dark:bg-gray-700 mx-1 hidden sm:block"></div>
 
-        @if (!cajaAbierta) {
-          <button (click)="abrirModalApertura()"
+        @if (!cajaAbierta()) {
+          <button *appPermiso="['caja', 'crear']"
+            (click)="abrirModalApertura()"
             class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-lg shadow-green-500/20 font-medium transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
             Abrir Caja
           </button>
         } @else {
-          <button (click)="abrirModalCierre()"
+          <button *appPermiso="['caja', 'editar']"
+            (click)="abrirModalCierre()"
             class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 font-medium transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             Cerrar Caja
           </button>
         }
         
-        <button (click)="abrirModalConfiguracion()"
+        <button *appPermiso="['caja', 'editar']"
+          (click)="abrirModalConfiguracion()"
           class="p-2.5 rounded-xl border transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
           [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-600'"
           title="Configuración">
@@ -67,7 +72,7 @@
       </div>
     </div>
 
-    @if (cargando) {
+    @if (cargando()) {
       <div class="animate-pulse space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div class="h-32 rounded-2xl bg-gray-200 dark:bg-gray-800"></div>
@@ -79,17 +84,17 @@
       </div>
     } @else {
 
-      @if (cajaActual) {
+      @if (cajaActual()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
           <div class="p-5 rounded-2xl border bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md"
                [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
             <p class="text-sm font-bold opacity-60 uppercase tracking-wider">Monto en Caja</p>
             <h2 class="text-3xl font-bold mt-1 text-blue-600 dark:text-blue-400">
-              {{ cajaActual.monto_actual | monedaArs }}
+              {{ cajaActual()!.monto_actual | monedaArs }}
             </h2>
             <div class="mt-2 text-xs opacity-60 flex items-center gap-1 font-mono">
               <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-              Apertura: {{ formatearHora(cajaActual.fecha_apertura) }}
+              Apertura: {{ formatearHora(cajaActual()!.fecha_apertura) }}
             </div>
           </div>
 
@@ -97,7 +102,7 @@
                [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
             <p class="text-sm font-bold opacity-60 uppercase tracking-wider">Ventas Efectivo</p>
             <h2 class="text-3xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
-              {{ resumen.ventasEfectivo | monedaArs }}
+              {{ resumen().ventasEfectivo | monedaArs }}
             </h2>
             <p class="mt-2 text-xs text-emerald-600/80 dark:text-emerald-400/80 font-medium">
               Neto (Ingresos - Vueltos)
@@ -108,7 +113,7 @@
                [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
             <p class="text-sm font-bold opacity-60 uppercase tracking-wider">Movimientos</p>
             <h2 class="text-3xl font-bold mt-1" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'text-gray-100' : 'text-gray-800'">
-              {{ resumen.cantidadMovimientos }}
+              {{ resumen().cantidadMovimientos }}
             </h2>
             <p class="mt-2 text-xs opacity-60">Operaciones registradas</p>
           </div>
@@ -117,7 +122,7 @@
                [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
              <p class="text-sm font-bold opacity-60 uppercase tracking-wider">Base Inicial</p>
              <h2 class="text-3xl font-bold mt-1 opacity-80">
-               {{ cajaActual.monto_inicial | monedaArs }}
+               {{ cajaActual()!.monto_inicial | monedaArs }}
              </h2>
              <p class="mt-2 text-xs opacity-60">Monto de apertura</p>
           </div>
@@ -126,16 +131,16 @@
 
       <div class="border-b" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
         <nav class="-mb-px flex space-x-8">
-          <button (click)="mostrarHistorial = false"
+          <button (click)="mostrarHistorial.set(false)"
             class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
-            [ngClass]="!mostrarHistorial 
+            [ngClass]="!mostrarHistorial() 
               ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'">
             Movimientos Actuales
           </button>
-          <button (click)="mostrarHistorial = true"
+          <button (click)="mostrarHistorial.set(true)"
             class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
-            [ngClass]="mostrarHistorial 
+            [ngClass]="mostrarHistorial() 
               ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
               : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'">
             Historial de Cajas
@@ -145,8 +150,8 @@
 
       <div class="min-h-[400px]">
         
-        @if (!mostrarHistorial) {
-          @if (!cajaActual) {
+        @if (!mostrarHistorial()) {
+          @if (!cajaActual()) {
             <div class="flex flex-col items-center justify-center h-64 text-center p-8 border-2 border-dashed rounded-2xl animate-fade-in"
                  [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50/50'">
               <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
@@ -154,7 +159,10 @@
               </div>
               <h3 class="text-lg font-medium">La caja está cerrada</h3>
               <p class="text-sm opacity-60 mt-1 max-w-sm">Debes abrir la caja para comenzar a registrar movimientos.</p>
-              <button (click)="abrirModalApertura()" class="mt-4 text-blue-600 dark:text-blue-400 font-bold hover:underline">
+              
+              <button *appPermiso="['caja', 'crear']" 
+                      (click)="abrirModalApertura()" 
+                      class="mt-4 text-blue-600 dark:text-blue-400 font-bold hover:underline">
                 Abrir caja ahora
               </button>
             </div>
@@ -163,18 +171,18 @@
             <div class="space-y-4 animate-fade-in">
               <div class="flex justify-end">
                 <div class="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg border dark:border-gray-700">
-                  <button (click)="filtroTipo = 'todos'" class="px-3 py-1 text-xs font-bold rounded-md transition-all"
-                    [ngClass]="filtroTipo === 'todos' ? 'bg-white dark:bg-gray-700 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Todos</button>
-                  <button (click)="filtroTipo = 'ingreso'" class="px-3 py-1 text-xs font-bold rounded-md transition-all"
-                    [ngClass]="filtroTipo === 'ingreso' ? 'bg-white dark:bg-gray-700 shadow text-green-600 dark:text-green-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Ingresos</button>
-                  <button (click)="filtroTipo = 'egreso'" class="px-3 py-1 text-xs font-bold rounded-md transition-all"
-                    [ngClass]="filtroTipo === 'egreso' ? 'bg-white dark:bg-gray-700 shadow text-red-600 dark:text-red-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Egresos</button>
+                  <button (click)="filtroTipo.set('todos')" class="px-3 py-1 text-xs font-bold rounded-md transition-all"
+                    [ngClass]="filtroTipo() === 'todos' ? 'bg-white dark:bg-gray-700 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Todos</button>
+                  <button (click)="filtroTipo.set('ingreso')" class="px-3 py-1 text-xs font-bold rounded-md transition-all"
+                    [ngClass]="filtroTipo() === 'ingreso' ? 'bg-white dark:bg-gray-700 shadow text-green-600 dark:text-green-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Ingresos</button>
+                  <button (click)="filtroTipo.set('egreso')" class="px-3 py-1 text-xs font-bold rounded-md transition-all"
+                    [ngClass]="filtroTipo() === 'egreso' ? 'bg-white dark:bg-gray-700 shadow text-red-600 dark:text-red-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">Egresos</button>
                 </div>
               </div>
 
               <div class="overflow-hidden rounded-xl border shadow-sm" 
                    [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'">
-                <table class="min-w-full divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
+                <table class="min-w-full divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
                   <thead [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-900/50' : 'bg-gray-50'">
                     <tr>
                       <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider opacity-60">Hora</th>
@@ -184,7 +192,7 @@
                     </tr>
                   </thead>
                   <tbody class="divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
-                    @for (mov of movimientosFiltrados(); track mov.id) {
+                    @for (mov of movimientosFiltrados(); track trackByMovimiento($index, mov)) {
                       <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-xs font-mono opacity-70">
                           {{ formatearHora(mov.created_at) }}
@@ -225,12 +233,22 @@
                 </table>
               </div>
 
-              @if (!todosMovimientosCargados) {
+              @if (!todosMovimientosCargados()) {
                 <div class="flex justify-center pt-2">
-                  <button (click)="cargarMasMovimientos()" 
-                          class="px-4 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors">
-                    Cargar más movimientos
-                  </button>
+                  @if (cargandoMasMovimientos()) {
+                    <div class="flex items-center gap-2 px-4 py-2 opacity-70">
+                        <svg class="animate-spin h-5 w-5 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span class="text-sm font-medium">Cargando movimientos...</span>
+                    </div>
+                  } @else {
+                    <button (click)="cargarMasMovimientos()" 
+                            class="px-4 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors">
+                      Cargar más movimientos
+                    </button>
+                  }
                 </div>
               }
             </div>
@@ -242,13 +260,13 @@
                  [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
               <div class="flex-1">
                 <label class="block text-xs font-bold uppercase opacity-60 mb-1">Desde</label>
-                <input type="date" [(ngModel)]="filtroFechaDesde" (change)="aplicarFiltroFechas()"
+                <input type="date" [ngModel]="filtroFechaDesde()" (ngModelChange)="setFiltroFechaDesde($event); aplicarFiltroFechas()"
                   class="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600 text-white' : 'border-gray-300 text-gray-900'">
               </div>
               <div class="flex-1">
                 <label class="block text-xs font-bold uppercase opacity-60 mb-1">Hasta</label>
-                <input type="date" [(ngModel)]="filtroFechaHasta" (change)="aplicarFiltroFechas()"
+                <input type="date" [ngModel]="filtroFechaHasta()" (ngModelChange)="setFiltroFechaHasta($event); aplicarFiltroFechas()"
                   class="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600 text-white' : 'border-gray-300 text-gray-900'">
               </div>
@@ -262,7 +280,7 @@
             </div>
 
             <div class="space-y-4">
-              @for (caja of historialCajas; track caja.id) {
+              @for (caja of historialCajas(); track trackByCaja($index, caja)) {
                 <div class="rounded-xl border overflow-hidden transition-all hover:shadow-md bg-white dark:bg-gray-800"
                      [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
                   
@@ -296,7 +314,7 @@
                       </div>
                       <div class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                         <svg class="w-5 h-5 transition-transform duration-300 opacity-60" 
-                             [ngClass]="{'rotate-180': cajaSeleccionadaHistorial === caja.id}"
+                             [ngClass]="{'rotate-180': cajaSeleccionadaHistorial() === caja.id}"
                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
@@ -304,44 +322,44 @@
                     </div>
                   </div>
 
-                  @if (cajaSeleccionadaHistorial === caja.id) {
+                  @if (cajaSeleccionadaHistorial() === caja.id) {
                     <div class="border-t bg-gray-50/50 dark:bg-gray-900/50 p-4 animate-fade-in"
                          [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
                       
                       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                         <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                           <div class="text-[10px] font-bold uppercase opacity-50 mb-1">Monto Inicial</div>
-                           <div class="font-bold text-gray-800 dark:text-gray-200">{{ caja.monto_inicial | monedaArs }}</div>
-                         </div>
-                         <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                           <div class="text-[10px] font-bold uppercase opacity-50 mb-1">Monto Cierre</div>
-                           <div class="font-bold text-gray-800 dark:text-gray-200">{{ caja.monto_cierre ? (caja.monto_cierre | monedaArs) : '-' }}</div>
-                         </div>
-                         
-                         <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                           <div class="text-[10px] font-bold uppercase opacity-50 mb-1">Fecha Apertura</div>
-                           <div class="font-mono text-sm">
-                             {{ formatearFecha(caja.fecha_apertura) }} 
-                           </div>
-                         </div>
+                          <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div class="text-[10px] font-bold uppercase opacity-50 mb-1">Monto Inicial</div>
+                            <div class="font-bold text-gray-800 dark:text-gray-200">{{ caja.monto_inicial | monedaArs }}</div>
+                          </div>
+                          <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div class="text-[10px] font-bold uppercase opacity-50 mb-1">Monto Cierre</div>
+                            <div class="font-bold text-gray-800 dark:text-gray-200">{{ caja.monto_cierre ? (caja.monto_cierre | monedaArs) : '-' }}</div>
+                          </div>
+                          
+                          <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div class="text-[10px] font-bold uppercase opacity-50 mb-1">Fecha Apertura</div>
+                            <div class="font-mono text-sm">
+                              {{ formatearFecha(caja.fecha_apertura) }} 
+                            </div>
+                          </div>
 
-                         <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-                           <div class="text-[10px] font-bold uppercase opacity-50 mb-1">Fecha Cierre</div>
-                           <div class="font-mono text-sm">
-                             @if (caja.fecha_cierre) {
-                               {{ formatearFecha(caja.fecha_cierre) }} 
-                             } @else {
-                               -
-                             }
-                           </div>
-                         </div>
+                          <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+                            <div class="text-[10px] font-bold uppercase opacity-50 mb-1">Fecha Cierre</div>
+                            <div class="font-mono text-sm">
+                              @if (caja.fecha_cierre) {
+                                {{ formatearFecha(caja.fecha_cierre) }} 
+                              } @else {
+                                -
+                              }
+                            </div>
+                          </div>
                       </div>
 
                       <h4 class="text-xs font-bold uppercase opacity-60 mb-3 tracking-wide">Movimientos Registrados</h4>
                       <div class="overflow-hidden rounded-lg border" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
                         <table class="min-w-full text-sm">
                           <tbody class="divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
-                            @for (movH of movimientosHistorial; track movH.id) {
+                            @for (movH of movimientosHistorial(); track trackByMovimiento($index, movH)) {
                               <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                 <td class="px-4 py-2.5 opacity-70 font-mono text-xs">{{ formatearHora(movH.created_at) }}</td>
                                 <td class="px-4 py-2.5 font-medium">{{ movH.concepto }}</td>
@@ -362,15 +380,15 @@
               }
             </div>
 
-            @if (totalPaginasHistorial > 1) {
+            @if (totalPaginasHistorial() > 1) {
               <div class="flex justify-center gap-2 pt-6">
-                @for (pag of paginasHistorial; track $index) {
+                @for (pag of paginasHistorial(); track trackByIndex($index)) {
                    @if (pag === -1) {
                      <span class="px-3 py-2 opacity-50 text-sm">...</span>
                    } @else {
                      <button (click)="cambiarPaginaHistorial(pag!)"
                        class="w-9 h-9 rounded-lg text-sm font-bold transition-all shadow-sm flex items-center justify-center"
-                       [ngClass]="paginaActualHistorial === pag 
+                       [ngClass]="paginaActualHistorial() === pag 
                          ? 'bg-blue-600 text-white shadow-blue-500/30' 
                          : 'bg-white dark:bg-gray-800 border dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'">
                        {{ pag }}
@@ -385,7 +403,7 @@
     }
   </div>
 
-  @if (mostrarModalApertura) {
+  @if (mostrarModalApertura()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border dark:border-gray-700">
         <div class="p-6">
@@ -421,7 +439,10 @@
           <div class="flex gap-3 mt-8">
             <button (click)="cerrarModalApertura()" class="flex-1 px-4 py-3 rounded-xl border-2 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
              [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'">Cancelar</button>
-            <button (click)="confirmarApertura()" class="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/30 transition-transform active:scale-95">
+            
+            <button *appPermiso="['caja', 'crear']" 
+                    (click)="confirmarApertura()" 
+                    class="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold shadow-lg shadow-green-500/30 transition-transform active:scale-95">
               Confirmar Apertura
             </button>
           </div>
@@ -430,7 +451,7 @@
     </div>
   }
 
-  @if (mostrarModalCierre) {
+  @if (mostrarModalCierre()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border dark:border-gray-700">
         <div class="p-6">
@@ -447,7 +468,7 @@
           <div class="space-y-5">
             <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 flex justify-between items-center">
               <span class="text-sm font-bold opacity-70 uppercase tracking-wide">Monto Esperado</span>
-              <span class="font-bold text-xl font-mono">{{ (cajaActual?.monto_actual ?? 0) | monedaArs }}</span>
+              <span class="font-bold text-xl font-mono">{{ (cajaActual()?.monto_actual ?? 0) | monedaArs }}</span>
             </div>
 
             <div>
@@ -460,12 +481,12 @@
               </div>
             </div>
             
-            @if (montoCierre !== (cajaActual?.monto_actual || 0)) {
+            @if (montoCierre !== (cajaActual()?.monto_actual || 0)) {
                <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800/30 animate-fade-in">
                  <div class="flex justify-between items-center mb-1">
                    <span class="text-xs font-bold uppercase text-orange-800 dark:text-orange-300 tracking-wider">Diferencia</span>
                    <span class="font-bold text-orange-600 dark:text-orange-400 font-mono text-lg">
-                     {{ (montoCierre - (cajaActual?.monto_actual || 0)) | monedaArs }}
+                     {{ (montoCierre - (cajaActual()?.monto_actual || 0)) | monedaArs }}
                    </span>
                  </div>
                  <p class="text-xs opacity-70 mt-1 font-medium">Se generará un movimiento de ajuste automático.</p>
@@ -476,7 +497,10 @@
           <div class="flex gap-3 mt-8">
             <button (click)="cerrarModalCierre()" class="flex-1 px-4 py-3 rounded-xl border-2 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
              [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'">Cancelar</button>
-            <button (click)="confirmarCierre()" class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/30 transition-transform active:scale-95">
+            
+            <button *appPermiso="['caja', 'editar']" 
+                    (click)="confirmarCierre()" 
+                    class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/30 transition-transform active:scale-95">
               Confirmar Cierre
             </button>
           </div>
@@ -485,7 +509,7 @@
     </div>
   }
 
-  @if (mostrarModalConfiguracion) {
+  @if (mostrarModalConfiguracion()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border dark:border-gray-700">
         <div class="p-6 border-b dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
@@ -547,7 +571,10 @@
            <button (click)="cerrarModalConfiguracion()" class="px-4 py-2 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">
              Cancelar
            </button>
-           <button (click)="guardarConfiguracion()" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-transform active:scale-95 text-sm">
+           
+           <button *appPermiso="['caja', 'editar']"
+                   (click)="guardarConfiguracion()" 
+                   class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-transform active:scale-95 text-sm">
              Guardar Cambios
            </button>
         </div>
@@ -555,13 +582,12 @@
     </div>
   }
 
-  @if (toastVisible) {
+  @if (toastVisible()) {
     <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
       <div class="px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-3 text-white font-bold backdrop-blur-md shadow-black/20"
-           [ngClass]="toastColor">
-        <span>{{ toastMensaje }}</span>
+           [ngClass]="toastColor()">
+        <span>{{ toastMensaje() }}</span>
       </div>
     </div>
   }
-
 </div>

@@ -1,18 +1,20 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { SupabaseService } from '../../services/supabase.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ThemeService } from '../../services/theme.service';
+import { PermisoDirective } from '../../directives/permiso.directive';
 
 // --- INTERFACES ---
 interface Vendedor {
   id: string;
   nombre: string;
   dni: string;
+  email?: string; // ✅ Opcional porque no viene de la tabla vendedores
   activo: boolean;
   created_at: string;
-  usuario_id?: string; 
+  usuario_id?: string;
 }
 
 interface PermisoGestion {
@@ -36,43 +38,55 @@ interface PermisoDB {
 @Component({
   selector: 'app-empleados',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PermisoDirective],
   templateUrl: './empleados.component.html',
-  styleUrls: ['./empleados.component.css']
+  styleUrls: ['./empleados.component.css'],
+  changeDetection: ChangeDetectionStrategy.OnPush // ✅ OPTIMIZACIÓN 1: OnPush
 })
 export class EmpleadosComponent implements OnInit, OnDestroy {
-  // Formulario
-  nuevoNombre: string = '';
-  nuevoDni: string = '';
+  // ✅ OPTIMIZACIÓN 4: Selección explícita de columnas
+  private readonly COLUMNAS_VENDEDOR = 'id, nombre, dni, activo, created_at, usuario_id';
+  private readonly COLUMNAS_PERMISOS = 'empleado_id, vista, puede_ver, puede_crear, puede_editar, puede_eliminar';
   
-  // ✅ VARIABLES AGREGADAS PARA LA CREACIÓN AUTOMÁTICA
-  nuevoEmail: string = '';
-  nuevoPassword: string = '';
+  // ✅ OPTIMIZACIÓN 5: Paginación
+  private readonly PAGE_SIZE = 20;
+  private currentPage = 0;
+  private hasMoreData = true;
+
+  // ✅ OPTIMIZACIÓN 2: Migración a Signals
+  // Formulario Creación
+  nuevoNombre = signal('');
+  nuevoDni = signal('');
+  nuevoEmail = signal('');
+  nuevoPassword = signal('');
   
   // Datos
-  vendedores: Vendedor[] = [];
+  vendedores: WritableSignal<Vendedor[]> = signal([]);
   
   // Estados UI
-  isLoading: boolean = false;
-  isToastVisible: boolean = false;
-  mensajeToast: string = '';
-  tipoMensajeToast: 'success' | 'error' | 'warning' = 'success';
+  isLoading = signal(false);
+  isLoadingMore = signal(false); // ✅ Nuevo: para scroll infinito
+  isToastVisible = signal(false);
+  mensajeToast = signal('');
+  tipoMensajeToast: WritableSignal<'success' | 'error' | 'warning'> = signal('success');
   private toastTimeout: any;
   
   // Modales
-  showDeleteModal: boolean = false;
-  vendedorAEliminar: Vendedor | null = null;
-
-  showPermisosModal: boolean = false;
-  empleadoSeleccionado: Vendedor | null = null;
+  showDeleteModal = signal(false);
+  vendedorAEliminar: WritableSignal<Vendedor | null> = signal(null);
+  showPermisosModal = signal(false);
+  empleadoSeleccionado: WritableSignal<Vendedor | null> = signal(null);
+  showEditModal = signal(false);
+  vendedorAEditar: WritableSignal<Vendedor | null> = signal(null);
   
-  showEditModal: boolean = false;
-  vendedorAEditar: Vendedor | null = null;
-  editNombre: string = '';
-  editDni: string = '';
+  // Variables de Edición
+  editNombre = signal('');
+  editDni = signal('');
+  editEmail = signal('');
+  editPassword = signal('');
 
   // Matriz de permisos
-  permisosGestion: PermisoGestion[] = [];
+  permisosGestion: WritableSignal<PermisoGestion[]> = signal([]);
   
   readonly vistasDelSistema = [
     { vista: 'ventas', label: 'Ventas' },
@@ -103,76 +117,112 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
   }
 
+  // ✅ OPTIMIZACIÓN 7: TrackBy para rendimiento
+  trackByVendedorId(_index: number, item: Vendedor): string {
+    return item.id;
+  }
+
+  trackByPermisoVista(_index: number, item: PermisoGestion): string {
+    return item.vista;
+  }
+
   // --- LÓGICA DE FORMULARIO ---
   onDniInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     const valorLimpio = input.value.replace(/\D/g, '').substring(0, 8);
-    this.nuevoDni = valorLimpio;
+    this.nuevoDni.set(valorLimpio);
     if (input.value !== valorLimpio) input.value = valorLimpio;
-  }
-
-  validarDni(): boolean {
-    if (this.nuevoDni.length < 7) {
-      this.mostrarToast('El DNI debe tener al menos 7 dígitos', 'warning');
-      return false;
-    }
-    return true;
   }
 
   mostrarToast(message: string, type: 'success' | 'error' | 'warning' = 'success'): void {
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.mensajeToast = message;
-    this.tipoMensajeToast = type;
-    this.isToastVisible = true;
+    this.mensajeToast.set(message);
+    this.tipoMensajeToast.set(type);
+    this.isToastVisible.set(true);
     this.toastTimeout = setTimeout(() => this.cerrarToast(), 3000);
   }
 
   cerrarToast(): void {
-    this.isToastVisible = false;
+    this.isToastVisible.set(false);
   }
 
   // --- GESTIÓN DE VENDEDORES ---
-  async cargarVendedores(): Promise<void> {
-    this.isLoading = true;
+  async cargarVendedores(reset: boolean = true): Promise<void> {
+    if (reset) {
+      this.currentPage = 0;
+      this.hasMoreData = true;
+      this.isLoading.set(true);
+    } else {
+      this.isLoadingMore.set(true);
+    }
+
     try {
+      const from = this.currentPage * this.PAGE_SIZE;
+      const to = from + this.PAGE_SIZE - 1;
+
+      // ✅ OPTIMIZACIÓN 4 + 5: Columnas explícitas + paginación
       const { data, error } = await this.supabase.getClient()
         .from('vendedores')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select(this.COLUMNAS_VENDEDOR)
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
       if (error) throw error;
-      this.vendedores = (data as Vendedor[]) || [];
+
+      const newVendedores = (data as Vendedor[]) || [];
+      
+      if (newVendedores.length < this.PAGE_SIZE) {
+        this.hasMoreData = false;
+      }
+
+      if (reset) {
+        this.vendedores.set(newVendedores);
+      } else {
+        // ✅ Acumulación de datos en scroll infinito
+        this.vendedores.update(current => [...current, ...newVendedores]);
+      }
+
+      this.currentPage++;
     } catch (error) {
       this.mostrarToast('Error al cargar vendedores', 'error');
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
+      this.isLoadingMore.set(false);
+    }
+  }
+
+  // ✅ OPTIMIZACIÓN 5: Infinite Scroll
+  onScroll(event: Event): void {
+    const element = event.target as HTMLElement;
+    const threshold = 100; // px antes del final
+    const position = element.scrollTop + element.clientHeight;
+    const height = element.scrollHeight;
+
+    if (position > height - threshold && !this.isLoadingMore() && this.hasMoreData) {
+      this.cargarVendedores(false);
     }
   }
 
   async crearVendedor(): Promise<void> {
-    // Validaciones
-    if (!this.nuevoNombre.trim() || !this.nuevoDni || !this.nuevoEmail.trim() || !this.nuevoPassword) {
+    if (!this.nuevoNombre().trim() || !this.nuevoDni() || !this.nuevoEmail().trim() || !this.nuevoPassword()) {
       this.mostrarToast('Todos los campos son obligatorios', 'warning');
       return;
     }
     
-    if (this.nuevoPassword.length < 6) {
+    if (this.nuevoPassword().length < 6) {
       this.mostrarToast('La contraseña debe tener al menos 6 caracteres', 'warning');
       return;
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     
     try {
-      // ============================================================
-      // CAMBIO: USAR EDGE FUNCTION EN LUGAR DE RPC SQL
-      // ============================================================
       const { data, error } = await this.supabase.getClient().functions.invoke('crear-empleado', {
         body: {
-          nombre: this.nuevoNombre.trim(),
-          dni: this.nuevoDni,
-          email: this.nuevoEmail.trim(),
-          password: this.nuevoPassword
+          nombre: this.nuevoNombre().trim(),
+          dni: this.nuevoDni(),
+          email: this.nuevoEmail().trim(),
+          password: this.nuevoPassword()
         }
       });
 
@@ -184,25 +234,30 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
 
       this.mostrarToast('Empleado creado y vinculado correctamente', 'success');
       
-      // Limpiar
-      this.nuevoNombre = '';
-      this.nuevoDni = '';
-      this.nuevoEmail = '';
-      this.nuevoPassword = '';
+      this.nuevoNombre.set('');
+      this.nuevoDni.set('');
+      this.nuevoEmail.set('');
+      this.nuevoPassword.set('');
 
-      this.cargarVendedores();
+      this.cargarVendedores(true);
 
     } catch (error: any) {
       console.error('Error:', error);
       this.mostrarToast(error.message || 'Error desconocido', 'error');
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
 
   async toggleEstado(vendedor: Vendedor): Promise<void> {
     const estadoOriginal = vendedor.activo;
     vendedor.activo = !vendedor.activo;
+    
+    // Actualizar signal
+    this.vendedores.update(current => 
+      current.map(v => v.id === vendedor.id ? { ...v, activo: vendedor.activo } : v)
+    );
+
     try {
       const { error } = await this.supabase.getClient()
         .from('vendedores')
@@ -211,115 +266,137 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
       if (error) throw error;
     } catch (error) {
       vendedor.activo = estadoOriginal;
+      this.vendedores.update(current => 
+        current.map(v => v.id === vendedor.id ? { ...v, activo: estadoOriginal } : v)
+      );
       this.mostrarToast('Error al actualizar estado', 'error');
     }
   }
 
   confirmarEliminar(vendedor: Vendedor): void {
-    this.vendedorAEliminar = vendedor;
-    this.showDeleteModal = true;
+    this.vendedorAEliminar.set(vendedor);
+    this.showDeleteModal.set(true);
   }
 
   cancelarEliminar(): void {
-    this.showDeleteModal = false;
-    this.vendedorAEliminar = null;
-  }
-
-  // --- EDICIÓN DE DATOS ---
-  abrirModalEditar(vendedor: Vendedor): void {
-    this.vendedorAEditar = vendedor;
-    this.editNombre = vendedor.nombre;
-    this.editDni = vendedor.dni;
-    this.showEditModal = true;
-  }
-
-  cerrarModalEditar(): void {
-    this.showEditModal = false;
-    this.vendedorAEditar = null;
-    this.editNombre = '';
-    this.editDni = '';
-  }
-
-  async actualizarVendedor(): Promise<void> {
-    if (!this.vendedorAEditar || !this.editNombre.trim() || !this.editDni) return;
-
-    this.isLoading = true;
-    try {
-      const { error } = await this.supabase.getClient()
-        .from('vendedores')
-        .update({
-          nombre: this.editNombre.trim(),
-          dni: this.editDni
-        })
-        .eq('id', this.vendedorAEditar.id);
-
-      if (error) throw error;
-
-      const index = this.vendedores.findIndex(v => v.id === this.vendedorAEditar!.id);
-      if (index !== -1) {
-        this.vendedores[index] = { 
-          ...this.vendedores[index], 
-          nombre: this.editNombre.trim(), 
-          dni: this.editDni 
-        };
-      }
-
-      this.mostrarToast('Datos actualizados correctamente', 'success');
-      this.cerrarModalEditar();
-    } catch (error) {
-      this.mostrarToast('Error al actualizar vendedor', 'error');
-    } finally {
-      this.isLoading = false;
-    }
+    this.showDeleteModal.set(false);
+    this.vendedorAEliminar.set(null);
   }
 
   async eliminarVendedor(): Promise<void> {
-    if (!this.vendedorAEliminar) return;
-    this.isLoading = true;
+    const vendedor = this.vendedorAEliminar();
+    if (!vendedor) return;
+    
+    this.isLoading.set(true);
     try {
       const { error } = await this.supabase.getClient()
         .from('vendedores')
         .delete()
-        .eq('id', this.vendedorAEliminar.id);
+        .eq('id', vendedor.id);
 
       if (error) throw error;
-      this.vendedores = this.vendedores.filter(v => v.id !== this.vendedorAEliminar!.id);
+      
+      this.vendedores.update(current => current.filter(v => v.id !== vendedor.id));
       this.mostrarToast('Vendedor eliminado', 'success');
-      this.showDeleteModal = false;
+      this.showDeleteModal.set(false);
     } catch (error) {
       this.mostrarToast('Error al eliminar', 'error');
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
+    }
+  }
+
+  // --- EDICIÓN DE DATOS ---
+  abrirModalEditar(vendedor: Vendedor): void {
+    this.vendedorAEditar.set(vendedor);
+    this.editNombre.set(vendedor.nombre);
+    this.editDni.set(vendedor.dni);
+    this.editEmail.set(vendedor.email || '');
+    this.editPassword.set('');
+    this.showEditModal.set(true);
+  }
+
+  cerrarModalEditar(): void {
+    this.showEditModal.set(false);
+    this.vendedorAEditar.set(null);
+    this.editNombre.set('');
+    this.editDni.set('');
+    this.editEmail.set('');
+    this.editPassword.set('');
+  }
+
+  async actualizarVendedor(): Promise<void> {
+    const vendedor = this.vendedorAEditar();
+    if (!vendedor || !this.editNombre().trim() || !this.editDni()) return;
+
+    if (this.editPassword() && this.editPassword().length < 6) {
+      this.mostrarToast('La nueva contraseña debe tener 6+ caracteres', 'warning');
+      return;
+    }
+
+    this.isLoading.set(true);
+    try {
+      const { data, error } = await this.supabase.getClient().functions.invoke('actualizar-empleado', {
+        body: {
+          id: vendedor.id,
+          usuario_id: vendedor.usuario_id,
+          nombre: this.editNombre().trim(),
+          dni: this.editDni(),
+          email: this.editEmail().trim(),
+          password: this.editPassword() || null
+        }
+      });
+
+      if (error) throw error;
+      if (data && !data.success) throw new Error(data.error);
+
+      this.vendedores.update(current => 
+        current.map(v => v.id === vendedor.id 
+          ? { ...v, nombre: this.editNombre().trim(), dni: this.editDni(), email: this.editEmail().trim() }
+          : v
+        )
+      );
+
+      this.mostrarToast('Datos actualizados correctamente', 'success');
+      this.cerrarModalEditar();
+    } catch (error: any) {
+      console.error(error);
+      this.mostrarToast(error.message || 'Error al actualizar', 'error');
+    } finally {
+      this.isLoading.set(false);
     }
   }
 
   // --- GESTIÓN DE PERMISOS ---
   async abrirModalPermisos(empleado: Vendedor): Promise<void> {
-    this.empleadoSeleccionado = empleado;
-    this.showPermisosModal = true;
+    this.empleadoSeleccionado.set(empleado);
+    this.showPermisosModal.set(true);
     await this.cargarPermisosEmpleado();
   }
 
   cerrarModalPermisos(): void {
-    this.showPermisosModal = false;
-    this.empleadoSeleccionado = null;
-    this.permisosGestion = [];
+    this.showPermisosModal.set(false);
+    this.empleadoSeleccionado.set(null);
+    this.permisosGestion.set([]);
   }
 
   async cargarPermisosEmpleado(): Promise<void> {
-    if (!this.empleadoSeleccionado) return;
-    this.isLoading = true;
+    const empleado = this.empleadoSeleccionado();
+    if (!empleado) return;
+    
+    this.isLoading.set(true);
 
     try {
+      // ✅ OPTIMIZACIÓN 4: Columnas explícitas
       const { data, error } = await this.supabase.getClient()
         .from('permisos_empleado')
-        .select('*')
-        .eq('empleado_id', this.empleadoSeleccionado.id);
+        .select(this.COLUMNAS_PERMISOS)
+        .eq('empleado_id', empleado.id);
 
       if (error) throw error;
       const permisosDB = (data as PermisoDB[]) || [];
 
-      this.permisosGestion = this.vistasDelSistema.map(sys => {
+      const permisos = this.vistasDelSistema.map(sys => {
         const pDB = permisosDB.find(p => p.vista === sys.vista);
         return {
           vista: sys.vista,
@@ -331,20 +408,24 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
         };
       });
 
+      this.permisosGestion.set(permisos);
+
     } catch (error) {
       this.mostrarToast('Error al cargar permisos', 'error');
       this.cerrarModalPermisos();
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
   }
 
   async guardarPermisos(): Promise<void> {
-    if (!this.empleadoSeleccionado) return;
-    this.isLoading = true;
+    const empleado = this.empleadoSeleccionado();
+    if (!empleado) return;
+    
+    this.isLoading.set(true);
 
     try {
-      const empleadoId = this.empleadoSeleccionado.id;
+      const empleadoId = empleado.id;
       const client = this.supabase.getClient();
 
       const { error: delError } = await client
@@ -354,8 +435,8 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
       
       if (delError) throw delError;
 
-      const permisosAGuardar = this.permisosGestion
-        .filter(p => p.ver) 
+      const permisosAGuardar = this.permisosGestion()
+        .filter(p => p.ver)
         .map(p => ({
           empleado_id: empleadoId,
           vista: p.vista,
@@ -379,7 +460,32 @@ export class EmpleadosComponent implements OnInit, OnDestroy {
     } catch (error) {
       this.mostrarToast('Error al guardar permisos', 'error');
     } finally {
-      this.isLoading = false;
+      this.isLoading.set(false);
     }
+  }
+
+  // ✅ Métodos helper para binding con ngModel en template
+  updatePermisoVer(permiso: PermisoGestion, value: boolean): void {
+    this.permisosGestion.update(current =>
+      current.map(p => p.vista === permiso.vista ? { ...p, ver: value } : p)
+    );
+  }
+
+  updatePermisoCrear(permiso: PermisoGestion, value: boolean): void {
+    this.permisosGestion.update(current =>
+      current.map(p => p.vista === permiso.vista ? { ...p, crear: value } : p)
+    );
+  }
+
+  updatePermisoEditar(permiso: PermisoGestion, value: boolean): void {
+    this.permisosGestion.update(current =>
+      current.map(p => p.vista === permiso.vista ? { ...p, editar: value } : p)
+    );
+  }
+
+  updatePermisoEliminar(permiso: PermisoGestion, value: boolean): void {
+    this.permisosGestion.update(current =>
+      current.map(p => p.vista === permiso.vista ? { ...p, eliminar: value } : p)
+    );
   }
 }

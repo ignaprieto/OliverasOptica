@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { SupabaseService } from '../../services/supabase.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -7,91 +7,101 @@ import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
 import { ThemeService } from '../../services/theme.service';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { PermisoDirective } from '../../directives/permiso.directive';
 
 @Component({
   selector: 'app-finanzas',
   standalone: true,
-  imports: [FormsModule, CommonModule, RouterModule, MonedaArsPipe],
+  imports: [FormsModule, CommonModule, RouterModule, MonedaArsPipe, PermisoDirective],
   templateUrl: './finanzas.component.html',
   styleUrl: './finanzas.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush // ✅ 1. OnPush Strategy
 })
 export class FinanzasComponent implements OnInit, OnDestroy {
+  
+  // ✅ 2. MIGRACIÓN A SIGNALS
   // Formulario
-  fecha: string = new Date().toISOString().substring(0, 10);
-  categoria: string = '';
-  descripcion: string = '';
-  monto: number = 0;
-  // 1️⃣ NUEVO: Método de pago en formulario
-  metodoPago: 'efectivo' | 'transferencia' | 'tarjeta' | 'otro' = 'efectivo';
+  fecha = signal<string>(new Date().toISOString().substring(0, 10));
+  categoria = signal<string>('');
+  descripcion = signal<string>('');
+  monto = signal<number>(0);
+  metodoPago = signal<'efectivo' | 'transferencia' | 'tarjeta' | 'otro'>('efectivo');
 
   // Datos Visuales
-  gastos: any[] = [];
-  editandoId: string | null = null;
+  gastos = signal<any[]>([]);
+  editandoId = signal<string | null>(null);
 
   // Filtros
-  tipoFiltroFecha: 'mes' | 'dia' = 'mes';
-  filtroMes: string = new Date().toISOString().substring(0, 7);
-  filtroDia: string = new Date().toISOString().substring(0, 10);
-  // 2️⃣ NUEVO: Filtro en tabla
-  filtroMetodoPago: 'todos' | 'efectivo' | 'transferencia' | 'tarjeta' | 'otro' = 'todos';
+  tipoFiltroFecha = signal<'mes' | 'dia'>('mes');
+  filtroMes = signal<string>(new Date().toISOString().substring(0, 7));
+  filtroDia = signal<string>(new Date().toISOString().substring(0, 10));
+  filtroMetodoPago = signal<'todos' | 'efectivo' | 'transferencia' | 'tarjeta' | 'otro'>('todos');
 
   // Buscador
-  private _filtroCategoria: string = '';
+  private _filtroCategoria = signal<string>('');
   private searchSubject = new Subject<string>();
   private searchSubscription: Subscription | null = null;
 
-  get filtroCategoria(): string { return this._filtroCategoria; }
+  get filtroCategoria(): string { return this._filtroCategoria(); }
   set filtroCategoria(val: string) {
-    this._filtroCategoria = val;
+    this._filtroCategoria.set(val);
     this.searchSubject.next(val);
   }
 
-  // === ESTADÍSTICAS ===
-  balancePeriodo = {
+  // Estadísticas
+  balancePeriodo = signal({
     ventas: 0,
     gastos: 0,
     ganancia: 0
-  };
+  });
 
-  statsGlobales = {
+  statsGlobales = signal({
     gananciaAnual: 0,
     promedioGananciaMensual: 0,
     gananciaHistorica: 0,
     gastosAnual: 0,
     promedioGastosMensual: 0,
     gastosHistorico: 0
-  }
+  });
 
   // UI
-  mostrarModal = false;
-  gastoAEliminar: string | null = null;
-  cargandoTabla = false;
-  cargandoStats = false;
+  mostrarModal = signal<boolean>(false);
+  gastoAEliminar = signal<string | null>(null);
+  cargandoTabla = signal<boolean>(false);
+  cargandoStats = signal<boolean>(false);
+  cargandoMas = signal<boolean>(false); // ✅ Para scroll infinito
 
-  // Paginación
-  paginaActual = 1;
-  itemsPorPagina = 10;
-  totalRegistros = 0;
+  // ✅ 5. SCROLL INFINITO - Paginación
+  paginaActual = signal<number>(1);
+  readonly itemsPorPagina = 20; // Aumentado para scroll infinito
+  totalRegistros = signal<number>(0);
+  hayMasRegistros = computed(() => this.gastos().length < this.totalRegistros());
 
   // Toast
-  toastVisible = false;
-  toastcolor = 'bg-green-600';
-  toastMensaje = '';
-  toastTipo: 'success' | 'error' = 'success';
+  toastVisible = signal<boolean>(false);
+  toastcolor = signal<string>('bg-green-600');
+  toastMensaje = signal<string>('');
+  toastTipo = signal<'success' | 'error'>('success');
   toastTimeout: any = null;
 
-  constructor(private supabase: SupabaseService, public themeService: ThemeService) {}
+  // ✅ 4. OPTIMIZACIÓN CONSULTAS - Columnas explícitas
+  private readonly COLUMNAS_GASTOS = 'id, fecha, categoria, descripcion, monto, metodo_pago';
+
+  constructor(
+    private supabase: SupabaseService, 
+    public themeService: ThemeService
+  ) {}
 
   async ngOnInit() {
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(500),
       distinctUntilChanged()
     ).subscribe(() => {
-      this.paginaActual = 1;
+      this.paginaActual.set(1);
+      this.gastos.set([]); // Reset para nueva búsqueda
       this.cargarListaGastos();
     });
 
-    // Carga inicial
     await this.actualizarTodo();
   }
 
@@ -101,6 +111,8 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   }
 
   async actualizarTodo() {
+    this.gastos.set([]); // Reset antes de cargar
+    this.paginaActual.set(1);
     await Promise.all([
       this.cargarBalancePeriodo(),
       this.cargarEstadisticasGlobales(),
@@ -150,14 +162,14 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   // ================================================================
 
   private obtenerRangoFechas(): { inicio: string, fin: string } {
-    if (this.tipoFiltroFecha === 'dia') {
+    if (this.tipoFiltroFecha() === 'dia') {
       return {
-        inicio: `${this.filtroDia}T00:00:00`,
-        fin: `${this.filtroDia}T23:59:59`
+        inicio: `${this.filtroDia()}T00:00:00`,
+        fin: `${this.filtroDia()}T23:59:59`
       };
     } else {
-      const [year, month] = this.filtroMes.split('-').map(Number);
-      const inicio = `${this.filtroMes}-01T00:00:00`;
+      const [year, month] = this.filtroMes().split('-').map(Number);
+      const inicio = `${this.filtroMes()}-01T00:00:00`;
       const finMesDate = new Date(year, month, 0); 
       const fin = `${year}-${String(month).padStart(2, '0')}-${finMesDate.getDate()}T23:59:59`;
       return { inicio, fin };
@@ -165,13 +177,15 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   }
 
   cambiarFiltroFecha() {
-    this.paginaActual = 1;
+    this.paginaActual.set(1);
+    this.gastos.set([]);
     this.cargarBalancePeriodo();
     this.cargarListaGastos();
   }
 
   cambiarFiltroMetodo() {
-    this.paginaActual = 1;
+    this.paginaActual.set(1);
+    this.gastos.set([]);
     this.cargarListaGastos();
   }
 
@@ -190,9 +204,11 @@ export class FinanzasComponent implements OnInit, OnDestroy {
       const sumaVentas = (ventasRes.data || []).reduce((acc, v) => acc + Number(v.total_final), 0);
       const sumaRecambios = (recambiosRes.data || []).reduce((acc, r) => acc + Number(r.diferencia_abonada), 0);
       
-      this.balancePeriodo.gastos = sumaGastos;
-      this.balancePeriodo.ventas = sumaVentas + sumaRecambios;
-      this.balancePeriodo.ganancia = this.balancePeriodo.ventas - this.balancePeriodo.gastos;
+      this.balancePeriodo.set({
+        gastos: sumaGastos,
+        ventas: sumaVentas + sumaRecambios,
+        ganancia: (sumaVentas + sumaRecambios) - sumaGastos
+      });
 
     } catch (error) {
       console.error('Error balance periodo:', error);
@@ -200,7 +216,7 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   }
 
   async cargarEstadisticasGlobales() {
-    this.cargandoStats = true;
+    this.cargandoStats.set(true);
     const client = this.supabase.getClient();
     const year = new Date().getFullYear().toString();
     const inicioAnio = `${year}-01-01T00:00:00`;
@@ -224,47 +240,54 @@ export class FinanzasComponent implements OnInit, OnDestroy {
       const rAnual = (recambiosAnual.data || []).reduce((acc, i) => acc + Number(i.diferencia_abonada), 0);
       const mesActual = new Date().getMonth() + 1;
 
-      this.statsGlobales.gastosAnual = gAnual;
-      this.statsGlobales.promedioGastosMensual = mesActual > 0 ? (gAnual / mesActual) : 0;
-      this.statsGlobales.gananciaAnual = (vAnual + rAnual) - gAnual;
-      this.statsGlobales.promedioGananciaMensual = mesActual > 0 ? (this.statsGlobales.gananciaAnual / mesActual) : 0;
-
       const gHist = (gastosHist.data || []).reduce((acc, i) => acc + Number(i.monto), 0);
       const vHist = (ventasHist.data || []).reduce((acc, i) => acc + Number(i.total_final), 0);
       const rHist = (recambiosHist.data || []).reduce((acc, i) => acc + Number(i.diferencia_abonada), 0);
 
-      this.statsGlobales.gastosHistorico = gHist;
-      this.statsGlobales.gananciaHistorica = (vHist + rHist) - gHist;
+      this.statsGlobales.set({
+        gastosAnual: gAnual,
+        promedioGastosMensual: mesActual > 0 ? (gAnual / mesActual) : 0,
+        gananciaAnual: (vAnual + rAnual) - gAnual,
+        promedioGananciaMensual: mesActual > 0 ? ((vAnual + rAnual - gAnual) / mesActual) : 0,
+        gastosHistorico: gHist,
+        gananciaHistorica: (vHist + rHist) - gHist
+      });
 
     } catch (error) {
       console.error('Error calculando stats globales:', error);
     } finally {
-      this.cargandoStats = false;
+      this.cargandoStats.set(false);
     }
   }
 
-  async cargarListaGastos() {
-    this.cargandoTabla = true;
-    const from = (this.paginaActual - 1) * this.itemsPorPagina;
+  // ✅ 5. SCROLL INFINITO - Cargar más datos
+  async cargarListaGastos(acumular: boolean = false) {
+    if (acumular && !this.hayMasRegistros()) return;
+    
+    if (acumular) {
+      this.cargandoMas.set(true);
+    } else {
+      this.cargandoTabla.set(true);
+    }
+
+    const from = (this.paginaActual() - 1) * this.itemsPorPagina;
     const to = from + this.itemsPorPagina - 1;
     const { inicio, fin } = this.obtenerRangoFechas();
 
     try {
       let query = this.supabase.getClient()
         .from('gastos')
-        // 3️⃣ INCLUIMOS metodo_pago EN EL SELECT
-        .select('id, fecha, categoria, descripcion, monto, metodo_pago', { count: 'exact' })
+        .select(this.COLUMNAS_GASTOS, { count: 'exact' }) // ✅ Columnas explícitas
         .gte('fecha', inicio)
         .lte('fecha', fin)
         .order('fecha', { ascending: false });
 
-      // 4️⃣ FILTRO POR METODO PAGO
-      if (this.filtroMetodoPago !== 'todos') {
-        query = query.eq('metodo_pago', this.filtroMetodoPago);
+      if (this.filtroMetodoPago() !== 'todos') {
+        query = query.eq('metodo_pago', this.filtroMetodoPago());
       }
 
-      if (this.filtroCategoria.trim()) {
-        const termino = this.filtroCategoria.trim();
+      if (this._filtroCategoria().trim()) {
+        const termino = this._filtroCategoria().trim();
         query = query.or(`categoria.ilike.%${termino}%,descripcion.ilike.%${termino}%`);
       }
 
@@ -272,8 +295,7 @@ export class FinanzasComponent implements OnInit, OnDestroy {
 
       if (error) throw error;
 
-      // Procesar datos (Parsear Usuario)
-      this.gastos = (data || []).map(g => {
+      const gastosNuevos = (data || []).map(g => {
         const regexUsuario = /(.*)\s\(Por:\s(.*)\)$/;
         const match = g.descripcion ? g.descripcion.match(regexUsuario) : null;
 
@@ -292,12 +314,35 @@ export class FinanzasComponent implements OnInit, OnDestroy {
         };
       });
 
-      this.totalRegistros = count || 0;
+      if (acumular) {
+        this.gastos.update(prev => [...prev, ...gastosNuevos]);
+      } else {
+        this.gastos.set(gastosNuevos);
+      }
+
+      this.totalRegistros.set(count || 0);
 
     } catch (error: any) {
       this.mostrarToast('Error cargando lista: ' + error.message, 'error');
     } finally {
-      this.cargandoTabla = false;
+      this.cargandoTabla.set(false);
+      this.cargandoMas.set(false);
+    }
+  }
+
+  // ✅ 5. DETECCIÓN DE SCROLL INFINITO
+  onScroll(event: Event) {
+    const element = event.target as HTMLElement;
+    const scrollTop = element.scrollTop;
+    const scrollHeight = element.scrollHeight;
+    const clientHeight = element.clientHeight;
+
+    // Si está cerca del final (90%) y no está cargando
+    if (scrollTop + clientHeight >= scrollHeight * 0.9 && 
+        !this.cargandoMas() && 
+        this.hayMasRegistros()) {
+      this.paginaActual.update(p => p + 1);
+      this.cargarListaGastos(true); // Acumular datos
     }
   }
 
@@ -306,22 +351,21 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   // ================================================================
 
   async agregarGasto() {
-    if (!this.categoria || !this.descripcion || this.monto <= 0 || !this.fecha) {
+    if (!this.categoria() || !this.descripcion() || this.monto() <= 0 || !this.fecha()) {
       this.mostrarToast('Datos incompletos', 'error');
       return;
     }
 
-    this.cargandoTabla = true;
+    this.cargandoTabla.set(true);
 
     try {
       const client = this.supabase.getClient();
       const usuarioObj = await this.obtenerUsuarioActual();
       const usuarioNombre = usuarioObj.nombre;
 
-      // 5️⃣ VALIDACIÓN DE CAJA (Si es Efectivo)
       let cajaAbiertaId: string | null = null;
 
-      if (this.metodoPago === 'efectivo') {
+      if (this.metodoPago() === 'efectivo') {
         const { data: caja, error: errorCaja } = await client
           .from('cajas')
           .select('id')
@@ -336,40 +380,37 @@ export class FinanzasComponent implements OnInit, OnDestroy {
         cajaAbiertaId = caja.id;
       }
 
-      // Preparar fecha
-      const fechaInput = new Date(this.fecha + 'T00:00:00');
+      const fechaInput = new Date(this.fecha() + 'T00:00:00');
       const esHoy = new Date().toDateString() === fechaInput.toDateString();
-      let fechaParaGuardar = esHoy ? new Date() : new Date(this.fecha + 'T12:00:00');
+      let fechaParaGuardar = esHoy ? new Date() : new Date(this.fecha() + 'T12:00:00');
       
       const offsetMs = fechaParaGuardar.getTimezoneOffset() * 60000;
       const fechaLocal = new Date(fechaParaGuardar.getTime() - offsetMs);
 
-      const descripcionFinal = `${this.descripcion.trim()} (Por: ${usuarioNombre})`;
+      const descripcionFinal = `${this.descripcion().trim()} (Por: ${usuarioNombre})`;
 
-      // 6️⃣ GUARDAR GASTO
       const { error: errorGasto } = await client
         .from('gastos')
         .insert([{
           fecha: fechaLocal.toISOString(), 
-          categoria: this.categoria,
+          categoria: this.categoria(),
           descripcion: descripcionFinal,
-          monto: this.monto,
-          metodo_pago: this.metodoPago
+          monto: this.monto(),
+          metodo_pago: this.metodoPago()
         }])
         .select()
         .single();
 
       if (errorGasto) throw errorGasto;
 
-      // 7️⃣ REGISTRAR EN CAJA (Si corresponde)
-      if (this.metodoPago === 'efectivo' && cajaAbiertaId) {
+      if (this.metodoPago() === 'efectivo' && cajaAbiertaId) {
         const { error: errorMovimiento } = await client
           .from('movimientos_caja')
           .insert([{
             caja_id: cajaAbiertaId,
             tipo: 'egreso',
-            concepto: `Gasto: ${this.categoria} - ${this.descripcion}`,
-            monto: this.monto,
+            concepto: `Gasto: ${this.categoria()} - ${this.descripcion()}`,
+            monto: this.monto(),
             metodo: 'efectivo',
             usuario_id: usuarioObj.id,
             usuario_nombre: usuarioNombre,
@@ -389,32 +430,31 @@ export class FinanzasComponent implements OnInit, OnDestroy {
     } catch (error: any) {
       this.mostrarToast(error.message, 'error');
     } finally {
-      this.cargandoTabla = false;
+      this.cargandoTabla.set(false);
     }
   }
 
   async guardarEdicion() {
-    if (!this.editandoId) return;
+    if (!this.editandoId()) return;
 
     try {
         const usuarioObj = await this.obtenerUsuarioActual();
-        const descripcionFinal = `${this.descripcion.trim()} (Editado por: ${usuarioObj.nombre})`;
+        const descripcionFinal = `${this.descripcion().trim()} (Editado por: ${usuarioObj.nombre})`;
 
         const { error } = await this.supabase.getClient()
         .from('gastos')
         .update({ 
-            fecha: this.fecha,
-            categoria: this.categoria, 
+            fecha: this.fecha(),
+            categoria: this.categoria(), 
             descripcion: descripcionFinal,
-            monto: this.monto
-            // Nota: No actualizamos metodo_pago al editar para evitar inconsistencias con caja histórica
+            monto: this.monto()
         })
-        .eq('id', this.editandoId);
+        .eq('id', this.editandoId());
 
         if (error) throw error;
 
         this.mostrarToast('Gasto editado', 'success');
-        this.editandoId = null;
+        this.editandoId.set(null);
         this.resetForm();
         this.actualizarTodo();
     } catch(err: any) {
@@ -423,12 +463,12 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   }
 
   async confirmarEliminar() {
-    if (!this.gastoAEliminar) return;
+    if (!this.gastoAEliminar()) return;
 
     const { error } = await this.supabase.getClient()
       .from('gastos')
       .delete()
-      .eq('id', this.gastoAEliminar);
+      .eq('id', this.gastoAEliminar());
 
     if (!error) {
       this.mostrarToast('Gasto eliminado', 'success');
@@ -440,27 +480,37 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   }
 
   // --- UTILS ---
-  mostrarModalEliminar(id: string) { this.gastoAEliminar = id; this.mostrarModal = true; }
-  cancelarEliminar() { this.mostrarModal = false; this.gastoAEliminar = null; }
+  mostrarModalEliminar(id: string) { 
+    this.gastoAEliminar.set(id); 
+    this.mostrarModal.set(true); 
+  }
+  
+  cancelarEliminar() { 
+    this.mostrarModal.set(false); 
+    this.gastoAEliminar.set(null); 
+  }
 
   editarGasto(gasto: any) {
-    this.editandoId = gasto.id;
-    this.fecha = gasto.fecha.substring(0, 10);
-    this.categoria = gasto.categoria;
-    this.descripcion = gasto.descripcionLimpia || gasto.descripcion; 
-    this.monto = gasto.monto;
-    this.metodoPago = gasto.metodo_pago || 'efectivo';
+    this.editandoId.set(gasto.id);
+    this.fecha.set(gasto.fecha.substring(0, 10));
+    this.categoria.set(gasto.categoria);
+    this.descripcion.set(gasto.descripcionLimpia || gasto.descripcion);
+    this.monto.set(gasto.monto);
+    this.metodoPago.set(gasto.metodo_pago || 'efectivo');
     this.scrollToForm();
   }
 
-  cancelarEdicion() { this.editandoId = null; this.resetForm(); }
+  cancelarEdicion() { 
+    this.editandoId.set(null); 
+    this.resetForm(); 
+  }
 
   resetForm() {
-    this.categoria = '';
-    this.descripcion = '';
-    this.monto = 0;
-    this.fecha = new Date().toISOString().substring(0, 10);
-    this.metodoPago = 'efectivo';
+    this.categoria.set('');
+    this.descripcion.set('');
+    this.monto.set(0);
+    this.fecha.set(new Date().toISOString().substring(0, 10));
+    this.metodoPago.set('efectivo');
   }
 
   scrollToForm() {
@@ -469,14 +519,29 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   }
 
   mostrarToast(mensaje: string, tipo: 'success' | 'error' = 'success') {
-    this.toastMensaje = mensaje;
-    this.toastTipo = tipo;
-    this.toastcolor = tipo === 'success' ? 'bg-green-600' : 'bg-red-600';
-    this.toastVisible = true;
+    this.toastMensaje.set(mensaje);
+    this.toastTipo.set(tipo);
+    this.toastcolor.set(tipo === 'success' ? 'bg-green-600' : 'bg-red-600');
+    this.toastVisible.set(true);
     if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => { this.toastVisible = false; }, 2500);
+    this.toastTimeout = setTimeout(() => { this.toastVisible.set(false); }, 2500);
   }
 
-  get totalPaginas(): number { return Math.ceil(this.totalRegistros / this.itemsPorPagina); }
-  cambiarPagina(pag: number) { if (pag >= 1 && pag <= this.totalPaginas) { this.paginaActual = pag; this.cargarListaGastos(); } }
+  // ✅ 7. TRACKBY PARA RENDIMIENTO
+  trackByGastoId(index: number, gasto: any): string {
+    return gasto.id;
+  }
+
+  // Paginación manual (mantener por compatibilidad si se desactiva scroll infinito)
+  get totalPaginas(): number { 
+    return Math.ceil(this.totalRegistros() / this.itemsPorPagina); 
+  }
+  
+  cambiarPagina(pag: number) { 
+    if (pag >= 1 && pag <= this.totalPaginas) { 
+      this.paginaActual.set(pag); 
+      this.gastos.set([]);
+      this.cargarListaGastos(); 
+    } 
+  }
 }

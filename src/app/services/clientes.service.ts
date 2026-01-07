@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
 
-// Interfaces (Mantenemos las existentes pero aseguramos que sean exportadas)
 export interface Cliente {
   id?: string;
   nombre: string;
@@ -12,6 +11,8 @@ export interface Cliente {
   limite_credito: number;
   saldo_actual: number;
   activo: boolean;
+  cuit?: string; 
+  condicion_iva?: string;
   observaciones?: string;
   created_at?: string;
   updated_at?: string;
@@ -29,7 +30,18 @@ export interface VentaCredito {
   observaciones?: string;
   // Estructura anidada de Supabase
   ventas?: {
-    detalle_venta: any[]; // Idealmente definir interfaz DetalleVenta aquí también
+    id: string;
+    detalle_venta: {
+      cantidad: number;
+      precio_unitario: number;
+      subtotal: number;
+      talle?: string;
+      productos?: {
+        nombre: string;
+        marca: string;
+        codigo: string;
+      };
+    }[];
   };
 }
 
@@ -167,30 +179,43 @@ export class ClientesService {
   }
 
   async obtenerVentasCredito(clienteId: string): Promise<VentaCredito[]> {
-    const { data, error } = await this.supabaseService.getClient()
-      .from('ventas_credito')
-      .select(`
-        *,
-        ventas (
-          detalle_venta (
-            cantidad,
-            precio_unitario,
-            subtotal,
-            talle,
-            productos (
-              nombre,
-              marca,
-              codigo
-            )
+  const { data, error } = await this.supabaseService.getClient()
+    .from('ventas_credito')
+    .select(`
+      id,
+      venta_id,
+      cliente_id,
+      monto_total,
+      saldo_pendiente,
+      estado,
+      fecha_venta,
+      fecha_vencimiento,
+      observaciones,
+      ventas!inner (
+        id,
+        detalle_venta (
+          cantidad,
+          precio_unitario,
+          subtotal,
+          talle,
+          productos (
+            nombre,
+            marca,
+            codigo
           )
         )
-      `)
-      .eq('cliente_id', clienteId)
-      .order('fecha_venta', { ascending: false });
-    
-    if (error) throw error;
-    return (data as unknown as VentaCredito[]) || [];
+      )
+    `)
+    .eq('cliente_id', clienteId)
+    .order('fecha_venta', { ascending: false });
+  
+  if (error) {
+    console.error('Error al cargar ventas crédito:', error);
+    throw error;
   }
+  
+  return (data as unknown as VentaCredito[]) || [];
+}
 
   async obtenerVentaCreditoPorId(id: string): Promise<VentaCredito> {
     const { data, error } = await this.supabaseService.getClient()

@@ -58,8 +58,8 @@ export class AumentoComponent implements OnInit, OnDestroy {
   paso = signal(1);
   confirmando = signal(false);
   toastVisible = signal(false);
-  toastMensaje = signal('');
-  toastColor = signal('');
+toastMensaje = signal('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
   resumenAumento = signal<string[]>([]);
   errorAumentoInvalido = signal(false);
 
@@ -447,24 +447,14 @@ export class AumentoComponent implements OnInit, OnDestroy {
     this.confirmando.set(false);
   }
 
-  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'info' | 'warning' = 'info', duracion = 3000) {
-    this.toastMensaje.set(mensaje);
-    
-    let color = '';
-    switch (tipo) {
-      case 'success': color = 'bg-green-600'; break;
-      case 'error': color = 'bg-red-600'; break;
-      case 'info': color = 'bg-blue-600'; break;
-      case 'warning': color = 'bg-yellow-600'; break;
-      default: color = 'bg-gray-800';
-    }
-    this.toastColor.set(color);
-    
-    this.toastVisible.set(true);
-    
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => this.ocultarToast(), duracion);
-  }
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success', duracion = 3000) {
+  this.toastMensaje.set(mensaje);
+  this.tipoMensajeToast.set(tipo);
+  this.toastVisible.set(true);
+  
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+  this.toastTimeout = setTimeout(() => this.ocultarToast(), duracion);
+}
 
   ocultarToast() {
     this.toastVisible.set(false);

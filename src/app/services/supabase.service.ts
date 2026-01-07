@@ -45,6 +45,13 @@ export class SupabaseService {
     this.recoverSession();
   }
 
+  // --- MODIFICACIÓN CLAVE AQUÍ ---
+  // Este getter permite acceder a this.supabaseService.client desde otros servicios
+  get client() {
+    return this.supabase;
+  }
+
+  // Mantenemos este por compatibilidad si lo usas en otro lado
   getClient() {
     return this.supabase;
   }
@@ -69,9 +76,6 @@ export class SupabaseService {
     const metadata = user.user_metadata || {};
     
     // Leer el rol de la metadata.
-    // Lógica: Si la metadata dice 'vendedor', es vendedor. Si dice 'admin', es admin.
-    // Si no dice nada, por defecto asumimos 'admin' si es el dueño, o 'guest'.
-    // Ajustado para tu lógica:
     const rolMetadata = metadata['rol'];
     const rolReal = (rolMetadata === 'vendedor') ? 'vendedor' : 'admin';
 
@@ -117,7 +121,7 @@ export class SupabaseService {
   async signOut() {
     this.currentUserSubject.next(null);
     this.permisosCache = null;
-    localStorage.removeItem('sb-' + environment.supabaseUrl + '-auth-token'); // Limpieza manual opcional
+    localStorage.removeItem('sb-' + environment.supabaseUrl + '-auth-token'); 
 
     try {
       await this.supabase.auth.signOut(); 
@@ -130,15 +134,13 @@ export class SupabaseService {
 
   // ==========================================
   // PERMISOS (Legacy / Helper Methods)
-  // Nota: La lógica principal ahora está en PermisosService,
-  // pero mantenemos estos métodos para compatibilidad con componentes existentes.
   // ==========================================
 
   async getPermisosUsuario(): Promise<PermisoVista[] | null> {
     const user = await this.getCurrentAppUser();
     if (!user) return [];
 
-    if (user.rol === 'admin') return null; // Admin (null significa acceso total en lógica legacy)
+    if (user.rol === 'admin') return null; // Admin
 
     if (this.permisosCache) return this.permisosCache;
 
@@ -199,7 +201,6 @@ export class SupabaseService {
   
   setVendedorTemp(vendedor: any) { /* No-op */ }
   
-  // Devuelve AppUser pero con tipo any para satisfacer interfaces viejas
   async getCurrentUser(): Promise<any> { 
     return this.getCurrentAppUser(); 
   }

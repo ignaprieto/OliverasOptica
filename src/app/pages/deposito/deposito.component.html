@@ -1,5 +1,6 @@
-<div class="min-h-screen p-4 sm:p-6 transition-colors duration-300"
-     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'">
+<div class="min-h-screen p-4 sm:p-6 transition-colors duration-300
+            bg-gray-50 text-gray-800
+            dark:bg-gray-900 dark:text-gray-100">
 
   <div class="max-w-7xl mx-auto space-y-6 animate-fade-in-scale">
 
@@ -10,30 +11,42 @@
       </div>
 
       <button routerLink="/dashboard"
-        class="group px-4 py-2.5 rounded-xl border transition-all duration-300 font-medium text-sm shadow-sm hover:shadow-md flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
-        [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700 text-gray-200' : 'bg-white border-gray-200 text-gray-700'">
-        Volver al Panel
-      </button>
+          class="group px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl transition-all duration-300 font-medium text-sm shadow-sm hover:shadow-md border transform hover:-translate-y-0.5
+                 bg-white hover:bg-gray-50 text-gray-700 border-gray-200
+                 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-700">
+          <span class="flex items-center justify-center space-x-2">
+            <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            <span>Volver al Panel</span>
+          </span>
+        </button>
     </div>
 
-    <div class="border-b" [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+    <div class="border-b border-gray-200 dark:border-gray-700">
       <nav class="-mb-px flex space-x-8">
         <button (click)="cambiarVista('deposito')"
           class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
-          [ngClass]="vistaActiva() === 'deposito' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
+          [ngClass]="vistaActiva() === 'deposito' 
+            ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
+            : 'border-transparent opacity-60 hover:opacity-100'">
           Inventario
         </button>
         
         <button *appPermiso="['deposito', 'crear']" 
           (click)="cambiarVista('transferir')"
           class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
-          [ngClass]="vistaActiva() === 'transferir' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
+          [ngClass]="vistaActiva() === 'transferir' 
+            ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
+            : 'border-transparent opacity-60 hover:opacity-100'">
           Transferencia Masiva
         </button>
         
         <button (click)="cambiarVista('historial')"
           class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
-          [ngClass]="vistaActiva() === 'historial' ? 'border-blue-500 text-blue-600 dark:text-blue-400' : 'border-transparent opacity-60 hover:opacity-100'">
+          [ngClass]="vistaActiva() === 'historial' 
+            ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
+            : 'border-transparent opacity-60 hover:opacity-100'">
           Historial
         </button>
       </nav>
@@ -46,13 +59,14 @@
           <div class="md:col-span-2 relative">
              <input type="text" [ngModel]="filtroTexto()" (ngModelChange)="onSearchInput($event)"
               placeholder="Buscar por nombre, código, marca..."
-              class="w-full pl-4 pr-4 py-2.5 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-transparent"
-              [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-300'">
+              class="w-full pl-4 pr-4 py-2.5 rounded-xl border outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-transparent
+                     border-gray-300 dark:border-gray-700">
           </div>
           
           <select [ngModel]="filtroCategoria()" (ngModelChange)="cambiarFiltroCategoria($event)"
-            class="w-full px-4 py-2.5 rounded-xl border outline-none bg-transparent"
-            [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 [&>option]:bg-gray-800' : 'border-gray-300'">
+            class="w-full px-4 py-2.5 rounded-xl border outline-none bg-transparent
+                   border-gray-300 dark:border-gray-700
+                   [&>option]:bg-white dark:[&>option]:bg-gray-800">
             <option value="todas">Todas las categorías</option>
             @for (cat of categorias(); track cat) {
               <option [value]="cat">{{ cat }}</option>
@@ -60,11 +74,13 @@
           </select>
         </div>
 
-        <div class="rounded-xl border overflow-hidden flex flex-col shadow-sm max-h-[600px]"
-             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'">
+        <div class="rounded-xl border overflow-hidden flex flex-col shadow-sm max-h-[600px]
+                    border-gray-200 bg-white
+                    dark:border-gray-700 dark:bg-gray-800">
           
-          <div class="grid grid-cols-12 gap-4 p-4 font-bold text-xs uppercase tracking-wider opacity-60 border-b shrink-0"
-               [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900/50 border-gray-700' : 'bg-gray-50 border-gray-200'">
+          <div class="grid grid-cols-12 gap-4 p-4 font-bold text-xs uppercase tracking-wider opacity-60 border-b shrink-0
+                      bg-gray-50 border-gray-200
+                      dark:bg-gray-900/50 dark:border-gray-700">
             <div class="col-span-4">Producto</div>
             <div class="col-span-3">Categoría</div>
             <div class="col-span-2 text-center">Depósito</div>
@@ -79,8 +95,9 @@
                </div>
             } @else {
               @for (producto of productos(); track trackByProducto($index, producto)) {
-                <div class="grid grid-cols-12 gap-4 p-4 items-center border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors"
-                     [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+                <div class="grid grid-cols-12 gap-4 p-4 items-center border-b last:border-0 transition-colors
+                            hover:bg-gray-50 border-gray-100
+                            dark:hover:bg-gray-700/30 dark:border-gray-700">
                   
                   <div class="col-span-4">
                     <div class="font-medium text-sm">{{ producto.nombre }}</div>
@@ -133,15 +150,17 @@
 
     @if (vistaActiva() === 'transferir') {
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
-        <div class="p-6 rounded-2xl border bg-white dark:bg-gray-800 shadow-sm h-fit"
-             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+        <div class="p-6 rounded-2xl border shadow-sm h-fit
+                    bg-white border-gray-200
+                    dark:bg-gray-800 dark:border-gray-700">
           <h3 class="text-lg font-bold mb-2">Transferencia por Categoría</h3>
           <p class="text-sm opacity-60 mb-6">Mueve todos los productos de una categoría completa.</p>
           
           <button *appPermiso="['deposito', 'crear']" 
             (click)="abrirModalCategoria()"
-            class="w-full py-4 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all"
-            [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-600'">
+            class="w-full py-4 rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 transition-all
+                   border-gray-300 text-gray-600 hover:bg-gray-50
+                   dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700/50">
             <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
               <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
             </div>
@@ -153,26 +172,28 @@
 
     @if (vistaActiva() === 'historial') {
       <div class="space-y-4 animate-fade-in">
-        <div class="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border shadow-sm"
-             [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+        <div class="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border shadow-sm
+                    bg-white border-gray-200
+                    dark:bg-gray-800 dark:border-gray-700">
            <div class="flex-1">
              <label class="text-xs font-bold uppercase opacity-60 mb-1 block">Desde</label>
              <input type="date" [ngModel]="filtroFechaDesde()" (ngModelChange)="filtroFechaDesde.set($event); cargarHistorial()"
-               class="w-full px-3 py-2 rounded-lg border bg-transparent"
-               [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
+               class="w-full px-3 py-2 rounded-lg border bg-transparent
+                      border-gray-300 dark:border-gray-600">
            </div>
            <div class="flex-1">
              <label class="text-xs font-bold uppercase opacity-60 mb-1 block">Hasta</label>
              <input type="date" [ngModel]="filtroFechaHasta()" (ngModelChange)="filtroFechaHasta.set($event); cargarHistorial()"
-               class="w-full px-3 py-2 rounded-lg border bg-transparent"
-               [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600' : 'border-gray-300'">
+               class="w-full px-3 py-2 rounded-lg border bg-transparent
+                      border-gray-300 dark:border-gray-600">
            </div>
         </div>
 
-        <div class="overflow-hidden rounded-xl border shadow-sm bg-white dark:bg-gray-800"
-             [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
-          <table class="min-w-full divide-y" [ngClass]="themeService.theme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
-            <thead [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900/50' : 'bg-gray-50'">
+        <div class="overflow-hidden rounded-xl border shadow-sm
+                    bg-white border-gray-200
+                    dark:bg-gray-800 dark:border-gray-700">
+          <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+            <thead class="bg-gray-50 dark:bg-gray-900/50">
               <tr>
                 <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider opacity-60">Fecha</th>
                 <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider opacity-60">Producto</th>
@@ -181,7 +202,7 @@
                 <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider opacity-60">Usuario</th>
               </tr>
             </thead>
-            <tbody class="divide-y" [ngClass]="themeService.theme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
+            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
               @for (item of historial(); track trackByHistorial($index, item)) {
                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                   <td class="px-6 py-4 whitespace-nowrap text-xs font-mono opacity-70">
@@ -216,29 +237,38 @@
 
   @if (mostrarModalTransferencia()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 border dark:border-gray-700">
+      <div class="rounded-2xl shadow-2xl w-full max-w-md p-6 border
+                  bg-white border-white
+                  dark:bg-gray-900 dark:border-gray-700">
          <h3 class="text-xl font-bold mb-1">{{ tipoTransferencia() === 'deposito_a_stock' ? 'Mover a Mostrador' : 'Mover a Depósito' }}</h3>
          <p class="text-sm opacity-60 mb-6">{{ productoSeleccionado()?.nombre }}</p>
          
          <div class="space-y-4">
-            <div class="p-4 rounded-xl border flex justify-between items-center bg-gray-50 dark:bg-gray-800">
+            <div class="p-4 rounded-xl border flex justify-between items-center
+                        bg-gray-50 border-gray-200
+                        dark:bg-gray-800 dark:border-gray-700">
                <span class="text-xs font-bold uppercase opacity-60">Disponible</span>
                <span class="text-xl font-bold">{{ cantidadMaximaTransferir() }}</span>
             </div>
             <div>
                <label class="block text-sm font-bold mb-2 opacity-80">Cantidad a mover</label>
                <input type="number" [ngModel]="cantidadTransferir()" (ngModelChange)="cantidadTransferir.set($event)"
-                 class="w-full px-4 py-3 rounded-xl border-2 bg-transparent text-lg font-bold">
+                 class="w-full px-4 py-3 rounded-xl border-2 bg-transparent text-lg font-bold
+                        border-gray-300 dark:border-gray-600">
             </div>
             <div>
                <label class="block text-sm font-bold mb-2 opacity-80">Observación</label>
                <input type="text" [ngModel]="observaciones()" (ngModelChange)="observaciones.set($event)"
-                 class="w-full px-4 py-3 rounded-xl border bg-transparent">
+                 class="w-full px-4 py-3 rounded-xl border bg-transparent
+                        border-gray-300 dark:border-gray-600">
             </div>
          </div>
          
          <div class="flex gap-3 mt-8">
-            <button (click)="cerrarModalTransferencia()" class="flex-1 py-3 rounded-xl border font-bold">Cancelar</button>
+            <button (click)="cerrarModalTransferencia()" class="flex-1 py-3 rounded-xl border font-bold
+                                                                border-gray-300 dark:border-gray-600">
+              Cancelar
+            </button>
             <button (click)="confirmarTransferencia()" [disabled]="cargandoGeneral() || cantidadTransferir() > cantidadMaximaTransferir()"
                class="flex-1 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
                Confirmar
@@ -250,8 +280,11 @@
 
   @if (mostrarModalCategoria()) {
      <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border dark:border-gray-700">
-           <div class="p-6 border-b dark:border-gray-700 flex justify-between">
+        <div class="rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col border
+                    bg-white border-white
+                    dark:bg-gray-900 dark:border-gray-700">
+           <div class="p-6 border-b flex justify-between
+                       border-gray-200 dark:border-gray-700">
               <h3 class="text-xl font-bold">Seleccionar Categoría</h3>
               <button (click)="mostrarModalCategoria.set(false)" class="text-2xl">&times;</button>
            </div>
@@ -260,7 +293,9 @@
               @if (!categoriaSeleccionada()) {
                  <div class="grid grid-cols-2 gap-3">
                     @for (cat of categorias(); track cat) {
-                       <button (click)="seleccionarCategoria(cat)" class="p-4 rounded-xl border text-center font-medium hover:bg-gray-50 dark:hover:bg-gray-800">
+                       <button (click)="seleccionarCategoria(cat)" class="p-4 rounded-xl border text-center font-medium transition-colors
+                               border-gray-200 hover:bg-gray-50
+                               dark:border-gray-700 dark:hover:bg-gray-800">
                           {{ cat }}
                        </button>
                     }
@@ -273,7 +308,8 @@
                        <h4 class="font-bold text-lg text-blue-500">{{ categoriaSeleccionada() }}</h4>
                        <div class="max-h-48 overflow-y-auto space-y-2">
                           @for (prod of productosCategoria(); track prod.id) {
-                             <div class="flex justify-between text-sm p-2 rounded border dark:border-gray-700">
+                             <div class="flex justify-between text-sm p-2 rounded border
+                                         border-gray-200 dark:border-gray-700">
                                 <span>{{ prod.nombre }}</span>
                                 <div class="flex gap-3 text-xs font-mono">
                                    <span class="text-blue-500">Dep:{{prod.cantidad_deposito}}</span>
@@ -283,8 +319,12 @@
                           }
                        </div>
                        <div class="grid grid-cols-1 gap-3">
-                          <button (click)="abrirConfirmacionTransferencia('deposito_a_stock')" class="w-full py-3 rounded-xl bg-blue-600 text-white font-bold">Mover TODO a Mostrador</button>
-                          <button (click)="abrirConfirmacionTransferencia('stock_a_deposito')" class="w-full py-3 rounded-xl bg-green-600 text-white font-bold">Mover TODO a Depósito</button>
+                          <button (click)="abrirConfirmacionTransferencia('deposito_a_stock')" class="w-full py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors">
+                            Mover TODO a Mostrador
+                          </button>
+                          <button (click)="abrirConfirmacionTransferencia('stock_a_deposito')" class="w-full py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-colors">
+                            Mover TODO a Depósito
+                          </button>
                        </div>
                     </div>
                  }
@@ -296,11 +336,16 @@
 
   @if (mostrarModalConfirmacion()) {
      <div class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 text-center max-w-sm w-full border dark:border-gray-700">
+        <div class="rounded-2xl p-6 text-center max-w-sm w-full border
+                    bg-white border-white
+                    dark:bg-gray-900 dark:border-gray-700">
            <h3 class="text-xl font-bold mb-2">¿Estás seguro?</h3>
            <p class="text-sm opacity-70 mb-6">Se moverán <strong class="text-blue-500">{{ productosATransferir() }} productos</strong>.</p>
            <div class="flex gap-3">
-              <button (click)="mostrarModalConfirmacion.set(false)" class="flex-1 py-3 rounded-xl border font-bold">Cancelar</button>
+              <button (click)="mostrarModalConfirmacion.set(false)" class="flex-1 py-3 rounded-xl border font-bold
+                                                                           border-gray-300 dark:border-gray-600">
+                Cancelar
+              </button>
               <button (click)="confirmarTransferenciaCategoria()" class="flex-1 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700">
                  {{ cargandoGeneral() ? 'Procesando...' : 'Sí, Mover' }}
               </button>
@@ -309,10 +354,27 @@
      </div>
   }
   
-  @if (mostrarToast()) {
-    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[70] animate-slide-up px-6 py-3 rounded-full shadow-2xl text-white font-bold"
-         [ngClass]="tipoMensaje() === 'success' ? 'bg-green-600' : 'bg-red-600'">
-       {{ mensaje() }}
+  @if (isToastVisible()) {
+    <div class="fixed bottom-6 right-6 z-[10000] animate-slide-in-right">
+      <div class="flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border
+                  bg-white border-gray-100 text-gray-800
+                  dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+        
+        <div [ngClass]="{
+          'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400': tipoMensajeToast() === 'success',
+          'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': tipoMensajeToast() === 'error',
+          'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400': tipoMensajeToast() === 'warning'
+        }" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg *ngIf="tipoMensajeToast() === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          <svg *ngIf="tipoMensajeToast() === 'error'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          <svg *ngIf="tipoMensajeToast() === 'warning'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-sm">{{ tipoMensajeToast() === 'success' ? '¡Éxito!' : (tipoMensajeToast() === 'error' ? 'Error' : 'Atención') }}</h4>
+          <p class="text-sm opacity-80">{{ mensajeToast() }}</p>
+        </div>
+      </div>
     </div>
   }
 

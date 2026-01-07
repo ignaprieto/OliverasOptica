@@ -9,24 +9,44 @@
         </a>
 
         <button (click)="toggleMenu($event)"
-                class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95"
+                class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95 md:hidden"
                 aria-label="Toggle menu">
-          @if (!mostrarMenu()) {
-            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-          } @else {
-            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          }
+          <svg *ngIf="!mostrarMenu()" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+          <svg *ngIf="mostrarMenu()" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
         </button>
       </div>
 
-      <div class="hidden md:flex items-center space-x-4 lg:space-x-6">
+      <div class="hidden md:flex items-center space-x-6">
+        
         <div class="text-sm lg:text-base font-medium text-gray-300">
           <span class="hidden lg:inline">Bienvenido, </span>
           <span class="text-white font-semibold">{{ userName() }}</span>
+        </div>
+
+        <div class="flex items-center gap-3 bg-gray-800/80 px-4 py-2 rounded-xl border border-gray-700 shadow-sm"
+             title="Habilitar/Deshabilitar emisión de facturas">
+          
+          <span class="text-xs font-semibold uppercase tracking-wide transition-colors"
+                [ngClass]="facturacionService.facturacionHabilitada() ? 'text-green-400' : 'text-gray-400'">
+            {{ facturacionService.facturacionHabilitada() ? 'Fact. ON' : 'Fact. OFF' }}
+          </span>
+          
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" 
+                   [checked]="facturacionService.facturacionHabilitada()" 
+                   (change)="toggleFacturacion()"
+                   class="sr-only peer">
+                   
+            <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer 
+                        peer-checked:after:translate-x-full peer-checked:after:border-white 
+                        after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                        after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all 
+                        peer-checked:bg-green-600"></div>
+          </label>
         </div>
         
         <button (click)="cerrarSesion()"
@@ -38,14 +58,31 @@
         </button>
       </div>
 
-      <div class="md:hidden">
+      <div class="md:hidden flex items-center gap-4">
+        
+        <div class="flex items-center gap-2">
+            <span class="text-[10px] text-gray-400 font-bold uppercase hidden sm:block">Fact.</span>
+            <label class="relative inline-flex items-center cursor-pointer scale-90">
+                <input type="checkbox" 
+                       [checked]="facturacionService.facturacionHabilitada()" 
+                       (change)="toggleFacturacion()"
+                       class="sr-only peer">
+                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer 
+                            peer-checked:after:translate-x-full peer-checked:after:border-white 
+                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                            after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all 
+                            peer-checked:bg-green-600"></div>
+            </label>
+        </div>
+
         <button (click)="cerrarSesion()" 
-                class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-110 active:scale-95">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-110 active:scale-95 text-red-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
           </svg>
         </button>
       </div>
+
     </div>
   </nav>
 

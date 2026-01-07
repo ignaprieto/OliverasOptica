@@ -24,6 +24,18 @@ export interface ConfigRecibo {
   updated_at?: string;
 }
 
+export interface FacturacionConfig {
+  id?: string;
+  razon_social: string;
+  cuit: string;
+  condicion_iva: 'Monotributista' | 'Responsable Inscripto';
+  ingresos_brutos: string;
+  inicio_actividades: string;
+  punto_venta: number;
+  facturacion_habilitada: boolean;
+  reglas_facturacion?: { [key: string]: boolean };
+}
+
 export interface AfipConfig {
   cuit: string;
   puntoVenta: string;
@@ -38,19 +50,29 @@ export interface AfipConfig {
   imports: [CommonModule, FormsModule, RouterModule, PermisoDirective],
   templateUrl: './configuracion.component.html',
   styleUrl: './configuracion.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush // ✅ 1. ESTRATEGIA ONPUSH
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfiguracionComponent implements OnInit, OnDestroy {
-  // Inyecciones (Angular 19 style)
+  // Inyecciones
   private supabase = inject(SupabaseService);
   public themeService = inject(ThemeService);
   private cdr = inject(ChangeDetectorRef);
 
-  // ✅ 2. MIGRACIÓN A SIGNALS
+  // MIGRACIÓN A SIGNALS
   activeTab = signal<'apariencia' | 'facturacion' | 'recibo' | 'contacto'>('apariencia');
   isLoading = signal(true);
   currentTheme = signal<'light' | 'dark'>('light');
   
+facturacion = signal<FacturacionConfig>({
+    razon_social: '',
+    cuit: '',
+    condicion_iva: 'Monotributista',
+    ingresos_brutos: '',
+    inicio_actividades: '',
+    punto_venta: 1,
+    facturacion_habilitada: false
+  });
+
   // Configuración AFIP
   afipConfig = signal<AfipConfig>({
     cuit: '',
@@ -90,13 +112,12 @@ export class ConfiguracionComponent implements OnInit, OnDestroy {
   };
 
   // Toast
-  toastVisible = signal(false);
-  toastMensaje = signal('');
-  toastColor = signal('bg-green-600');
-  private toastTimeout: any;
-  private themeInterval: any;
+isToastVisible = signal(false);
+mensajeToast = signal('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
+private toastTimeout: ReturnType<typeof setTimeout> | null = null;
+private themeInterval: ReturnType<typeof setInterval> | null = null;
 
-  // ✅ 4. OPTIMIZACIÓN SUPABASE - Selección explícita de columnas
   private readonly COLUMNAS_RECIBO = 'id, nombre_negocio, direccion, ciudad, telefono1, telefono2, whatsapp1, whatsapp2, email_empresa, logo_url, mensaje_agradecimiento, mensaje_pie, email_desarrollador, updated_at';
 
   async ngOnInit(): Promise<void> {
@@ -118,12 +139,13 @@ export class ConfiguracionComponent implements OnInit, OnDestroy {
       // Carga paralela
       await Promise.all([
         this.loadAfipConfig(),
-        this.cargarConfigRecibo()
+        this.cargarConfigRecibo(),
+        this.cargarDatosFacturacion()
       ]);
 
     } catch (error) {
       console.error('Error carga inicial:', error);
-      this.mostrarToast('Error de conexión', 'bg-red-600');
+      this.mostrarToast('Error de conexión', 'error');
     } finally {
       this.isLoading.set(false);
       this.cdr.markForCheck();
@@ -148,7 +170,7 @@ export class ConfiguracionComponent implements OnInit, OnDestroy {
     this.currentTheme.set(theme);
   }
 
-  // ✅ 7. TRACKBY FUNCTION para rendimiento en listas
+  // TRACKBY FUNCTION para rendimiento en listas
   trackById(index: number, item: any): any {
     return item?.id ?? index;
   }
@@ -161,14 +183,14 @@ export class ConfiguracionComponent implements OnInit, OnDestroy {
   }
 
   saveAfipConfig(): void {
-    this.mostrarToast('Configuración AFIP guardada', 'bg-blue-600');
+    this.mostrarToast('Configuración AFIP guardada', 'success');
   }
 
   async cargarConfigRecibo(): Promise<void> {
     try {
       const client = this.supabase.getClient();
       
-      // ✅ 4. Selección explícita de columnas
+      // Selección explícita de columnas
       const { data, error } = await client
         .from('configuracion_recibo')
         .select(this.COLUMNAS_RECIBO)
@@ -247,11 +269,11 @@ export class ConfiguracionComponent implements OnInit, OnDestroy {
         this.configRecibo.set(data as ConfigRecibo);
         this.archivoLogo.set(null);
       }
-      this.mostrarToast('Datos guardados exitosamente', 'bg-green-600');
+      this.mostrarToast('Datos guardados exitosamente', 'success');
 
     } catch (error: any) {
       console.error(error);
-      this.mostrarToast('Error al guardar cambios', 'bg-red-600');
+      this.mostrarToast('Error al guardar cambios', 'error');
     } finally {
       this.isGuardando.set(false);
       this.isSubiendoLogo.set(false);
@@ -265,7 +287,7 @@ export class ConfiguracionComponent implements OnInit, OnDestroy {
     if (input.files?.[0]) {
       const f = input.files[0];
       if (!f.type.startsWith('image/') || f.size > 2 * 1024 * 1024) {
-        this.mostrarToast('Imagen inválida (Max 2MB)', 'bg-yellow-600');
+        this.mostrarToast('Imagen inválida (Max 2MB)', 'warning');
         return;
       }
       this.archivoLogo.set(f);
@@ -312,49 +334,108 @@ export class ConfiguracionComponent implements OnInit, OnDestroy {
 
   // --- TOAST ---
 
-  mostrarToast(mensaje: string, color: string): void {
-    this.toastMensaje.set(mensaje);
-    this.toastColor.set(color);
-    this.toastVisible.set(true);
-    
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => {
-      this.toastVisible.set(false);
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success'): void {
+  this.mensajeToast.set(mensaje);
+  this.tipoMensajeToast.set(tipo);
+  this.isToastVisible.set(true);
+  
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+  this.toastTimeout = setTimeout(() => {
+    this.isToastVisible.set(false);
+    this.cdr.markForCheck();
+  }, 3000);
+}
+
+  async cargarDatosFacturacion(): Promise<void> {
+    try {
+      const { data, error } = await this.supabase.getClient()
+        .from('facturacion')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error cargando facturación:', error);
+        return;
+      }
+
+      if (data) {
+        data.reglas_facturacion = data.reglas_facturacion || {};
+        this.facturacion.set(data as FacturacionConfig);
+     } else {
+        // Si no existe, usamos los valores por defecto del signal pero no guardamos aún en DB para no ensuciar
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // MÉTODO GUARDAR FACTURACIÓN (Nueva Tabla)
+  async guardarFacturacion(): Promise<void> {
+    if (this.isGuardando()) return;
+    this.isGuardando.set(true);
+
+    try {
+      const datos = this.facturacion();
+      const client = this.supabase.getClient();
+      let result;
+
+      // Si ya tiene ID, actualizamos
+      if (datos.id) {
+        result = await client
+          .from('facturacion')
+          .update({
+            razon_social: datos.razon_social,
+            cuit: datos.cuit,
+            condicion_iva: datos.condicion_iva,
+            ingresos_brutos: datos.ingresos_brutos,
+            inicio_actividades: datos.inicio_actividades,
+            punto_venta: datos.punto_venta,
+            facturacion_habilitada: datos.facturacion_habilitada,
+            reglas_facturacion: datos.reglas_facturacion,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', datos.id)
+          .select()
+          .single();
+      } else {
+        // Si no tiene ID, insertamos
+        result = await client
+          .from('facturacion')
+          .insert({
+            razon_social: datos.razon_social,
+            cuit: datos.cuit,
+            condicion_iva: datos.condicion_iva,
+            ingresos_brutos: datos.ingresos_brutos,
+            inicio_actividades: datos.inicio_actividades,
+            punto_venta: datos.punto_venta,
+            facturacion_habilitada: datos.facturacion_habilitada,
+            reglas_facturacion: datos.reglas_facturacion
+          })
+          .select()
+          .single();
+      }
+
+      if (result.error) throw result.error;
+
+      if (result.data) {
+        this.facturacion.set(result.data as FacturacionConfig);
+        this.mostrarToast('Datos de facturación guardados', 'success');
+      }
+
+    } catch (error: any) {
+      console.error(error);
+      this.mostrarToast('Error al guardar facturación', 'error');
+    } finally {
+      this.isGuardando.set(false);
       this.cdr.markForCheck();
-    }, 3000);
-  }
-
-  // ✅ 3. CARGA DIFERIDA - Ejemplo de método con dynamic import
-  async exportarAPDF(): Promise<void> {
-    try {
-      // Carga diferida de jsPDF solo cuando se necesita
-      const { default: jsPDF } = await import('jspdf');
-      const pdf = new jsPDF();
-      
-      // Lógica de exportación...
-      pdf.text('Configuración del Sistema', 10, 10);
-      pdf.save('configuracion.pdf');
-      
-      this.mostrarToast('PDF generado exitosamente', 'bg-green-600');
-    } catch (error) {
-      console.error('Error al exportar PDF:', error);
-      this.mostrarToast('Error al generar PDF', 'bg-red-600');
     }
   }
 
-  async exportarAExcel(): Promise<void> {
-    try {
-      // ✅ 3. Carga diferida de XLSX solo cuando se usa
-      const XLSX = await import('xlsx');
-      const ws = XLSX.utils.json_to_sheet([this.configRecibo()]);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Configuracion');
-      XLSX.writeFile(wb, 'configuracion.xlsx');
-      
-      this.mostrarToast('Excel generado exitosamente', 'bg-green-600');
-    } catch (error) {
-      console.error('Error al exportar Excel:', error);
-      this.mostrarToast('Error al generar Excel', 'bg-red-600');
-    }
-  }
+  metodosPagoConfig = [
+    { key: 'efectivo', label: 'Efectivo' },
+    { key: 'transferencia', label: 'Transferencia' },
+    { key: 'tarjeta_debito', label: 'Débito' },
+    { key: 'tarjeta_credito', label: 'Crédito' },
+    { key: 'mercado_pago', label: 'Mercado Pago' }
+  ];
 }

@@ -468,6 +468,10 @@ export class ProductosComponent implements OnInit, OnDestroy {
     document.body.style.overflow = '';
   }
 
+onEnterBusqueda() {
+    this.resetearVirtualScroll();
+  }
+
   // --- TRACKBY FUNCTIONS ---
   
   trackByProductoId(index: number, producto: Producto): string {

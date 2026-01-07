@@ -1,5 +1,6 @@
-<div class="min-h-screen p-4 sm:p-6 transition-colors duration-300"
-     [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'">
+<div class="min-h-screen p-4 sm:p-6 transition-colors duration-300
+            bg-gray-50 text-gray-800
+            dark:bg-gray-900 dark:text-gray-100">
 
   <div class="max-w-7xl mx-auto space-y-6">
 
@@ -20,7 +21,7 @@
           </p>
 
           @if (cajaDeFechaAnterior()) {
-            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 dark:bg-red-900/30 dark:text-red-300 dark:border-red-600" role="alert">
                <p class="font-bold">¡Cuidado!</p>
                <p>Esta caja quedó abierta desde una fecha anterior ({{ cajaActual()?.fecha_apertura | date:'dd/MM/yyyy' }}). 
                   Por favor, realiza el <strong>Cierre de Caja</strong> para comenzar el día correctamente.</p>
@@ -32,10 +33,9 @@
       <div class="flex flex-wrap gap-3 items-center">
         
         <button routerLink="/dashboard"
-          class="group px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl transition-all duration-300 font-medium text-sm shadow-sm hover:shadow-md border transform hover:-translate-y-0.5"
-          [ngClass]="themeService.getCurrentTheme() === 'dark' 
-            ? 'bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700' 
-            : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-200'">
+          class="group px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl transition-all duration-300 font-medium text-sm shadow-sm hover:shadow-md border transform hover:-translate-y-0.5
+                 bg-white hover:bg-gray-50 text-gray-700 border-gray-200
+                 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 dark:border-gray-700">
           <span class="flex items-center justify-center space-x-2">
             <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
@@ -53,7 +53,15 @@
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
             Abrir Caja
           </button>
+          
         } @else {
+          <button *appPermiso="['caja', 'crear']"
+            (click)="abrirModalRetiro()"
+            class="px-5 py-2.5 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl shadow-lg shadow-yellow-500/20 font-medium transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            Retirar Dinero
+          </button>
+
           <button *appPermiso="['caja', 'editar']"
             (click)="abrirModalCierre()"
             class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-500/20 font-medium transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
@@ -64,8 +72,9 @@
         
         <button *appPermiso="['caja', 'editar']"
           (click)="abrirModalConfiguracion()"
-          class="p-2.5 rounded-xl border transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-          [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-gray-400' : 'border-gray-200 text-gray-600'"
+          class="p-2.5 rounded-xl border transition-colors hover:bg-gray-100 dark:hover:bg-gray-800
+                 border-gray-200 text-gray-600
+                 dark:border-gray-700 dark:text-gray-400"
           title="Configuración">
           <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         </button>
@@ -86,8 +95,9 @@
 
       @if (cajaActual()) {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
-          <div class="p-5 rounded-2xl border bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md"
-               [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+          <div class="p-5 rounded-2xl border backdrop-blur-sm shadow-sm transition-all hover:shadow-md
+                      bg-white/50 border-gray-100
+                      dark:bg-gray-800/50 dark:border-gray-700">
             <p class="text-sm font-bold opacity-60 uppercase tracking-wider">Monto en Caja</p>
             <h2 class="text-3xl font-bold mt-1 text-blue-600 dark:text-blue-400">
               {{ cajaActual()!.monto_actual | monedaArs }}
@@ -98,8 +108,9 @@
             </div>
           </div>
 
-          <div class="p-5 rounded-2xl border bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md"
-               [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+          <div class="p-5 rounded-2xl border backdrop-blur-sm shadow-sm transition-all hover:shadow-md
+                      bg-white/50 border-gray-100
+                      dark:bg-gray-800/50 dark:border-gray-700">
             <p class="text-sm font-bold opacity-60 uppercase tracking-wider">Ventas Efectivo</p>
             <h2 class="text-3xl font-bold mt-1 text-emerald-600 dark:text-emerald-400">
               {{ resumen().ventasEfectivo | monedaArs }}
@@ -109,17 +120,19 @@
             </p>
           </div>
 
-          <div class="p-5 rounded-2xl border bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md"
-               [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+          <div class="p-5 rounded-2xl border backdrop-blur-sm shadow-sm transition-all hover:shadow-md
+                      bg-white/50 border-gray-100 text-gray-800
+                      dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-100">
             <p class="text-sm font-bold opacity-60 uppercase tracking-wider">Movimientos</p>
-            <h2 class="text-3xl font-bold mt-1" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'text-gray-100' : 'text-gray-800'">
+            <h2 class="text-3xl font-bold mt-1">
               {{ resumen().cantidadMovimientos }}
             </h2>
             <p class="mt-2 text-xs opacity-60">Operaciones registradas</p>
           </div>
 
-          <div class="p-5 rounded-2xl border bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-sm transition-all hover:shadow-md"
-               [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+          <div class="p-5 rounded-2xl border backdrop-blur-sm shadow-sm transition-all hover:shadow-md
+                      bg-white/50 border-gray-100
+                      dark:bg-gray-800/50 dark:border-gray-700">
              <p class="text-sm font-bold opacity-60 uppercase tracking-wider">Base Inicial</p>
              <h2 class="text-3xl font-bold mt-1 opacity-80">
                {{ cajaActual()!.monto_inicial | monedaArs }}
@@ -129,7 +142,7 @@
         </div>
       }
 
-      <div class="border-b" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+      <div class="border-b border-gray-200 dark:border-gray-700">
         <nav class="-mb-px flex space-x-8">
           <button (click)="mostrarHistorial.set(false)"
             class="py-4 px-1 border-b-2 font-medium text-sm transition-colors duration-200 focus:outline-none"
@@ -152,8 +165,9 @@
         
         @if (!mostrarHistorial()) {
           @if (!cajaActual()) {
-            <div class="flex flex-col items-center justify-center h-64 text-center p-8 border-2 border-dashed rounded-2xl animate-fade-in"
-                 [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 bg-gray-800/30' : 'border-gray-200 bg-gray-50/50'">
+            <div class="flex flex-col items-center justify-center h-64 text-center p-8 border-2 border-dashed rounded-2xl animate-fade-in
+                        border-gray-200 bg-gray-50/50
+                        dark:border-gray-700 dark:bg-gray-800/30">
               <div class="p-4 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
                 <svg class="w-8 h-8 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
               </div>
@@ -180,10 +194,11 @@
                 </div>
               </div>
 
-              <div class="overflow-hidden rounded-xl border shadow-sm" 
-                   [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-white'">
-                <table class="min-w-full divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
-                  <thead [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'bg-gray-900/50' : 'bg-gray-50'">
+              <div class="overflow-hidden rounded-xl border shadow-sm
+                          border-gray-200 bg-white
+                          dark:border-gray-700 dark:bg-gray-800">
+                <table class="min-w-full divide-y divide-gray-100 dark:divide-gray-700">
+                  <thead class="bg-gray-50 dark:bg-gray-900/50">
                     <tr>
                       <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider opacity-60">Hora</th>
                       <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider opacity-60">Concepto</th>
@@ -191,7 +206,7 @@
                       <th class="px-6 py-3 text-right text-xs font-bold uppercase tracking-wider opacity-60">Monto</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'">
+                  <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                     @for (mov of movimientosFiltrados(); track trackByMovimiento($index, mov)) {
                       <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-xs font-mono opacity-70">
@@ -256,24 +271,28 @@
         } @else {
           
           <div class="space-y-6 animate-fade-in-up">
-            <div class="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border bg-white dark:bg-gray-800 shadow-sm"
-                 [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+            <div class="flex flex-col sm:flex-row gap-4 p-4 rounded-xl border shadow-sm
+                        bg-white border-gray-200
+                        dark:bg-gray-800 dark:border-gray-700">
               <div class="flex-1">
                 <label class="block text-xs font-bold uppercase opacity-60 mb-1">Desde</label>
                 <input type="date" [ngModel]="filtroFechaDesde()" (ngModelChange)="setFiltroFechaDesde($event); aplicarFiltroFechas()"
-                  class="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600 text-white' : 'border-gray-300 text-gray-900'">
+                  class="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                         bg-gray-50 border-gray-300 text-gray-900
+                         dark:bg-gray-900 dark:border-gray-600 dark:text-white">
               </div>
               <div class="flex-1">
                 <label class="block text-xs font-bold uppercase opacity-60 mb-1">Hasta</label>
                 <input type="date" [ngModel]="filtroFechaHasta()" (ngModelChange)="setFiltroFechaHasta($event); aplicarFiltroFechas()"
-                  class="w-full px-3 py-2 rounded-lg border bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600 text-white' : 'border-gray-300 text-gray-900'">
+                  class="w-full px-3 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                         bg-gray-50 border-gray-300 text-gray-900
+                         dark:bg-gray-900 dark:border-gray-600 dark:text-white">
               </div>
               <div class="flex items-end">
                 <button (click)="limpiarFiltroFechas()" 
-                  class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm font-medium h-[42px]"
-                  [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-600'">
+                  class="px-4 py-2 border rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm font-medium h-[42px]
+                         border-gray-300 text-gray-600
+                         dark:border-gray-600 dark:text-gray-300">
                   Limpiar
                 </button>
               </div>
@@ -281,10 +300,12 @@
 
             <div class="space-y-4">
               @for (caja of historialCajas(); track trackByCaja($index, caja)) {
-                <div class="rounded-xl border overflow-hidden transition-all hover:shadow-md bg-white dark:bg-gray-800"
-                     [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+                <div class="rounded-xl border overflow-hidden transition-all hover:shadow-md
+                            bg-white border-gray-200
+                            dark:bg-gray-800 dark:border-gray-700">
                   
-                  <div class="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                  <div class="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer transition-colors
+                              hover:bg-gray-50 dark:hover:bg-gray-700/50"
                        (click)="toggleMovimientosHistorial(caja.id)">
                     <div class="space-y-1">
                       <div class="flex items-center gap-3">
@@ -323,8 +344,9 @@
                   </div>
 
                   @if (cajaSeleccionadaHistorial() === caja.id) {
-                    <div class="border-t bg-gray-50/50 dark:bg-gray-900/50 p-4 animate-fade-in"
-                         [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+                    <div class="border-t p-4 animate-fade-in
+                                bg-gray-50/50 border-gray-100
+                                dark:bg-gray-900/50 dark:border-gray-700">
                       
                       <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
                           <div class="p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
@@ -356,11 +378,14 @@
                       </div>
 
                       <h4 class="text-xs font-bold uppercase opacity-60 mb-3 tracking-wide">Movimientos Registrados</h4>
-                      <div class="overflow-hidden rounded-lg border" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+                      <div class="overflow-hidden rounded-lg border" 
+                           [ngClass]="'border-gray-200 dark:border-gray-700'">
                         <table class="min-w-full text-sm">
-                          <tbody class="divide-y" [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'divide-gray-700' : 'divide-gray-200'">
+                          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                             @for (movH of movimientosHistorial(); track trackByMovimiento($index, movH)) {
-                              <tr class="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                              <tr class="transition-colors
+                                         bg-white hover:bg-gray-50
+                                         dark:bg-gray-800 dark:hover:bg-gray-700/50">
                                 <td class="px-4 py-2.5 opacity-70 font-mono text-xs">{{ formatearHora(movH.created_at) }}</td>
                                 <td class="px-4 py-2.5 font-medium">{{ movH.concepto }}</td>
                                 <td class="px-4 py-2.5 text-right font-bold font-mono" 
@@ -405,7 +430,9 @@
 
   @if (mostrarModalApertura()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border dark:border-gray-700">
+      <div class="rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border
+                  bg-white border-white
+                  dark:bg-gray-900 dark:border-gray-700">
         <div class="p-6">
           <div class="flex items-center gap-3 mb-4">
              <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-full text-green-600">
@@ -423,8 +450,9 @@
               <div class="relative">
                 <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-50 font-bold text-lg">$</span>
                 <input type="number" [(ngModel)]="montoApertura"
-                  class="w-full pl-10 pr-4 py-4 rounded-xl border-2 bg-gray-50 dark:bg-gray-800 focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all font-bold text-2xl"
-                  [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-white' : 'border-gray-200 text-gray-900'">
+                  class="w-full pl-10 pr-4 py-4 rounded-xl border-2 focus:ring-4 focus:ring-green-500/20 focus:border-green-500 outline-none transition-all font-bold text-2xl
+                         bg-gray-50 border-gray-200 text-gray-900
+                         dark:bg-gray-800 dark:border-gray-700 dark:text-white">
               </div>
             </div>
             
@@ -437,8 +465,12 @@
           </div>
 
           <div class="flex gap-3 mt-8">
-            <button (click)="cerrarModalApertura()" class="flex-1 px-4 py-3 rounded-xl border-2 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-             [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'">Cancelar</button>
+            <button (click)="cerrarModalApertura()" 
+                    class="flex-1 px-4 py-3 rounded-xl border-2 font-bold transition-colors
+                           hover:bg-gray-50 border-gray-200 text-gray-600
+                           dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-300">
+              Cancelar
+            </button>
             
             <button *appPermiso="['caja', 'crear']" 
                     (click)="confirmarApertura()" 
@@ -452,67 +484,153 @@
   }
 
   @if (mostrarModalCierre()) {
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border dark:border-gray-700">
-        <div class="p-6">
-          <div class="flex items-center gap-3 mb-4">
-             <div class="p-3 bg-red-100 dark:bg-red-900/30 rounded-full text-red-600">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-             </div>
-             <div>
-                <h3 class="text-xl font-bold">Cierre de Caja</h3>
-                <p class="text-sm opacity-60">Finalizar turno actual</p>
-             </div>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div class="rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border
+                bg-white border-white
+                dark:bg-gray-900 dark:border-gray-700">
+      <div class="p-6">
+        <div class="flex items-center gap-3 mb-4">
+           <div>
+              <h3 class="text-xl font-bold">Cierre de Caja</h3>
+              <p class="text-sm opacity-60">Finalizar turno actual</p>
+           </div>
+        </div>
+        
+        <div class="space-y-5">
+          <div class="p-4 rounded-xl flex justify-between items-center
+                      bg-gray-50 border-gray-100
+                      dark:bg-gray-800 dark:border-gray-700">
+            <span class="text-sm font-bold opacity-70 uppercase tracking-wide">Monto Esperado</span>
+            <span class="font-bold text-xl font-mono">{{ (cajaActual()?.monto_actual ?? 0) | monedaArs }}</span>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold uppercase opacity-70 mb-2">Monto Real (Físico)</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-50 font-bold text-lg">$</span>
+              <input type="number" [(ngModel)]="montoCierre"
+                class="w-full pl-10 pr-4 py-4 rounded-xl border-2 focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all font-bold text-2xl
+                       bg-gray-50 border-gray-200 text-gray-900
+                       dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+            </div>
           </div>
           
-          <div class="space-y-5">
-            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-800 border dark:border-gray-700 flex justify-between items-center">
-              <span class="text-sm font-bold opacity-70 uppercase tracking-wide">Monto Esperado</span>
-              <span class="font-bold text-xl font-mono">{{ (cajaActual()?.monto_actual ?? 0) | monedaArs }}</span>
-            </div>
-
-            <div>
-              <label class="block text-sm font-bold uppercase opacity-70 mb-2">Monto Real (Físico)</label>
-              <div class="relative">
-                <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-50 font-bold text-lg">$</span>
-                <input type="number" [(ngModel)]="montoCierre"
-                  class="w-full pl-10 pr-4 py-4 rounded-xl border-2 bg-gray-50 dark:bg-gray-800 focus:ring-4 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all font-bold text-2xl"
-                  [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-white' : 'border-gray-200 text-gray-900'">
-              </div>
-            </div>
-            
-            @if (montoCierre !== (cajaActual()?.monto_actual || 0)) {
-               <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800/30 animate-fade-in">
-                 <div class="flex justify-between items-center mb-1">
-                   <span class="text-xs font-bold uppercase text-orange-800 dark:text-orange-300 tracking-wider">Diferencia</span>
-                   <span class="font-bold text-orange-600 dark:text-orange-400 font-mono text-lg">
-                     {{ (montoCierre - (cajaActual()?.monto_actual || 0)) | monedaArs }}
-                   </span>
-                 </div>
-                 <p class="text-xs opacity-70 mt-1 font-medium">Se generará un movimiento de ajuste automático.</p>
+          @if (montoCierre !== (cajaActual()?.monto_actual || 0)) {
+             <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-800/30 animate-fade-in">
+               <div class="flex justify-between items-center mb-1">
+                 <span class="text-xs font-bold uppercase text-orange-800 dark:text-orange-300 tracking-wider">Diferencia</span>
+                 <span class="font-bold text-orange-600 dark:text-orange-400 font-mono text-lg">
+                   {{ (montoCierre - (cajaActual()?.monto_actual || 0)) | monedaArs }}
+                 </span>
                </div>
-            }
+               <p class="text-xs opacity-70 mt-1 font-medium">Se generará un movimiento de ajuste automático.</p>
+             </div>
+          }
           </div>
 
-          <div class="flex gap-3 mt-8">
-            <button (click)="cerrarModalCierre()" class="flex-1 px-4 py-3 rounded-xl border-2 font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-             [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-gray-300' : 'border-gray-200 text-gray-600'">Cancelar</button>
-            
-            <button *appPermiso="['caja', 'editar']" 
-                    (click)="confirmarCierre()" 
-                    class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/30 transition-transform active:scale-95">
-              Confirmar Cierre
-            </button>
-          </div>
+        <div class="flex gap-3 mt-8">
+           <button (click)="cerrarModalCierre()" 
+                   class="flex-1 px-4 py-3 rounded-xl border-2 font-bold transition-colors
+                          hover:bg-gray-50 border-gray-200 text-gray-600
+                          dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-300">
+             Cancelar
+           </button>
+           <button (click)="confirmarCierre()" 
+                   class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold shadow-lg shadow-red-500/30 transition-transform active:scale-95">
+             Confirmar Cierre
+           </button>
         </div>
       </div>
     </div>
+  </div>
+  }
+
+  @if (mostrarModalRetiro()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+    <div class="rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up border
+                bg-white border-white
+                dark:bg-gray-900 dark:border-gray-700">
+      <div class="p-6">
+        <div class="flex items-center gap-3 mb-4">
+           <div class="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-full text-yellow-600">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+           </div>
+           <div>
+              <h3 class="text-xl font-bold">Retiro de Efectivo</h3>
+              <p class="text-sm opacity-60">Registrar salida de dinero</p>
+           </div>
+        </div>
+        
+        <div class="space-y-5">
+          <div class="flex justify-between items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+            <span class="text-sm font-medium opacity-70">Saldo Disponible:</span>
+            <span class="font-bold text-lg font-mono">{{ (cajaActual()?.monto_actual ?? 0) | monedaArs }}</span>
+          </div>
+
+          <div>
+            <label class="block text-sm font-bold uppercase opacity-70 mb-2">Monto a Retirar</label>
+            <div class="relative">
+              <span class="absolute left-4 top-1/2 -translate-y-1/2 opacity-50 font-bold text-lg">$</span>
+              <input type="number" [(ngModel)]="montoRetiroInput"
+                class="w-full pl-10 pr-4 py-4 rounded-xl border-2 focus:ring-4 focus:ring-yellow-500/20 focus:border-yellow-500 outline-none transition-all font-bold text-2xl
+                       bg-gray-50 border-gray-200 text-gray-900
+                       dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+            </div>
+          </div>
+          
+          <div class="p-4 rounded-xl border border-blue-100 dark:border-blue-800/30 bg-blue-50 dark:bg-blue-900/10 flex justify-between items-center">
+             <div>
+               <span class="block text-xs font-bold uppercase text-blue-800 dark:text-blue-300 tracking-wider">Saldo Restante</span>
+               <span class="text-[10px] opacity-70">Quedará en caja para el próximo turno</span>
+             </div>
+             <span class="font-bold text-xl text-blue-700 dark:text-blue-400 font-mono">
+               {{ ((cajaActual()?.monto_actual ?? 0) - montoRetiroInput) | monedaArs }}
+             </span>
+          </div>
+
+          <label class="flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer
+                        hover:bg-gray-50 border-gray-200
+                        dark:hover:bg-gray-800 dark:border-gray-700">
+            <div class="relative flex items-center mt-1">
+              <input type="checkbox" [(ngModel)]="actualizarMontoDefault" 
+                     class="w-5 h-5 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500">
+            </div>
+            <div class="flex-1">
+              <span class="block text-sm font-bold text-gray-800 dark:text-gray-200">
+                Actualizar apertura automática
+              </span>
+              <span class="block text-xs opacity-60 leading-tight mt-1">
+                Usar este "Saldo Restante" como el nuevo <b>Monto Inicial por Defecto</b> para las siguientes cajas.
+              </span>
+            </div>
+          </label>
+        </div>
+
+        <div class="flex gap-3 mt-8">
+          <button (click)="cerrarModalRetiro()" 
+                  class="flex-1 px-4 py-3 rounded-xl border-2 font-bold transition-colors
+                         hover:bg-gray-50 border-gray-200 text-gray-600
+                         dark:hover:bg-gray-800 dark:border-gray-700 dark:text-gray-300">
+            Cancelar
+          </button>
+          
+          <button *appPermiso="['caja', 'crear']" 
+                  (click)="confirmarRetiro()" 
+                  class="flex-1 px-4 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl font-bold shadow-lg shadow-yellow-500/30 transition-transform active:scale-95">
+            Confirmar Retiro
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
   }
 
   @if (mostrarModalConfiguracion()) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border dark:border-gray-700">
-        <div class="p-6 border-b dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+      <div class="rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border
+                  bg-white border-white
+                  dark:bg-gray-900 dark:border-gray-700">
+        <div class="p-6 border-b bg-gray-50/50 dark:bg-gray-800/50 dark:border-gray-700">
           <h3 class="text-xl font-bold">Configuración Automática</h3>
         </div>
         
@@ -544,15 +662,17 @@
                <label class="block text-xs font-bold uppercase opacity-60 mb-1.5">Hora Apertura</label>
                <input type="time" [(ngModel)]="configForm.hora_apertura_auto"
                  [disabled]="!configForm.apertura_automatica_habilitada"
-                 class="w-full px-3 py-2.5 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 font-bold transition-all"
-                 [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-white' : 'border-gray-200 text-gray-900'">
+                 class="w-full px-3 py-2.5 rounded-xl border-2 focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 font-bold transition-all
+                        bg-white border-gray-200 text-gray-900
+                        dark:bg-gray-800 dark:border-gray-700 dark:text-white">
              </div>
              <div>
                <label class="block text-xs font-bold uppercase opacity-60 mb-1.5">Hora Cierre</label>
                <input type="time" [(ngModel)]="configForm.hora_cierre_auto"
                  [disabled]="!configForm.cierre_automatico_habilitado"
-                 class="w-full px-3 py-2.5 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 font-bold transition-all"
-                 [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-white' : 'border-gray-200 text-gray-900'">
+                 class="w-full px-3 py-2.5 rounded-xl border-2 focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 font-bold transition-all
+                        bg-white border-gray-200 text-gray-900
+                        dark:bg-gray-800 dark:border-gray-700 dark:text-white">
              </div>
            </div>
 
@@ -561,14 +681,16 @@
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 opacity-50 font-bold">$</span>
                 <input type="number" [(ngModel)]="configForm.monto_inicial_default"
-                  class="w-full pl-8 px-3 py-2.5 rounded-xl border-2 bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 outline-none font-bold transition-all"
-                  [ngClass]="themeService.getCurrentTheme() === 'dark' ? 'border-gray-700 text-white' : 'border-gray-200 text-gray-900'">
+                  class="w-full pl-8 px-3 py-2.5 rounded-xl border-2 focus:ring-2 focus:ring-blue-500 outline-none font-bold transition-all
+                         bg-white border-gray-200 text-gray-900
+                         dark:bg-gray-800 dark:border-gray-700 dark:text-white">
               </div>
            </div>
         </div>
 
-        <div class="p-6 bg-gray-50/50 dark:bg-gray-900/50 flex justify-end gap-3 border-t dark:border-gray-700">
-           <button (click)="cerrarModalConfiguracion()" class="px-4 py-2 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">
+        <div class="p-6 flex justify-end gap-3 border-t bg-gray-50/50 dark:bg-gray-900/50 dark:border-gray-700">
+           <button (click)="cerrarModalConfiguracion()" 
+                   class="px-4 py-2 rounded-xl font-bold hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors text-sm">
              Cancelar
            </button>
            
@@ -582,12 +704,28 @@
     </div>
   }
 
-  @if (toastVisible()) {
-    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up">
-      <div class="px-6 py-3.5 rounded-full shadow-2xl flex items-center gap-3 text-white font-bold backdrop-blur-md shadow-black/20"
-           [ngClass]="toastColor()">
-        <span>{{ toastMensaje() }}</span>
+  @if (isToastVisible()) {
+    <div class="fixed bottom-6 right-6 z-[10000] animate-slide-in-right">
+      <div class="flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border
+                  bg-white border-gray-100 text-gray-800
+                  dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+        
+        <div [ngClass]="{
+          'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400': tipoMensajeToast() === 'success',
+          'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': tipoMensajeToast() === 'error',
+          'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400': tipoMensajeToast() === 'warning'
+        }" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg *ngIf="tipoMensajeToast() === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+          <svg *ngIf="tipoMensajeToast() === 'error'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          <svg *ngIf="tipoMensajeToast() === 'warning'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-sm">{{ tipoMensajeToast() === 'success' ? '¡Éxito!' : (tipoMensajeToast() === 'error' ? 'Error' : 'Atención') }}</h4>
+          <p class="text-sm opacity-80">{{ mensajeToast() }}</p>
+        </div>
       </div>
     </div>
   }
+
 </div>

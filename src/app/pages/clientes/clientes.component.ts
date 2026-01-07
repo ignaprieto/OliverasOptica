@@ -81,7 +81,7 @@ export class ClientesComponent implements OnInit {
   public themeService = inject(ThemeService);
 
   // Columnas optimizadas para Supabase
-  private readonly COLUMNAS_CLIENTES = 'id, nombre, email, telefono, dni, direccion, limite_credito, saldo_actual, activo, observaciones';
+private readonly COLUMNAS_CLIENTES = 'id, nombre, email, telefono, dni, cuit, condicion_iva, direccion, limite_credito, saldo_actual, activo, observaciones';
   private readonly COLUMNAS_RECIBO = 'venta_id, diferencia_abonada, metodo_pago_diferencia';
 
   // Signals de Estado
@@ -101,10 +101,10 @@ export class ClientesComponent implements OnInit {
   cajaAbierta = signal(false);
   
   // Toast Signals
-  mensaje = signal('');
-  tipoMensaje = signal<'success' | 'error'>('success');
-  mostrarToast = signal(false);
-  private toastTimeout: any;
+isToastVisible = signal(false);
+mensajeToast = signal('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
+private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Filtros y Búsqueda
   busqueda = signal('');
@@ -112,6 +112,7 @@ export class ClientesComponent implements OnInit {
   filtroFechaDesde = signal('');
   filtroFechaHasta = signal('');
   searchSubject = new Subject<string>();
+filtroDeuda = signal<'todos' | 'deudores' | 'sin_deuda'>('todos');
 
   // Paginación Infinita
   page = signal(0);
@@ -157,6 +158,10 @@ export class ClientesComponent implements OnInit {
     this.cargarClientes();
   }
 
+ngOnDestroy() {
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+}
+
   // TrackBy Functions
   trackByCliente(index: number, item: Cliente): string {
     return item.id || index.toString();
@@ -175,18 +180,20 @@ export class ClientesComponent implements OnInit {
   }
 
   private inicializarCliente(): Cliente {
-    return {
-      nombre: '',
-      email: '',
-      telefono: '',
-      dni: '',
-      direccion: '',
-      limite_credito: 0,
-      saldo_actual: 0,
-      activo: true,
-      observaciones: ''
-    };
-  }
+  return {
+    nombre: '',
+    email: '',
+    telefono: '',
+    dni: '',
+    cuit: '', // <--- AGREGAR
+    condicion_iva: 'Consumidor Final', // <--- AGREGAR
+    direccion: '',
+    limite_credito: 0,
+    saldo_actual: 0,
+    activo: true,
+    observaciones: ''
+  };
+}
 
   // ========== CARGA DE CLIENTES E INFINITE SCROLL ==========
 
@@ -219,19 +226,32 @@ export class ClientesComponent implements OnInit {
       const to = from + this.pageSize - 1;
 
       let query = this.clientesService['supabase'].getClient()
-        .from('clientes')
-        .select(this.COLUMNAS_CLIENTES)
-        .range(from, to)
-        .order('nombre', { ascending: true });
+  .from('clientes')
+  .select(this.COLUMNAS_CLIENTES)
+  .range(from, to);
 
-      if (this.busqueda()) {
-        const term = this.busqueda();
-        query = query.or(`nombre.ilike.%${term}%,dni.ilike.%${term}%,email.ilike.%${term}%`);
-      }
+if (this.busqueda()) {
+  const term = this.busqueda();
+  query = query.or(`nombre.ilike.%${term}%,dni.ilike.%${term}%,cuit.ilike.%${term}%,email.ilike.%${term}%`);
+}
 
-      if (this.filtroEstado() !== 'todos') {
-        query = query.eq('activo', this.filtroEstado() === 'activos');
-      }
+if (this.filtroEstado() !== 'todos') {
+  query = query.eq('activo', this.filtroEstado() === 'activos');
+}
+
+// Filtro de deuda
+if (this.filtroDeuda() === 'deudores') {
+  query = query.gt('saldo_actual', 0);
+} else if (this.filtroDeuda() === 'sin_deuda') {
+  query = query.eq('saldo_actual', 0);
+}
+
+// Orden según filtro de deuda
+if (this.filtroDeuda() === 'deudores') {
+  query = query.order('saldo_actual', { ascending: false });
+} else {
+  query = query.order('nombre', { ascending: true });
+}
 
       const { data, error } = await query;
 
@@ -259,6 +279,11 @@ export class ClientesComponent implements OnInit {
     this.cargarClientes();
   }
 
+  cambiarFiltroDeuda(estado: 'todos' | 'deudores' | 'sin_deuda') {
+  this.filtroDeuda.set(estado);
+  this.resetearPaginacion();
+  this.cargarClientes();
+}
   // ========== DETALLE CLIENTE ==========
 
   async verDetalleCliente(cliente: Cliente) {
@@ -280,46 +305,48 @@ export class ClientesComponent implements OnInit {
   }
 
   async cargarVentasCredito(clienteId: string) {
-    let ventas = await this.clientesService.obtenerVentasCredito(clienteId);
-    
-    if (this.filtroFechaDesde()) {
-      const d = new Date(this.filtroFechaDesde()); d.setHours(0,0,0,0);
-      ventas = ventas.filter(v => new Date(v.fecha_venta) >= d);
-    }
-    if (this.filtroFechaHasta()) {
-      const h = new Date(this.filtroFechaHasta()); h.setHours(23,59,59,999);
-      ventas = ventas.filter(v => new Date(v.fecha_venta) <= h);
-    }
-
-    // Optimización N+1: Una sola consulta para todos los recambios
-    const ventaIds = ventas.map(v => v.venta_id);
-    let mapaRecambios: any = {};
-
-    if (ventaIds.length > 0) {
-      const { data: recambios } = await this.clientesService['supabase'].getClient()
-        .from('recambios')
-        .select(this.COLUMNAS_RECIBO)
-        .in('venta_id', ventaIds);
-      
-      if (recambios) {
-        recambios.forEach((r: any) => {
-          mapaRecambios[r.venta_id] = r;
-        });
-      }
-    }
-
-    const ventasExtendidas = ventas.map(venta => {
-      const recambio = mapaRecambios[venta.venta_id];
-      const vExt = { ...venta } as VentaCreditoExtendida;
-      if (recambio) {
-        vExt.recambio_diferencia = recambio.diferencia_abonada;
-        vExt.recambio_metodo_pago = recambio.metodo_pago_diferencia;
-      }
-      return vExt;
-    });
-
-    this.ventasCredito.set(ventasExtendidas);
+  // Usar el servicio en lugar de consulta directa
+  let ventas = await this.clientesService.obtenerVentasCredito(clienteId);
+  
+  if (this.filtroFechaDesde()) {
+    const d = new Date(this.filtroFechaDesde()); d.setHours(0,0,0,0);
+    ventas = ventas.filter(v => new Date(v.fecha_venta) >= d);
   }
+  if (this.filtroFechaHasta()) {
+    const h = new Date(this.filtroFechaHasta()); h.setHours(23,59,59,999);
+    ventas = ventas.filter(v => new Date(v.fecha_venta) <= h);
+  }
+
+  // Optimización N+1: Una sola consulta para todos los recambios
+  const ventaIds = ventas.map(v => v.venta_id);
+  let mapaRecambios: any = {};
+
+  if (ventaIds.length > 0) {
+    const { data: recambios } = await this.clientesService['supabase'].getClient()
+      .from('recambios')
+      .select(this.COLUMNAS_RECIBO)
+      .in('venta_id', ventaIds);
+    
+    if (recambios) {
+      recambios.forEach((r: any) => {
+        mapaRecambios[r.venta_id] = r;
+      });
+    }
+  }
+
+  const ventasExtendidas = ventas.map(venta => {
+    const recambio = mapaRecambios[venta.venta_id];
+    const vExt = { ...venta } as VentaCreditoExtendida;
+    if (recambio) {
+      vExt.recambio_diferencia = recambio.diferencia_abonada;
+      vExt.recambio_metodo_pago = recambio.metodo_pago_diferencia;
+    }
+    // fecha_vencimiento ya viene en venta desde el servicio
+    return vExt;
+  });
+
+  this.ventasCredito.set(ventasExtendidas);
+}
 
   async cargarHistorialPagos(clienteId: string) {
     const pagos = await this.clientesService.obtenerPagosCliente(clienteId);
@@ -350,45 +377,89 @@ export class ClientesComponent implements OnInit {
   }
 
   async guardarCliente() {
-    const cliente = this.nuevoCliente();
-    if (!cliente.nombre.trim()) {
-      this.mostrarMensajeToast('El nombre es obligatorio', 'error');
-      return;
-    }
-
-    this.cargando.set(true);
-    try {
-      if (this.modoEdicion() && cliente.id) {
-        await this.clientesService.actualizarCliente(cliente.id, cliente);
-        this.mostrarMensajeToast('Cliente actualizado', 'success');
-        
-        // Actualizar optimista en la lista
-        this.clientes.update(lista => lista.map(c => c.id === cliente.id ? { ...c, ...cliente } : c));
-        
-        if (this.clienteSeleccionado()?.id === cliente.id) {
-          this.clienteSeleccionado.set({ ...this.clienteSeleccionado()!, ...cliente });
-        }
-
-      } else {
-        await this.clientesService.crearCliente(cliente);
-        this.mostrarMensajeToast('Cliente creado', 'success');
-        this.resetearPaginacion();
-        this.cargarClientes();
-      }
-      
-      this.cerrarModal();
-      
-    } catch (error: any) {
-      const errMessage = error.message || JSON.stringify(error);
-      if (errMessage.includes('clientes_dni_key') || errMessage.includes('unique constraint')) {
-        this.mostrarMensajeToast('Ya existe un cliente registrado con este DNI', 'error');
-      } else {
-        this.mostrarMensajeToast('Error al guardar: ' + errMessage, 'error');
-      }
-    } finally {
-      this.cargando.set(false);
-    }
+  const cliente = this.nuevoCliente();
+  if (!cliente.nombre.trim()) {
+    this.mostrarMensajeToast('El nombre es obligatorio', 'error');
+    return;
   }
+
+  this.cargando.set(true);
+  try {
+    if (this.modoEdicion() && cliente.id) {
+      // EDICIÓN: Actualización optimista inmediata
+      const clienteActualizado = { ...cliente };
+      
+      // Actualizar UI inmediatamente
+      this.clientes.update(lista => 
+        lista.map(c => c.id === cliente.id ? clienteActualizado : c)
+      );
+      
+      if (this.clienteSeleccionado()?.id === cliente.id) {
+        this.clienteSeleccionado.set(clienteActualizado);
+      }
+      
+      // Guardar en servidor en background
+      await this.clientesService.actualizarCliente(cliente.id, cliente);
+      this.mostrarMensajeToast('Cliente actualizado', 'success');
+
+    } else {
+      // CREACIÓN: Crear y agregar optimistamente
+      const nuevoClienteCreado = await this.clientesService.crearCliente(cliente);
+      
+      // Agregar al principio de la lista solo si cumple con los filtros actuales
+      const cumpleFiltros = this.clienteCumpleFiltros(nuevoClienteCreado);
+      
+      if (cumpleFiltros) {
+        this.clientes.update(lista => [nuevoClienteCreado, ...lista]);
+      }
+      
+      this.mostrarMensajeToast('Cliente creado', 'success');
+    }
+    
+    this.cerrarModal();
+    
+  } catch (error: any) {
+    const errMessage = error.message || JSON.stringify(error);
+    if (errMessage.includes('clientes_dni_key') || errMessage.includes('unique constraint')) {
+      this.mostrarMensajeToast('Ya existe un cliente registrado con este DNI', 'error');
+    } else {
+      this.mostrarMensajeToast('Error al guardar: ' + errMessage, 'error');
+    }
+    
+    // Si falla, revertir cambios optimistas recargando
+    if (this.modoEdicion()) {
+      this.resetearPaginacion();
+      await this.cargarClientes();
+    }
+  } finally {
+    this.cargando.set(false);
+  }
+}
+
+// Método auxiliar para verificar si un cliente cumple los filtros actuales
+private clienteCumpleFiltros(cliente: Cliente): boolean {
+  // Filtro de estado
+  if (this.filtroEstado() === 'activos' && !cliente.activo) return false;
+  if (this.filtroEstado() === 'inactivos' && cliente.activo) return false;
+  
+  // Filtro de deuda
+  if (this.filtroDeuda() === 'deudores' && (cliente.saldo_actual || 0) <= 0) return false;
+  if (this.filtroDeuda() === 'sin_deuda' && (cliente.saldo_actual || 0) > 0) return false;
+  
+  // Filtro de búsqueda
+  if (this.busqueda()) {
+    const term = this.busqueda().toLowerCase();
+    const cumpleBusqueda = 
+      cliente.nombre?.toLowerCase().includes(term) ||
+      cliente.dni?.toLowerCase().includes(term) ||
+      cliente.cuit?.toLowerCase().includes(term) ||
+      cliente.email?.toLowerCase().includes(term);
+    
+    if (!cumpleBusqueda) return false;
+  }
+  
+  return true;
+}
 
   async toggleEstadoCliente(cliente: Cliente) {
     if (!cliente.id) return;
@@ -459,58 +530,85 @@ export class ClientesComponent implements OnInit {
   }
 
   async registrarPago() {
-    const pago = this.nuevoPago();
-    const venta = this.ventaCreditoSeleccionada();
-    const cliente = this.clienteSeleccionado();
+  const pago = this.nuevoPago();
+  const venta = this.ventaCreditoSeleccionada();
+  const cliente = this.clienteSeleccionado();
 
-    if (!venta || !cliente) return;
-    
-    if (pago.monto_pagado <= 0) return this.mostrarMensajeToast('Monto inválido', 'error');
-    
-    if (pago.metodo_pago === 'efectivo') {
-      const cajaEstaAbierta = await this.verificarCajaAbierta(); 
-      if (!cajaEstaAbierta) {
-        this.mostrarMensajeToast('❌ No hay caja abierta. No se puede en efectivo.', 'error');
-        return;
-      }
-    }
-
-    const saldoPendiente = this.getSaldoPendienteConRecambio(venta);
-    if (pago.monto_pagado > saldoPendiente) {
-        return this.mostrarMensajeToast('El monto no puede ser mayor al saldo pendiente', 'error');
-    }
-
-    this.cargando.set(true);
-    try {
-      await this.clientesService.registrarPago({
-        cliente_id: cliente.id!,
-        venta_credito_id: venta.id,
-        monto_pagado: pago.monto_pagado,
-        metodo_pago: pago.metodo_pago,
-        observaciones: pago.observaciones
-      });
-
-      if (pago.metodo_pago === 'efectivo') {
-        await this.registrarMovimientosEnCaja(
-          pago.monto_pagado,
-          pago.efectivo_entregado,
-          pago.vuelto,
-          venta.venta_id,
-          pago.observaciones || `Pago Cta Cte - ${cliente.nombre}`
-        );
-      }
-
-      this.mostrarMensajeToast('Pago registrado', 'success');
-      this.cerrarModalPago();
-      
-      await this.verDetalleCliente(cliente);
-      
-    } catch (error: any) {
-      this.mostrarMensajeToast('Error al registrar pago', 'error');
-    } finally {
-      this.cargando.set(false);
+  if (!venta || !cliente) return;
+  
+  if (pago.monto_pagado <= 0) return this.mostrarMensajeToast('Monto inválido', 'error');
+  
+  if (pago.metodo_pago === 'efectivo') {
+    const cajaEstaAbierta = await this.verificarCajaAbierta(); 
+    if (!cajaEstaAbierta) {
+      this.mostrarMensajeToast('❌ No hay caja abierta. No se puede en efectivo.', 'error');
+      return;
     }
   }
+
+  const saldoPendiente = this.getSaldoPendienteConRecambio(venta);
+  if (pago.monto_pagado > saldoPendiente) {
+      return this.mostrarMensajeToast('El monto no puede ser mayor al saldo pendiente', 'error');
+  }
+
+  this.cargando.set(true);
+  try {
+    await this.clientesService.registrarPago({
+      cliente_id: cliente.id!,
+      venta_credito_id: venta.id,
+      monto_pagado: pago.monto_pagado,
+      metodo_pago: pago.metodo_pago,
+      observaciones: pago.observaciones
+    });
+
+    if (pago.metodo_pago === 'efectivo') {
+      await this.registrarMovimientosEnCaja(
+        pago.monto_pagado,
+        pago.efectivo_entregado,
+        pago.vuelto,
+        venta.venta_id,
+        pago.observaciones || `Pago Cta Cte - ${cliente.nombre}`
+      );
+    }
+
+    this.mostrarMensajeToast('Pago registrado', 'success');
+    this.cerrarModalPago();
+    
+    // RECARGAR DATOS ACTUALIZADOS
+    await Promise.all([
+      this.cargarVentasCredito(cliente.id!),
+      this.cargarHistorialPagos(cliente.id!)
+    ]);
+
+    // ACTUALIZAR EL SALDO DEL CLIENTE EN LA LISTA
+    const { data: clienteActualizado } = await this.clientesService['supabase']
+      .getClient()
+      .from('clientes')
+      .select('saldo_actual')
+      .eq('id', cliente.id!)
+      .single();
+
+    if (clienteActualizado) {
+      // Actualizar en la lista de clientes
+      this.clientes.update(lista => 
+        lista.map(c => c.id === cliente.id 
+          ? { ...c, saldo_actual: clienteActualizado.saldo_actual } 
+          : c
+        )
+      );
+
+      // Actualizar el cliente seleccionado
+      this.clienteSeleccionado.update(c => 
+        c ? { ...c, saldo_actual: clienteActualizado.saldo_actual } : null
+      );
+    }
+    
+  } catch (error: any) {
+    this.mostrarMensajeToast('Error al registrar pago', 'error');
+  } finally {
+    this.cargando.set(false);
+  }
+}
 
   async registrarMovimientosEnCaja(monto: number, entregado: number, vuelto: number, ventaId: string, obs: string) {
     const { data: caja } = await this.clientesService['supabase'].getClient()
@@ -619,18 +717,18 @@ export class ClientesComponent implements OnInit {
     if (this.clienteSeleccionado()?.id) this.cargarVentasCredito(this.clienteSeleccionado()!.id!);
   }
 
-  mostrarMensajeToast(msg: string, tipo: 'success' | 'error') {
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    
-    this.mensaje.set(msg);
-    this.tipoMensaje.set(tipo);
-    this.mostrarToast.set(true);
-    
-    this.toastTimeout = setTimeout(() => {
-      this.mostrarToast.set(false);
-      this.mensaje.set('');
-    }, 3000);
-  }
+  mostrarMensajeToast(msg: string, tipo: 'success' | 'error' | 'warning' = 'success') {
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+  
+  this.mensajeToast.set(msg);
+  this.tipoMensajeToast.set(tipo);
+  this.isToastVisible.set(true);
+  
+  this.toastTimeout = setTimeout(() => {
+    this.isToastVisible.set(false);
+    this.mensajeToast.set('');
+  }, 3000);
+}
 
   volverALista() {
     this.clienteSeleccionado.set(null);
@@ -678,4 +776,39 @@ export class ClientesComponent implements OnInit {
 
   getPagosDeVenta(vid: string) { return this.historialPagos().filter(p => p.venta_credito_id === vid); }
   tienePagos(vid: string) { return this.getPagosDeVenta(vid).length > 0; }
+
+  estaVencida(fechaVencimiento: string | undefined): boolean {
+  if (!fechaVencimiento) return false;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  
+  // Parsear fecha sin timezone
+  const [year, month, day] = fechaVencimiento.split('T')[0].split('-');
+  const vencimiento = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  vencimiento.setHours(0, 0, 0, 0);
+  
+  return vencimiento < hoy;
+}
+
+diasParaVencimiento(fechaVencimiento: string | undefined): number {
+  if (!fechaVencimiento) return 0;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  
+  // Parsear fecha sin timezone
+  const [year, month, day] = fechaVencimiento.split('T')[0].split('-');
+  const vencimiento = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  vencimiento.setHours(0, 0, 0, 0);
+  
+  const diferencia = vencimiento.getTime() - hoy.getTime();
+  return Math.ceil(diferencia / (1000 * 60 * 60 * 24));
+}
+
+formatearFechaVencimiento(f: string | undefined): string {
+  if (!f) return '';
+  // Para fechas tipo DATE (YYYY-MM-DD), usar manualmente para evitar UTC
+  const [year, month, day] = f.split('T')[0].split('-');
+  const fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+  return fecha.toLocaleDateString('es-AR');
+}
 }

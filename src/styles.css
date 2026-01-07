@@ -89,3 +89,32 @@
 canvas {
   max-height: 300px;
 }
+
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-scheme: light dark;
+}
+
+@layer base {
+  /* Eliminamos el color-scheme forzado para que respete la clase */
+  html {
+    /* Por defecto claro, si agregas la clase .dark cambiará */
+    color-scheme: light; 
+    background-color: white; 
+    color: #111827; /* gray-900 */
+  }
+
+  /* Cuando html tiene la clase .dark */
+  html.dark {
+    color-scheme: dark;
+    background-color: #030712; /* gray-950 */
+    color: white;
+  }
+  
+  /* Asegúrate que el body herede */
+  body {
+    @apply bg-transparent text-inherit;
+  }
+}

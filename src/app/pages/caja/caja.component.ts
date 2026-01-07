@@ -97,9 +97,10 @@ export class CajaComponent implements OnInit, OnDestroy {
   mostrarModalConfiguracion = signal(false);
   mostrarHistorial = signal(false);
   cargando = signal(false);
-  toastVisible = signal(false);
-  toastMensaje = signal('');
-  toastColor = signal('bg-green-600');
+ isToastVisible = signal(false);
+mensajeToast = signal('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
+private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // Resumen - Signal
   resumen = signal({
@@ -123,6 +124,10 @@ export class CajaComponent implements OnInit, OnDestroy {
   private readonly MOVIMIENTOS_POR_PAGINA = 50;
   todosMovimientosCargados = signal(false);
   cargandoMasMovimientos = signal(false);
+
+  mostrarModalRetiro = signal(false);
+  montoRetiroInput = 0;
+  actualizarMontoDefault = false; // Checkbox del modal retiro
 
   // Computed signals para mejor performance
   movimientosFiltrados = computed(() => {
@@ -186,8 +191,8 @@ export class CajaComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // Limpieza si fuera necesaria
-  }
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+}
 
   // ========== CARGA DE DATOS ==========
 
@@ -443,6 +448,7 @@ export class CajaComponent implements OnInit, OnDestroy {
       this.mostrarToast('No hay caja abierta', 'error');
       return;
     }
+    // Solo cargamos el monto actual para comparar
     this.montoCierre = caja.monto_actual;
     this.mostrarModalCierre.set(true);
   }
@@ -458,14 +464,16 @@ export class CajaComponent implements OnInit, OnDestroy {
     this.cargando.set(true);
     try {
       const usuario = await this.obtenerUsuarioActual();
+      // Calculamos la diferencia entre lo que dice el sistema y lo que contó el usuario
       const diferencia = this.montoCierre - caja.monto_actual;
 
+      // 1. Cerrar la caja actual en la base de datos
       const { error } = await this.supabase
         .getClient()
         .from('cajas')
         .update({
           fecha_cierre: new Date().toISOString(),
-          monto_cierre: this.montoCierre,
+          monto_cierre: this.montoCierre, // Guardamos el monto físico real contado
           estado: 'cerrada',
           usuario_cierre: usuario.nombre,
           cierre_manual: true,
@@ -475,6 +483,7 @@ export class CajaComponent implements OnInit, OnDestroy {
 
       if (error) throw error;
 
+      // 2. Si hay diferencia (positiva o negativa), registramos el movimiento de ajuste automático
       if (diferencia !== 0) {
         await this.supabase
           .getClient()
@@ -487,16 +496,21 @@ export class CajaComponent implements OnInit, OnDestroy {
             metodo: 'efectivo',
             usuario_id: usuario.id,
             usuario_nombre: usuario.nombre,
-            observaciones: `Diferencia: ${diferencia.toFixed(2)} - Cierre manual`,
+            observaciones: `Diferencia: ${diferencia.toFixed(2)} - Cierre manual (Físico vs Sistema)`,
             created_at: new Date().toISOString()
           });
       }
 
       this.mostrarToast('Caja cerrada correctamente', 'success');
       this.mostrarModalCierre.set(false);
+      
+      // Actualizamos estados locales inmediatos
       this.cajaAbierta.set(false);
       this.cajaDeFechaAnterior.set(false);
+      
+      // Recargamos todos los datos para reflejar cambios en historial
       await this.cargarDatos();
+
     } catch (error: any) {
       console.error('Error al cerrar caja:', error);
       this.mostrarToast(error.message || 'Error al cerrar caja', 'error');
@@ -651,14 +665,16 @@ export class CajaComponent implements OnInit, OnDestroy {
     };
   }
 
-  mostrarToast(mensaje: string, tipo: 'success' | 'error') {
-    this.toastMensaje.set(mensaje);
-    this.toastColor.set(tipo === 'success' ? 'bg-green-600' : 'bg-red-600');
-    this.toastVisible.set(true);
-    setTimeout(() => {
-      this.toastVisible.set(false);
-    }, 3000);
-  }
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success') {
+  this.mensajeToast.set(mensaje);
+  this.tipoMensajeToast.set(tipo);
+  this.isToastVisible.set(true);
+  
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+  this.toastTimeout = setTimeout(() => {
+    this.isToastVisible.set(false);
+  }, 3000);
+}
 
   formatearFecha(fecha: string): string {
     const date = new Date(fecha);
@@ -754,5 +770,96 @@ export class CajaComponent implements OnInit, OnDestroy {
 
   setFiltroFechaHasta(value: string) {
     this.filtroFechaHasta.set(value);
+  }
+
+  abrirModalRetiro() {
+    if (!this.cajaActual()) return;
+    this.montoRetiroInput = 0;
+    this.actualizarMontoDefault = false;
+    this.mostrarModalRetiro.set(true);
+  }
+
+  cerrarModalRetiro() {
+    this.mostrarModalRetiro.set(false);
+  }
+
+  async confirmarRetiro() {
+    const caja = this.cajaActual();
+    if (!caja) return;
+
+    if (this.montoRetiroInput <= 0) {
+      this.mostrarToast('Ingresa un monto válido', 'error');
+      return;
+    }
+
+    if (this.montoRetiroInput > caja.monto_actual) {
+      this.mostrarToast('No hay suficiente saldo en caja', 'error');
+      return;
+    }
+
+    this.cargando.set(true);
+    try {
+      const usuario = await this.obtenerUsuarioActual();
+      const saldoRestante = caja.monto_actual - this.montoRetiroInput;
+
+      // 1. Insertar el Movimiento de Egreso (El retiro)
+      const { error: errorMov } = await this.supabase.getClient()
+        .from('movimientos_caja')
+        .insert({
+          caja_id: caja.id,
+          tipo: 'egreso',
+          concepto: 'Retiro de Caja',
+          monto: this.montoRetiroInput,
+          metodo: 'efectivo',
+          usuario_id: usuario.id,
+          usuario_nombre: usuario.nombre,
+          observaciones: `Retiro manual. Quedan ${saldoRestante} en caja.`,
+          created_at: new Date().toISOString()
+        });
+
+      if (errorMov) throw errorMov;
+
+      // 2. Actualizar monto de la caja actual (Supabase lo hace via trigger o manual)
+      // Actualizamos manual para asegurar consistencia inmediata si no hay trigger
+      await this.supabase.getClient()
+        .from('cajas')
+        .update({ monto_actual: saldoRestante })
+        .eq('id', caja.id);
+
+      // 3. ACTUALIZAR CONFIGURACIÓN AUTOMÁTICA (El requerimiento clave)
+      // Si el usuario quiere que el sobrante sea el nuevo estándar
+      if (this.actualizarMontoDefault) {
+        // Buscamos si existe config, si no, se crea o actualiza
+        const config = this.configuracion();
+        const configData = {
+          monto_inicial_default: saldoRestante,
+          updated_at: new Date().toISOString()
+        };
+
+        if (config) {
+          await this.supabase.getClient()
+            .from('configuracion_caja')
+            .update(configData)
+            .eq('id', config.id);
+        } else {
+          await this.supabase.getClient()
+            .from('configuracion_caja')
+            .insert(configData);
+        }
+        
+        this.mostrarToast(`Retiro exitoso. Nuevo monto inicial por defecto: $${saldoRestante}`, 'success');
+      } else {
+        this.mostrarToast('Retiro registrado exitosamente', 'success');
+      }
+
+      this.cerrarModalRetiro();
+      await this.cargarDatos(); // Recargar todo para ver reflejado el cambio
+
+    } catch (error: any) {
+      console.error('Error al retirar:', error);
+      this.mostrarToast('Error al registrar retiro', 'error');
+    } finally {
+      this.cargando.set(false);
+    }
   }
 }

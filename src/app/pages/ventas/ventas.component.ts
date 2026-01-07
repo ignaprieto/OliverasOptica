@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, signal, computed, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef,inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { Producto } from '../../models/producto.model';
@@ -10,7 +10,8 @@ import { ClientesService, Cliente } from '../../services/clientes.service';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { PermisoDirective } from '../../directives/permiso.directive';
-
+import { FacturacionService } from '../../services/facturacion.service';
+FacturacionService
 type VendedorTemp = {
   id: string;
   rol: string;
@@ -100,10 +101,12 @@ declare global {
   changeDetection: ChangeDetectionStrategy.OnPush // ✅ CAMBIO 1: OnPush Strategy
 })
 export class VentasComponent implements OnInit, OnDestroy {
+private facturacionService = inject(FacturacionService);
+clienteParaFacturaA = signal<Cliente | null>(null);
+mostrarSelectorClienteFacturaA = signal<boolean>(false);
   // ✅ CAMBIO 2: Constante para columnas específicas de Supabase
   private readonly COLUMNAS_PRODUCTOS = 'id, codigo, nombre, marca, categoria, talle, precio, cantidad_stock, cantidad_deposito, activo';
-  private readonly COLUMNAS_CLIENTES = 'id, nombre, dni, email, limite_credito, saldo_actual, activo';
-  
+private readonly COLUMNAS_CLIENTES = 'id, nombre, dni, email, limite_credito, saldo_actual, activo, cuit, condicion_iva';  
   // ✅ CAMBIO 3: Migración a Signals
   productos = signal<Producto[]>([]);
   carrito = signal<{ producto: Producto; cantidad: number; subtotal: number }[]>([]);
@@ -137,15 +140,15 @@ export class VentasComponent implements OnInit, OnDestroy {
   ordenStock = signal<'asc' | 'desc' | 'none'>('none');
 
   // Pagos
-  metodoPago = signal<string>('efectivo');
+  metodoPago = signal<string>('');
   codigoDescuento = signal<string>('');
   descuentoAplicado = signal<number>(0);
   totalFinal = signal<number>(0);
 
   // Pago dividido
-  metodoPago1 = signal<string>('efectivo');
+  metodoPago1 = signal<string>('');
   montoPago1 = signal<number>(0);
-  metodoPago2 = signal<string>('transferencia');
+  metodoPago2 = signal<string>('');
   montoPago2 = signal<number>(0);
   efectivoEntregadoPago1 = signal<number>(0);
   efectivoEntregadoPago2 = signal<number>(0);
@@ -182,8 +185,8 @@ export class VentasComponent implements OnInit, OnDestroy {
 
   // Toast
   toastVisible = signal<boolean>(false);
-  toastMensaje = signal<string>('');
-  toastColor = signal<string>('bg-green-600');
+toastMensaje = signal<string>('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
 
   // Scanner
   mostrarScanner = signal<boolean>(false);
@@ -214,15 +217,22 @@ export class VentasComponent implements OnInit, OnDestroy {
   itemsPorPagina = 20;
   hayMasProductos = signal<boolean>(true);
 
+// ==================== SIGNALS DE RECIBO POST-VENTA ====================
+mostrarModalReciboPostVenta = signal<boolean>(false);
+ventaRecienCreada = signal<any>(null);
+generandoReciboPostVenta = signal<boolean>(false);
+configRecibo = signal<any>(null);
   constructor(
     private supabase: SupabaseService, 
     public themeService: ThemeService,
-    private clientesService: ClientesService
+    private clientesService: ClientesService, 
+    private cdr: ChangeDetectorRef
   ) {}
 
   async ngOnInit() {
     this.cargando.set(true);
-    
+    await this.facturacionService.obtenerDatosFacturacionCompleta();
+    await this.cargarConfigRecibo();
     // Configurar Debounce para Productos
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(400),
@@ -254,6 +264,7 @@ export class VentasComponent implements OnInit, OnDestroy {
     } finally {
       this.cargando.set(false);
     }
+    
   }
 
   ngOnDestroy(): void {
@@ -588,17 +599,25 @@ export class VentasComponent implements OnInit, OnDestroy {
   // ============================================
 
   onTipoPagoChange() {
-    if (this.esVentaCredito()) {
-      this.metodoPago.set('credito');
-      this.mostrarListaClientes.set(true);
-      this.clientes.set([]);
-    } else {
-      this.metodoPago.set('efectivo');
-      this.mostrarListaClientes.set(false);
-      this.limpiarCliente();
-    }
-    this.onMetodoPagoChange();
+  if (this.esVentaCredito()) {
+    // Si es crédito, aplicamos la regla de 'fiado'
+    this.facturacionService.aplicarReglaPorMetodo('fiado');
+    
+    this.mostrarListaClientes.set(true);
+    this.clientes.set([]);
+    this.clienteParaFacturaA.set(null); // Limpiar cliente para factura A
+  } else {
+    // Si vuelve a venta normal, reseteamos
+    this.metodoPago.set('');
+    this.facturacionService.actualizarEstadoGlobal(false);
+    
+    this.mostrarListaClientes.set(false);
+    this.limpiarCliente();
   }
+  
+  this.montoEntregado.set(0);
+  this.vuelto.set(0);
+}
 
   getCreditoDisponible(): number {
     const cliente = this.clienteSeleccionado();
@@ -741,6 +760,7 @@ export class VentasComponent implements OnInit, OnDestroy {
     } else {
       this.calcularVuelto();
     }
+    this.facturacionService.aplicarReglaPorMetodo(this.metodoPago());
   }
   
   onEfectivoEntregadoPago1Change() { this.calcularVuelto(); }
@@ -772,6 +792,7 @@ export class VentasComponent implements OnInit, OnDestroy {
       this.vueltoPago1.set(0);
     }
     this.calcularVuelto();
+    this.facturacionService.aplicarReglaPorMetodo(this.metodoPago1());
   }
 
   onMetodoPago2Change() {
@@ -780,6 +801,7 @@ export class VentasComponent implements OnInit, OnDestroy {
       this.vueltoPago2.set(0);
     }
     this.calcularVuelto();
+    this.facturacionService.aplicarReglaPorMetodo(this.metodoPago2());
   }
 
   async aplicarDescuento() {
@@ -916,7 +938,20 @@ export class VentasComponent implements OnInit, OnDestroy {
   async confirmarVenta() {
     if (this.procesandoVenta()) return;
 
-    // Validaciones
+    if (!this.esVentaCredito()) {
+        if (this.pagoDividido()) {
+            if (!this.metodoPago1() || !this.metodoPago2()) {
+                this.mostrarToast('Debe seleccionar ambos métodos de pago.', 'error');
+                return;
+            }
+        } else {
+            if (!this.metodoPago()) {
+                this.mostrarToast('Debe seleccionar un método de pago.', 'error');
+                return;
+            }
+        }
+    }
+
     if (this.esVentaCredito()) {
       if (!this.clienteSeleccionado()) {
         this.mostrarToast('Debe seleccionar un cliente para venta a crédito.', 'error');
@@ -1006,22 +1041,27 @@ export class VentasComponent implements OnInit, OnDestroy {
         metodoPagoVenta = `${metodo1Normalizado} ($${this.montoPago1().toFixed(2)}) + ${metodo2Normalizado} ($${this.montoPago2().toFixed(2)})`; 
       }
 
-      const { data: venta, error } = await this.supabase.getClient().from('ventas').insert({
-        usuario_id,
-        usuario_nombre,
-        cliente_nombre: this.clienteNombre(),
-        cliente_email: this.clienteEmail(),
-        metodo_pago: metodoPagoVenta,
-        total_sin_desc: totalSinDesc,
-        descuento_aplicado: this.descuentoAplicado(),
-        total_final: totalFinal,
-        cliente_id: this.clienteSeleccionado()?.id || null,
-        es_credito: this.esVentaCredito()
-      }).select().single();
+      // 1. Insertar Venta
+const clienteIdFinal = this.esVentaCredito() 
+  ? this.clienteSeleccionado()?.id 
+  : this.clienteParaFacturaA()?.id || null;
+
+const { data: venta, error } = await this.supabase.getClient().from('ventas').insert({
+  usuario_id,
+  usuario_nombre,
+  cliente_nombre: this.clienteNombre(),
+  cliente_email: this.clienteEmail(),
+  metodo_pago: metodoPagoVenta,
+  total_sin_desc: totalSinDesc,
+  descuento_aplicado: this.descuentoAplicado(),
+  total_final: totalFinal,
+  cliente_id: clienteIdFinal, // <-- AHORA USA clienteIdFinal
+  es_credito: this.esVentaCredito()
+}).select().single();
 
       if (error || !venta) throw new Error('Error al guardar la venta');
 
-      // Detalles
+      // 2. Insertar Detalles
       for (const item of carritoActual) {
         await this.supabase.getClient().from('detalle_venta').insert({
           venta_id: venta.id,
@@ -1036,7 +1076,7 @@ export class VentasComponent implements OnInit, OnDestroy {
           .eq('id', item.producto.id);
       }
 
-      // Crédito
+      // 3. Manejo de Crédito
       if (this.esVentaCredito() && this.clienteSeleccionado()) {
         const cliente = this.clienteSeleccionado()!;
         await this.supabase.getClient().from('ventas_credito').insert({
@@ -1054,7 +1094,7 @@ export class VentasComponent implements OnInit, OnDestroy {
           .eq('id', cliente.id);
       }
 
-      // Caja
+      // 4. Manejo de Caja
       if (!this.esVentaCredito()) {
         if (this.pagoDividido()) {
           if (this.metodoPago1() === 'efectivo') {
@@ -1091,46 +1131,153 @@ export class VentasComponent implements OnInit, OnDestroy {
         }
       }
 
-      this.mostrarToast('Venta confirmada correctamente', 'success');
+      // ============================================================
+      //  5. LÓGICA DE FACTURACIÓN AUTOMÁTICA AFIP
+      // ============================================================
+      try {
+  const { data: configFiscal } = await this.supabase.getClient()
+    .from('facturacion')
+    .select('*')
+    .single();
+
+  if (configFiscal && configFiscal.facturacion_habilitada) {
+    
+    this.mostrarToast('Procesando facturación electrónica...', 'warning');
+
+    let tipoFactura = 'B';
+
+    if (configFiscal.condicion_iva === 'Monotributista') {
+      tipoFactura = 'C'; 
+    } else {
+      // Verificar cliente (puede ser de crédito o solo para factura A)
+      const clienteParaVerificar = this.esVentaCredito() 
+        ? this.clienteSeleccionado() 
+        : this.clienteParaFacturaA();
+      
+      if (clienteParaVerificar && 
+          clienteParaVerificar.condicion_iva === 'Responsable Inscripto' && 
+          clienteParaVerificar.cuit) {
+        tipoFactura = 'A';
+      } else {
+        tipoFactura = 'B';
+      }
+    }
+
+    const resultadoAfip = await this.facturacionService.facturarVenta(venta.id, tipoFactura);
+    
+    if (resultadoAfip) {
+       this.mostrarToast(`Factura ${tipoFactura} emitida correctamente`, 'success');
+       
+       venta.facturada = true;
+       venta.factura_tipo = tipoFactura;
+       venta.factura_nro = resultadoAfip.nroFactura;
+    }
+  }
+} catch (billingError: any) {
+  console.error('Error en facturación automática:', billingError);
+  this.mostrarToast('Venta guardada, pero falló la facturación AFIP.', 'error');
+}
+
+      // 6. Preparar datos para el modal de recibo interno
+      this.ventaRecienCreada.set({
+        ...venta,
+        fecha_venta: new Date().toISOString(),
+        nombre_usuario: usuario_nombre,
+        productos: carritoActual.map(item => ({
+          producto_id: item.producto.id,
+          nombre: item.producto.nombre,
+          marca: item.producto.marca || 'Sin marca',
+          cantidad: item.cantidad,
+          precio_unitario: item.producto.tiene_promocion 
+            ? (item.producto.precio_promocional || item.producto.precio) 
+            : item.producto.precio,
+          subtotal: item.subtotal,
+          talle: item.producto.talle
+        }))
+      });
+
+      this.mostrarToast('Venta registrada exitosamente', 'success');
       this.resetearFormulario();
       this.realizarBusquedaProductos('', true);
-      
+      this.mostrarModalReciboPostVenta.set(true);
+
     } catch (error: any) {
       this.mostrarToast(error.message || 'Error al procesar la venta', 'error');
     } finally {
       this.procesandoVenta.set(false);
     }
   }
-  
-  resetearFormulario() {
-    this.carrito.set([]);
-    this.clienteNombre.set('');
-    this.clienteEmail.set('');
-    this.codigoDescuento.set('');
-    this.descuentoAplicado.set(0);
-    this.totalFinal.set(0);
-    this.cantidades.set({});
-    
-    this.pagoDividido.set(false);
-    this.metodoPago.set('efectivo');
-    this.montoEntregado.set(0);
-    this.vuelto.set(0);
-    
-    this.metodoPago1.set('efectivo');
-    this.montoPago1.set(0);
-    this.metodoPago2.set('transferencia');
-    this.montoPago2.set(0);
-    this.efectivoEntregadoPago1.set(0);
-    this.efectivoEntregadoPago2.set(0);
-    this.vueltoPago1.set(0);
-    this.vueltoPago2.set(0);
-    
-    this.esVentaCredito.set(false);
-    this.limpiarCliente();
-    this.fechaVencimiento.set('');
-    this.observacionesCredito.set('');
-  }
 
+cerrarModalReciboPostVenta() {
+  this.mostrarModalReciboPostVenta.set(false);
+  this.ventaRecienCreada.set(null);
+}
+
+async seleccionarFormatoReciboPostVenta(formato: 'termica' | 'a4') {
+  const venta = this.ventaRecienCreada();
+  if (!venta) return;
+  
+  this.generandoReciboPostVenta.set(true);
+  
+  try {
+    // Cambiar descargar:true por false para obtener el blob
+    const pdfBlob = await this.generarReciboPDF(venta, false, formato);
+    
+    if (pdfBlob) {
+      // Crear URL del blob y abrir ventana de impresión
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const printWindow = window.open(pdfUrl, '_blank');
+      
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+          // Liberar URL después de imprimir
+          setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+        };
+      }
+      
+      this.mostrarToast('✅ Abriendo vista de impresión...', 'success');
+    }
+    
+    this.cerrarModalReciboPostVenta();
+  } catch (error: any) {
+    console.error('Error al generar recibo:', error);
+    this.mostrarToast('❌ Error al generar el recibo', 'error');
+  } finally {
+    this.generandoReciboPostVenta.set(false);
+    this.cdr.markForCheck();
+  }
+}
+
+  resetearFormulario() {
+  this.carrito.set([]);
+  this.clienteNombre.set('');
+  this.clienteEmail.set('');
+  this.codigoDescuento.set('');
+  this.descuentoAplicado.set(0);
+  this.totalFinal.set(0);
+  this.cantidades.set({});
+  
+  this.pagoDividido.set(false);
+  this.metodoPago.set('');
+  this.montoEntregado.set(0);
+  this.vuelto.set(0);
+  
+  this.metodoPago1.set('');
+  this.montoPago1.set(0);
+  this.metodoPago2.set('');
+  this.montoPago2.set(0);
+  this.efectivoEntregadoPago1.set(0);
+  this.efectivoEntregadoPago2.set(0);
+  this.vueltoPago1.set(0);
+  this.vueltoPago2.set(0);
+  
+  this.esVentaCredito.set(false);
+  this.limpiarCliente();
+  this.clienteParaFacturaA.set(null); // <-- AGREGAR ESTA LÍNEA
+  this.fechaVencimiento.set('');
+  this.observacionesCredito.set('');
+}
   quitarDescuento() {
     this.descuentoAplicado.set(0);
     this.codigoDescuento.set('');
@@ -1138,15 +1285,14 @@ export class VentasComponent implements OnInit, OnDestroy {
     this.mostrarToast('Descuento eliminado.', 'error');
   }
 
-  mostrarToast(mensaje: string, tipo: 'success' | 'error') {
-    this.toastMensaje.set(mensaje);
-    this.toastColor.set(tipo === 'success' ? 'bg-green-600' : 'bg-red-600');
-    this.toastVisible.set(true);
-    setTimeout(() => {
-      this.toastVisible.set(false);
-      this.toastColor.set('bg-green-600');
-    }, tipo === 'success' ? 3000 : 2500);
-  }
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success') {
+  this.toastMensaje.set(mensaje);
+  this.tipoMensajeToast.set(tipo);
+  this.toastVisible.set(true);
+  setTimeout(() => {
+    this.toastVisible.set(false);
+  }, tipo === 'success' ? 3000 : tipo === 'warning' ? 3500 : 4000);
+}
 
   normalizarMetodoPago(metodo: string): string {
     return metodo === 'modo' ? 'mercado_pago' : metodo;
@@ -1194,6 +1340,595 @@ export class VentasComponent implements OnInit, OnDestroy {
     });
   }
 
+seleccionarTexto(event: any) {
+    event.target.select();
+  }
+
+  // NUEVO: Maneja el ENTER del lector de código de barras
+  async manejarEscaneo(event: Event) {
+    // Evita que el formulario se envíe si está dentro de uno
+    event.preventDefault(); 
+    
+    const termino = this.filtroGeneral.trim();
+    if (!termino) return;
+
+    // Lógica inteligente: 
+    // Si parece un código de barras (solo números y longitud > 3), buscamos exacto para agregar al carrito.
+    // Si es texto, dejamos que el buscador normal (debounce) haga su trabajo o forzamos búsqueda.
+    const esCodigoBarras = /^\d+$/.test(termino) && termino.length > 3;
+
+    if (esCodigoBarras) {
+      // Usamos tu método existente que busca exacto y agrega al carrito
+      await this.buscarProductoExacto(termino);
+      
+    } else {
+      // Si escribió "Coca", forzamos la búsqueda de lista inmediatamente sin esperar el debounce
+      this.realizarBusquedaProductos(termino, true);
+    }
+  }
+
+async generarReciboPDF(venta: any, descargar: boolean = true, formato: 'termica' | 'a4' = 'termica'): Promise<Blob | undefined> {
+  this.generandoReciboPostVenta.set(true);
+  
+  try {
+    const { default: jsPDF } = await import('jspdf');
+    
+    if (formato === 'a4') {
+      return await this.generarReciboA4(venta, descargar, jsPDF);
+    } else {
+      return await this.generarReciboTermica(venta, descargar, jsPDF);
+    }
+    
+  } catch (error: any) {
+    console.error('Error al generar recibo:', error);
+    this.mostrarToast('❌ Error al generar el recibo', 'error');
+    return undefined;
+  } finally {
+    this.generandoReciboPostVenta.set(false);
+    this.cdr.markForCheck();
+  }
+}
+
+private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): Promise<Blob | undefined> {
+  const alturaBase = 150;
+  const alturaPorProducto = 15;
+  const cantidadProductos = venta.productos.length;
+  const alturaEstimada = alturaBase + (cantidadProductos * alturaPorProducto);
+
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: [80, Math.max(alturaEstimada, 170)]
+  });
+  
+  const config = this.configRecibo();
+  const margen = 5;
+  const anchoUtil = 70;
+  let y = 8;
+  
+  // ==================== LOGO ====================
+  if (config?.logo_url) {
+    try {
+      const logoWidth = 35;
+      const logoHeight = 18;
+      const logoX = (80 - logoWidth) / 2;
+      doc.addImage(config.logo_url, 'JPG', logoX, y, logoWidth, logoHeight);
+      y += logoHeight + 5;
+    } catch (error) {
+      y += 2;
+    }
+  } else {
+    y += 2;
+  }
+
+  // ==================== ENCABEZADO ====================
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text(config?.nombre_negocio || 'PRISYS SOLUTIONS', 40, y, { align: 'center' });
+  y += 6;
+  
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(config?.direccion || '9 DE JULIO 1718', 40, y, { align: 'center' });
+  y += 3.5;
+  doc.text(config?.ciudad || 'Corrientes - Capital (3400)', 40, y, { align: 'center' });
+  y += 3.5;
+  
+  const tel1 = config?.telefono1 || '(3735) 475716';
+  const tel2 = config?.telefono2 || '(3735) 410299';
+  doc.text(`Cel: ${tel1} - ${tel2}`, 40, y, { align: 'center' });
+  y += 3.5;
+  
+  const wsp1 = config?.whatsapp1 || '3735 475716';
+  const wsp2 = config?.whatsapp2 || '3735 410299';
+  doc.text(`WhatsApp: ${wsp1} - ${wsp2}`, 40, y, { align: 'center' });
+  y += 3.5;
+  
+  if (config?.email_empresa) {
+    doc.text(config.email_empresa, 40, y, { align: 'center' });
+    y += 3.5;
+  }
+  
+  y += 2.5;
+  
+  // ==================== LÍNEA SEPARADORA ====================
+  doc.setLineWidth(0.3);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 1;
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 5;
+  
+  // ==================== TÍTULO ====================
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('COMPROBANTE DE VENTA', 40, y, { align: 'center' });
+  y += 4;
+  
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text('NO VÁLIDO COMO FACTURA', 40, y, { align: 'center' });
+  y += 6;
+  
+  // ==================== INFORMACIÓN DE VENTA ====================
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Cod venta: ${venta.id.slice(-8)}`, margen, y);
+  y += 4;
+  
+  const fechaVenta = new Date(venta.fecha_venta);
+  const dia = String(fechaVenta.getDate()).padStart(2, '0');
+  const mes = String(fechaVenta.getMonth() + 1).padStart(2, '0');
+  const anio = fechaVenta.getFullYear();
+  const hora = String(fechaVenta.getHours()).padStart(2, '0');
+  const minutos = String(fechaVenta.getMinutes()).padStart(2, '0');
+  const fechaFormateada = `${dia}/${mes}/${anio} ${hora}:${minutos}`;
+
+  doc.text(`Fecha: ${fechaFormateada}`, margen, y);
+  y += 6;
+  
+  if (venta.cliente_nombre) {
+    doc.text(`Cliente: ${venta.cliente_nombre.toUpperCase()}`, margen, y);
+    y += 6;
+  }
+  
+  doc.text(`Vendedor/Cajero: ${venta.nombre_usuario}`, margen, y);
+  y += 6;
+  
+  // ==================== ENCABEZADO PRODUCTOS ====================
+  doc.setLineWidth(0.2);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 5;
+  
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CANT', margen, y);
+  doc.text('DESCRIPCIÓN', margen + 10, y);
+  doc.text('IMPORTE', margen + anchoUtil - 5, y, { align: 'right' });
+  y += 1;
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 4;
+  
+  // ==================== PRODUCTOS ====================
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  
+  for (const producto of venta.productos) {
+    doc.text(`${producto.cantidad}`, margen + 2, y);
+    
+    const descripcion = `${producto.nombre}${producto.marca ? ' - ' + producto.marca : ''}`;
+    const descripcionLineas = doc.splitTextToSize(descripcion, 40);
+    doc.text(descripcionLineas, margen + 10, y);
+    
+    doc.text(`${producto.subtotal.toFixed(2)}`, margen + anchoUtil - 5, y, { align: 'right' });
+    
+    y += descripcionLineas.length * 4;
+    
+    doc.setFontSize(7);
+    doc.text(`  ${producto.precio_unitario.toFixed(2)} c/u`, margen + 10, y);
+    if (producto.talle) {
+      doc.text(`- Talle: ${producto.talle}`, margen + 30, y);
+    }
+    doc.setFontSize(8);
+    y += 4;
+  }
+  
+  y += 2;
+  
+  // ==================== TOTALES ====================
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 5;
+  
+  doc.setFontSize(9);
+  
+  const subtotal = venta.productos.reduce((sum: number, p: any) => sum + p.subtotal, 0);
+  
+  doc.text('SUBTOTAL $:', margen, y);
+  doc.text(`${subtotal.toFixed(2)}`, margen + anchoUtil - 5, y, { align: 'right' });
+  y += 5;
+  
+  if (venta.descuento_aplicado > 0) {
+    const montoDescuento = subtotal * venta.descuento_aplicado / 100;
+    doc.text(`Desc. ${venta.descuento_aplicado}% $:`, margen, y);
+    doc.text(`-${montoDescuento.toFixed(2)}`, margen + anchoUtil - 5, y, { align: 'right' });
+    y += 5;
+  }
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('TOTAL $:', margen, y);
+  doc.text(`${venta.total_final.toFixed(2)}`, margen + anchoUtil - 5, y, { align: 'right' });
+  y += 6;
+  
+  // ==================== MÉTODO DE PAGO ====================
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  const metodoPago = venta.metodo_pago || '';
+  
+  const metodoPagoLineas = doc.splitTextToSize(`Forma de pago: ${metodoPago.toUpperCase()}`, anchoUtil);
+  metodoPagoLineas.forEach((linea: string) => {
+    doc.text(linea, margen, y);
+    y += 4;
+  });
+  y += 4;
+  
+  // ==================== LÍNEA SEPARADORA FINAL ====================
+  doc.setLineWidth(0.3);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 1;
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 6;
+  
+  // ==================== PIE DE PÁGINA ====================
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  const mensajeGracias = config?.mensaje_agradecimiento || '¡Gracias por su compra!';
+  doc.text(mensajeGracias, 40, y, { align: 'center' });
+  y += 6;
+
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  const mensajePie = config?.mensaje_pie || 'DESARROLLADO POR PRISYS SOLUTIONS';
+  doc.text(mensajePie, 40, y, { align: 'center' });
+  y += 3.5;
+  const emailDev = config?.email_desarrollador || 'prisys.solutions@gmail.com';
+  doc.text(emailDev, 40, y, { align: 'center' });
+  y += 5;
+  
+  return doc.output('blob');
+}
+
+private async generarReciboA4(venta: any, descargar: boolean, jsPDF: any): Promise<Blob | undefined> {
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: 'a4'
+  });
+  
+  const config = this.configRecibo();
+  const margenIzq = 15;
+  const margenDer = 15;
+  const anchoUtil = 180;
+  const anchoPagina = 210;
+  let y = 15;
+  
+  // ==================== LOGO ====================
+  if (config?.logo_url) {
+    try {
+      const logoWidth = 60;
+      const logoHeight = 30;
+      const logoX = (anchoPagina - logoWidth) / 2;
+      doc.addImage(config.logo_url, 'JPG', logoX, y, logoWidth, logoHeight);
+      y += logoHeight + 10;
+    } catch (error) {
+      y += 5;
+    }
+  } else {
+    y += 5;
+  }
+
+  // ==================== INFORMACIÓN DE LA EMPRESA ====================
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text(config?.nombre_negocio || 'PRISYS SOLUTIONS', anchoPagina / 2, y, { align: 'center' });
+  y += 7;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(config?.direccion || '9 DE JULIO 1718', anchoPagina / 2, y, { align: 'center' });
+  y += 5;
+  doc.text(config?.ciudad || 'Corrientes - Capital (3400)', anchoPagina / 2, y, { align: 'center' });
+  y += 5;
+  
+  const tel1 = config?.telefono1 || '(3735) 475716';
+  const tel2 = config?.telefono2 || '(3735) 410299';
+  doc.text(`Tel: ${tel1} - ${tel2}`, anchoPagina / 2, y, { align: 'center' });
+  y += 5;
+  
+  const wsp1 = config?.whatsapp1 || '3735 475716';
+  const wsp2 = config?.whatsapp2 || '3735 410299';
+  doc.text(`WhatsApp: ${wsp1} - ${wsp2}`, anchoPagina / 2, y, { align: 'center' });
+  y += 5;
+  
+  if (config?.email_empresa) {
+    doc.text(config.email_empresa, anchoPagina / 2, y, { align: 'center' });
+    y += 5;
+  }
+  
+  y += 5;
+  
+  // ==================== LÍNEA SEPARADORA DOBLE ====================
+  doc.setLineWidth(0.5);
+  doc.line(margenIzq, y, anchoPagina - margenDer, y);
+  y += 1;
+  doc.line(margenIzq, y, anchoPagina - margenDer, y);
+  y += 10;
+  
+  // ==================== TÍTULO DEL DOCUMENTO ====================
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text('RECIBO DE COMPRA', anchoPagina / 2, y, { align: 'center' });
+  y += 6;
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(100, 100, 100);
+  doc.text('NO VÁLIDO COMO FACTURA', anchoPagina / 2, y, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
+  y += 12;
+  
+  // ==================== INFORMACIÓN DE LA VENTA EN RECUADRO ====================
+  const alturaRecuadro = 35;
+  doc.setFillColor(245, 247, 250);
+  doc.rect(margenIzq, y, anchoUtil, alturaRecuadro, 'F');
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(margenIzq, y, anchoUtil, alturaRecuadro);
+  
+  const yRecuadro = y + 7;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  
+  // Columna izquierda
+  doc.text('Código de venta:', margenIzq + 5, yRecuadro);
+  doc.text('Fecha:', margenIzq + 5, yRecuadro + 7);
+  doc.text('Vendedor/Cajero:', margenIzq + 5, yRecuadro + 14);
+  doc.text('Cliente:', margenIzq + 5, yRecuadro + 21);
+  
+  doc.setFont('helvetica', 'normal');
+  
+  const fechaVenta = new Date(venta.fecha_venta);
+  const dia = String(fechaVenta.getDate()).padStart(2, '0');
+  const mes = String(fechaVenta.getMonth() + 1).padStart(2, '0');
+  const anio = fechaVenta.getFullYear();
+  const hora = String(fechaVenta.getHours()).padStart(2, '0');
+  const minutos = String(fechaVenta.getMinutes()).padStart(2, '0');
+  const fechaFormateada = `${dia}/${mes}/${anio} ${hora}:${minutos}`;
+  
+  doc.text(venta.id.slice(-8), margenIzq + 45, yRecuadro);
+  doc.text(fechaFormateada, margenIzq + 45, yRecuadro + 7);
+  doc.text(venta.nombre_usuario || 'N/A', margenIzq + 45, yRecuadro + 14);
+  doc.text(venta.cliente_nombre ? venta.cliente_nombre.toUpperCase() : 'CLIENTE GENÉRICO', margenIzq + 45, yRecuadro + 21);
+  
+  y += alturaRecuadro + 15;
+  
+  // ==================== TABLA DE PRODUCTOS ====================
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DETALLE DE PRODUCTOS', margenIzq, y);
+  y += 8;
+  
+  // Encabezado de la tabla
+  const colCant = margenIzq;
+  const colDescripcion = margenIzq + 20;
+  const colPrecioUnit = margenIzq + 115;
+  const colSubtotal = margenIzq + 150;
+  
+  doc.setFillColor(66, 139, 202);
+  doc.rect(margenIzq, y - 5, anchoUtil, 8, 'F');
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  
+  doc.text('Cant.', colCant + 5, y);
+  doc.text('Descripción', colDescripcion, y);
+  doc.text('Precio Unit.', colPrecioUnit, y);
+  doc.text('Subtotal', colSubtotal, y);
+  
+  doc.setTextColor(0, 0, 0);
+  y += 8;
+  
+  // Línea debajo del encabezado
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(66, 139, 202);
+  doc.line(margenIzq, y - 3, anchoPagina - margenDer, y - 3);
+  
+  // Productos
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  
+  let filaAlterna = false;
+  
+  for (const producto of venta.productos) {
+    // Fondo alternado para filas
+    if (filaAlterna) {
+      doc.setFillColor(250, 250, 250);
+      doc.rect(margenIzq, y - 4, anchoUtil, 10, 'F');
+    }
+    filaAlterna = !filaAlterna;
+    
+    // Cantidad centrada
+    doc.text(`${producto.cantidad}`, colCant + 10, y, { align: 'center' });
+    
+    // Descripción con marca y talle
+    const descripcionCompleta = `${producto.nombre}${producto.marca ? ' - ' + producto.marca : ''}${producto.talle ? ' (Talle: ' + producto.talle + ')' : ''}`;
+    const descripcionLineas = doc.splitTextToSize(descripcionCompleta, 90);
+    doc.text(descripcionLineas, colDescripcion, y);
+    
+    // Precio unitario
+    doc.text(`$ ${producto.precio_unitario.toFixed(2)}`, colPrecioUnit + 25, y, { align: 'right' });
+    
+    // Subtotal
+    doc.setFont('helvetica', 'bold');
+    doc.text(`$ ${producto.subtotal.toFixed(2)}`, colSubtotal + 30, y, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    
+    const alturaFila = Math.max(descripcionLineas.length * 4, 10);
+    y += alturaFila;
+    
+    // Línea separadora sutil
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.1);
+    doc.line(margenIzq, y - 2, anchoPagina - margenDer, y - 2);
+  }
+  
+  y += 5;
+  
+  // ==================== TOTALES EN RECUADRO ====================
+  const anchoCajaTotal = 70;
+  const xCajaTotal = anchoPagina - margenDer - anchoCajaTotal;
+  const yCajaTotal = y;
+  
+  doc.setLineWidth(0.5);
+  doc.setDrawColor(66, 139, 202);
+  doc.rect(xCajaTotal, yCajaTotal, anchoCajaTotal, 35);
+  
+  y += 7;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  
+  const subtotal = venta.productos.reduce((sum: number, p: any) => sum + p.subtotal, 0);
+  
+  // Subtotal
+  doc.text('SUBTOTAL:', xCajaTotal + 5, y);
+  doc.text(`$ ${subtotal.toFixed(2)}`, xCajaTotal + anchoCajaTotal - 5, y, { align: 'right' });
+  y += 7;
+  
+  // Descuento si existe
+  if (venta.descuento_aplicado > 0) {
+    const montoDescuento = subtotal * venta.descuento_aplicado / 100;
+    doc.setTextColor(220, 53, 69);
+    doc.text(`Descuento (${venta.descuento_aplicado}%):`, xCajaTotal + 5, y);
+    doc.text(`- $ ${montoDescuento.toFixed(2)}`, xCajaTotal + anchoCajaTotal - 5, y, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+    y += 7;
+  }
+  
+  // Línea antes del total
+  doc.setLineWidth(0.3);
+  doc.line(xCajaTotal + 5, y - 2, xCajaTotal + anchoCajaTotal - 5, y - 2);
+  y += 5;
+  
+  // Total final
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(25, 135, 84);
+  doc.text('TOTAL:', xCajaTotal + 5, y);
+  doc.text(`$ ${venta.total_final.toFixed(2)}`, xCajaTotal + anchoCajaTotal - 5, y, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
+  
+  y += 15;
+  
+  // ==================== MÉTODO DE PAGO ====================
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  const metodoPago = venta.metodo_pago || '';
+  
+  doc.setFillColor(240, 248, 255);
+  doc.rect(margenIzq, y - 4, anchoUtil, 10, 'F');
+  doc.setDrawColor(200, 200, 200);
+  doc.rect(margenIzq, y - 4, anchoUtil, 10);
+  
+  doc.text('Forma de pago:', margenIzq + 5, y + 2);
+  doc.setFont('helvetica', 'normal');
+  doc.text(metodoPago.toUpperCase(), margenIzq + 40, y + 2);
+  
+  y += 18;
+  
+  // ==================== LÍNEA SEPARADORA FINAL ====================
+  doc.setLineWidth(0.5);
+  doc.setDrawColor(66, 139, 202);
+  doc.line(margenIzq, y, anchoPagina - margenDer, y);
+  y += 1;
+  doc.line(margenIzq, y, anchoPagina - margenDer, y);
+  y += 12;
+  
+  // ==================== MENSAJE DE AGRADECIMIENTO ====================
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(66, 139, 202);
+  const mensajeGracias = config?.mensaje_agradecimiento || '¡Gracias por su compra!';
+  doc.text(mensajeGracias, anchoPagina / 2, y, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
+  y += 15;
+
+  // ==================== PIE DE PÁGINA ====================
+  const yPie = 280;
+  
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(128, 128, 128);
+  
+  const mensajePie = config?.mensaje_pie || 'DESARROLLADO POR PRISYS SOLUTIONS';
+  doc.text(mensajePie, anchoPagina / 2, yPie, { align: 'center' });
+  
+  const emailDev = config?.email_desarrollador || 'prisys.solutions@gmail.com';
+  doc.text(emailDev, anchoPagina / 2, yPie + 4, { align: 'center' });
+  
+  doc.setTextColor(0, 0, 0);
+  
+  return doc.output('blob');
+}
+
+async cargarConfigRecibo(): Promise<void> {
+    try {
+      const { data, error } = await this.supabase.getClient()
+        .from('configuracion_recibo')
+        .select('*')
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          this.configRecibo.set({
+            nombre_negocio: 'PRISYS SOLUTIONS',
+            direccion: '9 DE JULIO 1718',
+            ciudad: 'Corrientes - Capital (3400)',
+            telefono1: '(3735) 475716',
+            telefono2: '(3735) 410299',
+            whatsapp1: '3735 475716',
+            whatsapp2: '3735 410299',
+            email_empresa: null,
+            logo_url: null,
+            mensaje_agradecimiento: '¡Gracias por su compra!',
+            mensaje_pie: 'DESARROLLADO POR PRISYS SOLUTIONS',
+            email_desarrollador: 'prisys.solutions@gmail.com'
+          });
+        }
+        return;
+      }
+
+      if (data) {
+        this.configRecibo.set(data);
+      }
+    } catch (error) {
+      console.error('Error al cargar configuración del recibo:', error);
+      this.configRecibo.set({
+        nombre_negocio: 'PRISYS SOLUTIONS',
+        direccion: '9 DE JULIO 1718',
+        ciudad: 'Corrientes - Capital (3400)',
+        telefono1: '(3735) 475716',
+        telefono2: '(3735) 410299',
+        whatsapp1: '3735 475716',
+        whatsapp2: '3735 410299',
+        email_empresa: null,
+        logo_url: null,
+        mensaje_agradecimiento: '¡Gracias por su compra!',
+        mensaje_pie: 'DESARROLLADO POR PRISYS SOLUTIONS',
+        email_desarrollador: 'prisys.solutions@gmail.com'
+      });
+    }
+    this.cdr.markForCheck();
+  }
+
   // ✅ CAMBIO 8: TrackBy para optimizar renderizado de listas
   trackByProductoId(index: number, producto: Producto): string {
     return producto.id;
@@ -1206,4 +1941,34 @@ export class VentasComponent implements OnInit, OnDestroy {
   trackByClienteId(index: number, cliente: Cliente): string {
     return cliente.id ?? '';
   }
+
+  abrirSelectorClienteFacturaA() {
+  this.mostrarSelectorClienteFacturaA.set(true);
+  this.busquedaCliente = ''; // Trigger búsqueda
+}
+
+// Método para seleccionar cliente solo para factura A
+seleccionarClienteParaFacturaA(cliente: Cliente) {
+  this.clienteParaFacturaA.set(cliente);
+  this.clienteNombre.set(cliente.nombre);
+  this.clienteEmail.set(cliente.email || '');
+  this._busquedaCliente.set('');
+  this.mostrarSelectorClienteFacturaA.set(false);
+  
+  // Aplicar regla de facturación según el cliente
+  if (cliente.condicion_iva === 'Responsable Inscripto' && cliente.cuit) {
+    // Si el cliente es RI con CUIT, puede factura A
+    this.mostrarToast('Cliente Responsable Inscripto seleccionado - Factura A disponible', 'success');
+  } else {
+    this.mostrarToast('Cliente seleccionado - Factura B/C según configuración', 'success');
+  }
+}
+
+// Método para limpiar cliente de factura A
+limpiarClienteFacturaA() {
+  this.clienteParaFacturaA.set(null);
+  this.clienteNombre.set('');
+  this.clienteEmail.set('');
+  this._busquedaCliente.set('');
+}
 }

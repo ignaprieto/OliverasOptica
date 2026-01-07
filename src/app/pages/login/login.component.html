@@ -1,36 +1,32 @@
-<div class="min-h-screen w-full flex items-center justify-center p-4 transition-colors duration-500"
-     [ngClass]="themeService.theme() === 'dark' 
-       ? 'bg-gradient-to-br from-slate-900 via-[#0f172a] to-[#1e1b4b]' 
-       : 'bg-gradient-to-br from-gray-100 to-blue-50'">
+<div class="min-h-screen w-full flex items-center justify-center p-4 transition-colors duration-500
+            bg-gradient-to-br from-gray-100 to-blue-50
+            dark:from-slate-900 dark:via-[#0f172a] dark:to-[#1e1b4b]">
 
-  <div class="absolute inset-0 z-0 opacity-[0.03]" 
-       [style.background-image]="'radial-gradient(' + (themeService.theme() === 'dark' ? '#ffffff' : '#000000') + ' 1px, transparent 1px)'"
-       style="background-size: 30px 30px;">
+  <div class="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" 
+       style="background-image: radial-gradient(currentColor 1px, transparent 1px); background-size: 30px 30px;">
   </div>
 
   @if (isLoadingInitial) {
     <div class="relative z-10 flex flex-col items-center animate-fade-in gap-4">
       <div class="w-14 h-14 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      <p class="text-sm font-medium tracking-widest uppercase opacity-80" 
-         [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-slate-600'">
+      <p class="text-sm font-medium tracking-widest uppercase opacity-80 text-slate-600 dark:text-white">
          Cargando Sistema...
       </p>
     </div>
   } @else {
-    <div class="relative z-10 w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden border animate-fade-in-scale"
-         [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+    <div class="relative z-10 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden border animate-fade-in-scale
+                bg-white border-gray-200
+                dark:bg-gray-800 dark:border-gray-700">
       
       <div class="h-1.5 w-full bg-blue-600"></div>
 
       <div class="p-8 sm:p-10">
         
         <div class="mb-8 text-center">
-          <h1 class="text-3xl font-bold tracking-tight mb-2" 
-              [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'">
+          <h1 class="text-3xl font-bold tracking-tight mb-2 text-gray-900 dark:text-white">
             Bienvenido
           </h1>
-          <p class="text-sm" 
-             [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+          <p class="text-sm text-gray-500 dark:text-gray-400">
             Ingresa tus credenciales para acceder
           </p>
         </div>
@@ -38,8 +34,7 @@
         <form (ngSubmit)="login()" class="space-y-5">
           
           <div>
-            <label class="block text-sm font-bold mb-1.5" 
-                   [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
+            <label class="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
               Correo electrónico
             </label>
             <div class="relative">
@@ -47,16 +42,14 @@
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" /></svg>
               </div>
               <input type="email" [(ngModel)]="email" name="email" required [disabled]="isLoading" placeholder="ejemplo@empresa.com"
-                class="w-full pl-10 pr-4 py-3 rounded-lg border transition-all font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                [ngClass]="themeService.theme() === 'dark' 
-                  ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-600' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'">
+                class="w-full pl-10 pr-4 py-3 rounded-lg border transition-all font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                       bg-white border-gray-300 text-gray-900 placeholder-gray-400
+                       dark:bg-gray-900 dark:border-gray-600 dark:text-white dark:placeholder-gray-600">
             </div>
           </div>
 
           <div>
-            <label class="block text-sm font-bold mb-1.5"
-                   [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
+            <label class="block text-sm font-bold mb-1.5 text-gray-700 dark:text-gray-300">
               Contraseña
             </label>
             <div class="relative">
@@ -64,10 +57,9 @@
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
               </div>
               <input [type]="showPassword ? 'text' : 'password'" [(ngModel)]="password" name="password" required [disabled]="isLoading" placeholder="••••••••"
-                class="w-full pl-10 pr-12 py-3 rounded-lg border transition-all font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                [ngClass]="themeService.theme() === 'dark' 
-                  ? 'bg-gray-900 border-gray-600 text-white placeholder-gray-600' 
-                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'">
+                class="w-full pl-10 pr-12 py-3 rounded-lg border transition-all font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+                       bg-white border-gray-300 text-gray-900 placeholder-gray-400
+                       dark:bg-gray-900 dark:border-gray-600 dark:text-white dark:placeholder-gray-600">
               
               <button type="button" (click)="togglePasswordVisibility()" 
                 class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-blue-600 transition-colors focus:outline-none">
@@ -92,10 +84,9 @@
         </form>
 
         @if (error) {
-          <div class="mt-6 p-4 rounded-lg flex items-start gap-3 animate-bounce-in border"
-               [ngClass]="themeService.theme() === 'dark' 
-                 ? 'bg-red-900/20 border-red-800/50 text-red-200' 
-                 : 'bg-red-50 border-red-100 text-red-700'">
+          <div class="mt-6 p-4 rounded-lg flex items-start gap-3 animate-bounce-in border
+                      bg-red-50 border-red-100 text-red-700
+                      dark:bg-red-900/20 dark:border-red-800/50 dark:text-red-200">
             <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <p class="text-sm font-medium leading-snug">{{ error }}</p>
           </div>

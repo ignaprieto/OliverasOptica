@@ -78,11 +78,10 @@ export class FinanzasComponent implements OnInit, OnDestroy {
   hayMasRegistros = computed(() => this.gastos().length < this.totalRegistros());
 
   // Toast
-  toastVisible = signal<boolean>(false);
-  toastcolor = signal<string>('bg-green-600');
-  toastMensaje = signal<string>('');
-  toastTipo = signal<'success' | 'error'>('success');
-  toastTimeout: any = null;
+isToastVisible = signal<boolean>(false);
+mensajeToast = signal<string>('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
+private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
   // ✅ 4. OPTIMIZACIÓN CONSULTAS - Columnas explícitas
   private readonly COLUMNAS_GASTOS = 'id, fecha, categoria, descripcion, monto, metodo_pago';
@@ -375,7 +374,7 @@ export class FinanzasComponent implements OnInit, OnDestroy {
         if (errorCaja) throw errorCaja;
 
         if (!caja) {
-          throw new Error('⛔ NO SE PUEDE REGISTRAR GASTO EN EFECTIVO: No hay una caja abierta actualmente.');
+          throw new Error(' NO SE PUEDE REGISTRAR GASTO EN EFECTIVO: No hay una caja abierta actualmente.');
         }
         cajaAbiertaId = caja.id;
       }
@@ -518,14 +517,16 @@ export class FinanzasComponent implements OnInit, OnDestroy {
     if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  mostrarToast(mensaje: string, tipo: 'success' | 'error' = 'success') {
-    this.toastMensaje.set(mensaje);
-    this.toastTipo.set(tipo);
-    this.toastcolor.set(tipo === 'success' ? 'bg-green-600' : 'bg-red-600');
-    this.toastVisible.set(true);
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => { this.toastVisible.set(false); }, 2500);
-  }
+ mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success') {
+  this.mensajeToast.set(mensaje);
+  this.tipoMensajeToast.set(tipo);
+  this.isToastVisible.set(true);
+  
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+  this.toastTimeout = setTimeout(() => { 
+    this.isToastVisible.set(false); 
+  }, 3000);
+}
 
   // ✅ 7. TRACKBY PARA RENDIMIENTO
   trackByGastoId(index: number, gasto: any): string {

@@ -1,12 +1,12 @@
-<div class="min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-300 animate-fade-in"
-     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'">
+<div class="min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-300 animate-fade-in-scale
+            bg-gray-50 text-gray-800
+            dark:bg-gray-900 dark:text-gray-100">
   
   <div class="max-w-[1920px] mx-auto space-y-6">
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h2 class="text-3xl font-bold tracking-tight flex items-center gap-3"
-            [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'">
+        <h2 class="text-3xl font-bold tracking-tight flex items-center gap-3 text-gray-900 dark:text-white">
           <div class="p-2 rounded-lg bg-blue-600 text-white shadow-lg shadow-blue-500/30">
             <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
           </div>
@@ -16,8 +16,9 @@
       </div>
 
       <button routerLink="/dashboard"
-        class="group px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 shadow-md hover:shadow-lg border flex items-center gap-2"
-        [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700 text-white' : 'bg-white border-gray-200 hover:bg-gray-50 text-gray-700'">
+        class="group px-5 py-2.5 rounded-xl font-medium text-sm transition-all duration-300 shadow-md hover:shadow-lg border flex items-center gap-2
+               bg-white border-gray-200 hover:bg-gray-50 text-gray-700
+               dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700 dark:text-white">
         <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         Volver al Panel
       </button>
@@ -30,23 +31,28 @@
         <div class="p-1 rounded-xl flex bg-gray-200 dark:bg-gray-800 shadow-inner">
           <button *appPermiso="['stock', 'crear']" (click)="cambiarModo('agregar')"
             class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-            [ngClass]="modo === 'agregar' ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+            [ngClass]="modo === 'agregar' 
+              ? 'bg-white dark:bg-gray-700 shadow text-blue-600 dark:text-blue-400' 
+              : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
             <span>Agregar</span>
           </button>
           
           <button *appPermiso="['stock', 'editar']" (click)="cambiarModo('editar')"
             class="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
-            [ngClass]="modo === 'editar' ? 'bg-white dark:bg-gray-700 shadow text-orange-500' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
+            [ngClass]="modo === 'editar' 
+              ? 'bg-white dark:bg-gray-700 shadow text-orange-500' 
+              : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
             <span>Editar</span>
           </button>
         </div>
 
-        <div class="rounded-2xl shadow-xl border p-5 transition-all duration-300 relative overflow-hidden"
-             [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
+        <div class="rounded-2xl shadow-xl border p-5 transition-all duration-300 relative overflow-hidden
+                    bg-white border-gray-200
+                    dark:bg-gray-800 dark:border-gray-700">
           
-          <div class="flex items-center gap-3 mb-6 pb-4 border-b" [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100 dark:border-gray-700">
             <div class="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md transition-colors"
                  [ngClass]="modo === 'agregar' ? 'bg-blue-600' : 'bg-orange-500'">
               <svg *ngIf="modo === 'agregar'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -65,20 +71,19 @@
               <div class="relative group">
                 <input type="text" [(ngModel)]="producto.codigo" placeholder="Escanear o escribir..."
                   [readonly]="modo === 'editar'"
-                  class="w-full pl-4 pr-24 py-3 rounded-xl border-2 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-mono font-medium"
-                  [ngClass]="themeService.theme() === 'dark' 
-                    ? 'bg-gray-900 border-gray-600 focus:border-blue-500 text-white placeholder-gray-500' 
-                    : 'bg-white border-gray-300 focus:border-blue-500 text-gray-900 placeholder-gray-400'"/>
+                  class="w-full pl-4 pr-24 py-3 rounded-xl border-2 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-sm font-mono font-medium
+                         bg-white border-gray-300 focus:border-blue-500 text-gray-900 placeholder-gray-400
+                         dark:bg-gray-900 dark:border-gray-600 dark:text-white dark:placeholder-gray-500"/>
                 
                 <div class="absolute right-1.5 top-1.5 flex gap-1">
                     <button *ngIf="modo === 'agregar'" (click)="generarCodigoBarras()" 
-                            class="p-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-gray-600 dark:text-gray-300 transition-colors" 
+                            class="p-1.5 rounded-lg transition-colors bg-gray-200 dark:bg-gray-700 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-gray-600 dark:text-gray-300" 
                             title="Generar Código Automático">
                       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                     </button>
                     
                     <button (click)="abrirScanner()" 
-                            class="p-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400 transition-colors" 
+                            class="p-1.5 rounded-lg transition-colors bg-gray-200 dark:bg-gray-700 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-600 dark:text-purple-400" 
                             title="Abrir Cámara">
                       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     </button>
@@ -94,22 +99,25 @@
             <div>
               <label class="text-xs font-bold uppercase tracking-wider mb-1.5 block opacity-80">Nombre</label>
               <input type="text" [(ngModel)]="producto.nombre" [readonly]="modo === 'editar'" 
-                     class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all" 
-                     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"/>
+                     class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                            bg-white border-gray-300 text-gray-900
+                            dark:bg-gray-900 dark:border-gray-600 dark:text-white"/>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="text-xs font-bold uppercase tracking-wider mb-1.5 block opacity-80">Marca</label>
                 <input type="text" [(ngModel)]="producto.marca" [readonly]="modo === 'editar'" 
-                       class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                       [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"/>
+                       class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                              bg-white border-gray-300 text-gray-900
+                              dark:bg-gray-900 dark:border-gray-600 dark:text-white"/>
               </div>
               <div>
                 <label class="text-xs font-bold uppercase tracking-wider mb-1.5 block opacity-80">Talle/Medida</label>
                 <input type="text" [(ngModel)]="producto.talle" [readonly]="modo === 'editar'" 
-                       class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                       [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"/>
+                       class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                              bg-white border-gray-300 text-gray-900
+                              dark:bg-gray-900 dark:border-gray-600 dark:text-white"/>
               </div>
             </div>
 
@@ -119,8 +127,9 @@
                       [(ngModel)]="producto.categoria" 
                       list="listaCategorias" 
                       placeholder="Escribe o selecciona..."
-                      class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"/>
+                      class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                             bg-white border-gray-300 text-gray-900
+                             dark:bg-gray-900 dark:border-gray-600 dark:text-white"/>
                <datalist id="listaCategorias">
                   <option *ngFor="let cat of categoriasDisponibles()" [value]="cat"></option>
                </datalist>
@@ -130,25 +139,27 @@
               <div>
                 <label class="text-xs font-bold uppercase tracking-wider mb-1.5 block opacity-80">Precio ($)</label>
                 <input type="number" [(ngModel)]="producto.precio" 
-                       class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-green-600"
-                       [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 border-gray-600' : 'bg-white border-gray-300'"/>
+                       class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-green-500 outline-none transition-all font-bold text-green-600
+                              bg-white border-gray-300
+                              dark:bg-gray-900 dark:border-gray-600"/>
               </div>
               <div>
                 <label class="text-xs font-bold uppercase tracking-wider mb-1.5 block opacity-80">Stock</label>
                 <input type="number" [(ngModel)]="producto.cantidad_stock" 
-                       class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold"
-                       [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'"/>
+                       class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all font-bold
+                              bg-white border-gray-300 text-gray-900
+                              dark:bg-gray-900 dark:border-gray-600 dark:text-white"/>
               </div>
             </div>
 
             <div *ngIf="modo === 'agregar'" class="bg-gray-100 dark:bg-gray-700/50 p-3 rounded-xl flex gap-4 justify-center border border-transparent dark:border-gray-700">
                <label class="flex items-center gap-2 cursor-pointer select-none">
                  <input type="radio" name="destino" value="stock" [(ngModel)]="destinoProducto" class="text-blue-600 focus:ring-blue-500 w-4 h-4">
-                 <span class="text-sm font-medium" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-700'">Mostrador</span>
+                 <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Mostrador</span>
                </label>
                <label class="flex items-center gap-2 cursor-pointer select-none">
                  <input type="radio" name="destino" value="deposito" [(ngModel)]="destinoProducto" class="text-purple-600 focus:ring-purple-500 w-4 h-4">
-                 <span class="text-sm font-medium" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-200' : 'text-gray-700'">Depósito</span>
+                 <span class="text-sm font-medium text-gray-700 dark:text-gray-200">Depósito</span>
                </label>
             </div>
           </div>
@@ -171,8 +182,10 @@
              </button>
 
              <div *ngIf="modo === 'editar'" class="flex gap-3">
-                <button (click)="cancelarEdicion()" class="flex-1 py-2.5 rounded-xl font-medium border transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600 text-gray-300' : 'border-gray-300 text-gray-600'">
+                <button (click)="cancelarEdicion()" 
+                        class="flex-1 py-2.5 rounded-xl font-medium border transition-colors
+                               hover:bg-gray-100 border-gray-300 text-gray-600
+                               dark:hover:bg-gray-700 dark:border-gray-600 dark:text-gray-300">
                    Cancelar
                 </button>
                 <button *appPermiso="['stock', 'eliminar']" (click)="eliminarProducto(producto.id)" 
@@ -189,29 +202,40 @@
 
       <div class="xl:col-span-9 space-y-6">
         
-        <div class="rounded-2xl shadow-lg border p-4 flex flex-col lg:flex-row gap-4 justify-between items-center z-40 relative"
-             [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-white'">
+        <div class="rounded-2xl shadow-lg border p-4 flex flex-col lg:flex-row gap-4 justify-between items-center z-20 relative
+                    bg-white border-white
+                    dark:bg-gray-800 dark:border-gray-700">
            
            <div class="flex-1 w-full relative group">
              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
              </div>
-             <input type="text" [(ngModel)]="filtro" placeholder="Buscar por nombre, código, marca..." 
-                    class="w-full pl-12 pr-14 py-3.5 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    [ngClass]="themeService.theme() === 'dark' ? 'border-gray-600 placeholder-gray-500 text-white' : 'border-gray-200 placeholder-gray-400 text-gray-900'"/>
-             
+             <input type="text" [(ngModel)]="filtro" (keydown.enter)="busquedaInmediata()"
+ autocomplete="off" placeholder="Buscar por nombre, código, marca..." 
+                   class="w-full pl-12 pr-14 py-3.5 rounded-xl border bg-transparent focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                          border-gray-200 placeholder-gray-400 text-gray-900
+                          dark:border-gray-600 dark:placeholder-gray-500 dark:text-white"/>
+            
              <button (click)="abrirScannerBusqueda()" 
                      class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400"
                      title="Escanear para buscar">
-                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+               <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
              </button>
            </div>
 
            <div class="flex flex-wrap gap-2 w-full lg:w-auto justify-start lg:justify-end">
               <input type="file" id="inputImportar" (change)="onFileSelected($event)" accept=".xlsx, .xls, .csv" class="hidden">
               
-              <button (click)="descargarPlantillaImportacion()" class="px-4 py-2.5 rounded-xl border transition-colors flex items-center gap-2 whitespace-nowrap text-sm font-bold shadow-sm hover:shadow"
-                      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-200' : 'bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600'">
+<button (click)="abrirModalPresupuesto()" 
+        class="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white transition-all flex items-center gap-2 whitespace-nowrap text-sm font-bold shadow-md shadow-purple-500/20 active:scale-95">
+  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+  <span>Presupuesto</span>
+</button>
+
+              <button (click)="descargarPlantillaImportacion()" 
+                      class="px-4 py-2.5 rounded-xl border transition-colors flex items-center gap-2 whitespace-nowrap text-sm font-bold shadow-sm hover:shadow
+                             bg-gray-50 hover:bg-gray-100 border-gray-200 text-gray-600
+                             dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600 dark:text-gray-200">
                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                  Plantilla
               </button>
@@ -235,32 +259,36 @@
                  <div *ngIf="mostrarMenuExportar" (click)="mostrarMenuExportar = false" class="fixed inset-0 z-40"></div>
 
                  <div *ngIf="mostrarMenuExportar" 
-                      class="absolute right-0 mt-2 w-56 rounded-xl shadow-xl z-50 border overflow-hidden animate-fade-in-up origin-top-right ring-1 ring-black ring-opacity-5"
-                      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'">
+                      class="absolute right-0 mt-2 w-56 rounded-xl shadow-xl z-50 border overflow-hidden animate-fade-in-up origin-top-right ring-1 ring-black ring-opacity-5
+                             bg-white border-gray-100
+                             dark:bg-gray-800 dark:border-gray-700">
                     
                     <div class="py-1">
-                      <div class="px-4 py-2 text-xs font-semibold uppercase tracking-wider opacity-50" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+                      <div class="px-4 py-2 text-xs font-semibold uppercase tracking-wider opacity-50 text-gray-500 dark:text-gray-400">
                         Selecciona Opción
                       </div>
                       
-                      <button (click)="exportarAExcel('todos')" class="w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors group"
-                              [ngClass]="themeService.theme() === 'dark' ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'">
+                      <button (click)="exportarAExcel('todos')" class="w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors group
+                                     hover:bg-gray-50 text-gray-700
+                                     dark:hover:bg-gray-700 dark:text-gray-200">
                         <div class="p-1.5 rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 group-hover:scale-110 transition-transform">
                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
                         </div>
                         Todo el inventario
                       </button>
 
-                      <button (click)="exportarAExcel('mostrador')" class="w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors group"
-                              [ngClass]="themeService.theme() === 'dark' ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'">
+                      <button (click)="exportarAExcel('mostrador')" class="w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors group
+                                     hover:bg-gray-50 text-gray-700
+                                     dark:hover:bg-gray-700 dark:text-gray-200">
                         <div class="p-1.5 rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 group-hover:scale-110 transition-transform">
                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                         </div>
                         Solo Mostrador
                       </button>
 
-                      <button (click)="exportarAExcel('deposito')" class="w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors group"
-                              [ngClass]="themeService.theme() === 'dark' ? 'hover:bg-gray-700 text-gray-200' : 'hover:bg-gray-50 text-gray-700'">
+                      <button (click)="exportarAExcel('deposito')" class="w-full text-left px-4 py-3 text-sm flex items-center gap-3 transition-colors group
+                                     hover:bg-gray-50 text-gray-700
+                                     dark:hover:bg-gray-700 dark:text-gray-200">
                         <div class="p-1.5 rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400 group-hover:scale-110 transition-transform">
                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                         </div>
@@ -274,9 +302,10 @@
 
         <div class="flex flex-wrap items-center gap-3">
             <button (click)="toggleSeleccionMultiple()" 
-                    class="px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-wide transition-all shadow-sm flex items-center gap-2"
-                    [class.ring-2]="modoSeleccionMultiple" [class.ring-blue-500]="modoSeleccionMultiple"
-                    [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-white border-gray-200 hover:bg-gray-50'">
+                    class="px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-wide transition-all shadow-sm flex items-center gap-2
+                           bg-white border-gray-200 hover:bg-gray-50
+                           dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+                    [class.ring-2]="modoSeleccionMultiple" [class.ring-blue-500]="modoSeleccionMultiple">
               <div class="w-3 h-3 rounded-full" [class.bg-blue-500]="modoSeleccionMultiple" [class.bg-gray-300]="!modoSeleccionMultiple"></div>
               {{ modoSeleccionMultiple ? 'Selección Activada' : 'Etiquetas Múltiples' }}
             </button>
@@ -285,11 +314,17 @@
 
             <div class="flex bg-gray-200 dark:bg-gray-700 rounded-lg p-1">
               <button (click)="cambiarFiltroEstado('activos')" class="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
-                  [ngClass]="filtroEstado === 'activos' ? 'bg-white dark:bg-gray-600 shadow text-green-600 dark:text-green-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">Activos</button>
+                  [ngClass]="filtroEstado === 'activos' 
+                    ? 'bg-white dark:bg-gray-600 shadow text-green-600 dark:text-green-400' 
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">Activos</button>
               <button (click)="cambiarFiltroEstado('desactivados')" class="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
-                  [ngClass]="filtroEstado === 'desactivados' ? 'bg-white dark:bg-gray-600 shadow text-red-600 dark:text-red-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">Inactivos</button>
+                  [ngClass]="filtroEstado === 'desactivados' 
+                    ? 'bg-white dark:bg-gray-600 shadow text-red-600 dark:text-red-400' 
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">Inactivos</button>
               <button (click)="cambiarFiltroEstado('todos')" class="px-3 py-1.5 rounded-md text-xs font-bold transition-all"
-                  [ngClass]="filtroEstado === 'todos' ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">Todos</button>
+                  [ngClass]="filtroEstado === 'todos' 
+                    ? 'bg-white dark:bg-gray-600 shadow text-blue-600 dark:text-blue-400' 
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400'">Todos</button>
             </div>
             
             <div class="flex-1"></div>
@@ -323,9 +358,13 @@
            </div>
         </div>
 
-        <div class="rounded-2xl shadow-xl border overflow-hidden flex flex-col h-[650px] relative bg-white dark:bg-gray-800 border-white dark:border-gray-700">
+        <div class="rounded-2xl shadow-xl border overflow-hidden flex flex-col h-[650px] relative
+                    bg-white border-white
+                    dark:bg-gray-800 dark:border-gray-700">
           
-           <div class="bg-gray-50 dark:bg-gray-900 border-b dark:border-gray-700 flex text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-4 py-4 pr-6 select-none z-20">
+           <div class="border-b flex text-xs font-bold uppercase tracking-wider px-4 py-4 pr-6 select-none z-20
+                       bg-gray-50 text-gray-500
+                       dark:bg-gray-900 dark:border-gray-700 dark:text-gray-400">
               <div *ngIf="modoSeleccionMultiple" class="w-12 text-center">#</div>
               <div class="w-32">Código</div>
               <div class="flex-1">Producto</div>
@@ -354,7 +393,8 @@
               </div>
 
               <div *ngFor="let prod of (mostrarProductosEliminados ? productosEliminados() : productosVisibles()); trackBy: trackByFn"
-                   class="flex items-center px-4 py-3 border-b dark:border-gray-700 transition-colors cursor-pointer text-sm group relative"
+                   class="flex items-center px-4 py-3 border-b transition-colors cursor-pointer text-sm group relative
+                          dark:border-gray-700"
                    [ngClass]="{
                       'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-l-blue-500': producto.id === prod.id && !modoSeleccionMultiple,
                       'hover:bg-gray-50 dark:hover:bg-gray-700/50': producto.id !== prod.id,
@@ -448,16 +488,29 @@
 
   </div>
 
-  <div *ngIf="mostrarToast()" class="fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl z-50 text-white font-medium animate-slide-up flex items-center gap-3"
-       [ngClass]="error() ? 'bg-red-600 shadow-red-500/30' : 'bg-green-600 shadow-green-500/30'">
-     <div class="bg-white/20 p-1 rounded-full">
-       <svg *ngIf="!error()" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-       <svg *ngIf="error()" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-     </div>
-     <span>{{ mensaje() || error() }}</span>
-  </div>
+  <div *ngIf="isToastVisible()" class="fixed bottom-6 right-6 z-[10000] animate-slide-in-right">
+  <div class="flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border
+              bg-white border-gray-100 text-gray-800
+              dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+    
+    <div [ngClass]="{
+      'bg-green-100 text-green-600': tipoMensajeToast() === 'success',
+      'bg-red-100 text-red-600': tipoMensajeToast() === 'error',
+      'bg-amber-100 text-amber-600': tipoMensajeToast() === 'warning'
+    }" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+      <svg *ngIf="tipoMensajeToast() === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+      <svg *ngIf="tipoMensajeToast() === 'error'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      <svg *ngIf="tipoMensajeToast() === 'warning'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+    </div>
 
-  <div *ngIf="mostrarScanner" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" (click)="cerrarScanner()">
+    <div>
+      <h4 class="font-bold text-sm">{{ tipoMensajeToast() === 'success' ? '¡Éxito!' : tipoMensajeToast() === 'warning' ? '¡Atención!' : 'Error' }}</h4>
+      <p class="text-sm opacity-80">{{ mensajeToast() }}</p>
+    </div>
+  </div>
+</div>
+
+  <div *ngIf="mostrarScanner" class="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" (click)="cerrarScanner()">
      <div class="w-full max-w-lg bg-gray-900 rounded-3xl overflow-hidden border border-gray-700 relative shadow-2xl" (click)="$event.stopPropagation()">
         <div class="absolute top-4 right-4 z-20">
            <button (click)="cerrarScanner()" class="bg-gray-800/80 text-white p-2.5 rounded-full hover:bg-red-600 transition-colors backdrop-blur-sm">
@@ -483,7 +536,9 @@
   </div>
 
   <div *ngIf="mostrarModalEliminar" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-up border dark:border-gray-700 relative overflow-hidden">
+     <div class="rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-up border relative overflow-hidden
+                 bg-white border-gray-100
+                 dark:bg-gray-800 dark:border-gray-700">
         <div class="absolute top-0 left-0 w-full h-2 bg-red-500"></div>
         
         <div class="flex items-center gap-4 mb-5">
@@ -496,21 +551,262 @@
            </div>
         </div>
 
-        <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-xl mb-4 border border-gray-100 dark:border-gray-700">
+        <div class="p-3 rounded-xl mb-4 border
+                    bg-gray-50 border-gray-100
+                    dark:bg-gray-700/50 dark:border-gray-700">
            <p class="font-bold text-gray-800 dark:text-gray-200">{{ productoAEliminar?.nombre }}</p>
            <p class="text-xs text-gray-500 font-mono mt-1">{{ productoAEliminar?.codigo }}</p>
         </div>
         
-        <label class="block text-xs font-bold uppercase mb-2 opacity-70" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">Motivo (Obligatorio)</label>
-        <textarea [(ngModel)]="motivoEliminacion" class="w-full border rounded-xl p-3 mb-6 focus:ring-2 focus:ring-red-500 outline-none text-sm min-h-[80px]" placeholder="Ej: Vencido, roto, error de carga..." [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900 border-gray-600 text-white' : 'bg-white border-gray-300'"></textarea>
+        <label class="block text-xs font-bold uppercase mb-2 opacity-70 text-gray-700 dark:text-gray-300">Motivo (Obligatorio)</label>
+        <textarea [(ngModel)]="motivoEliminacion" class="w-full border rounded-xl p-3 mb-6 focus:ring-2 focus:ring-red-500 outline-none text-sm min-h-[80px]
+                                                         bg-white border-gray-300 text-gray-900
+                                                         dark:bg-gray-900 dark:border-gray-600 dark:text-white" placeholder="Ej: Vencido, roto, error de carga..."></textarea>
 
         <div class="flex gap-3 justify-end">
-           <button (click)="cancelarEliminarConMotivo()" class="px-5 py-2.5 rounded-xl font-bold hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">Cancelar</button>
+           <button (click)="cancelarEliminarConMotivo()" class="px-5 py-2.5 rounded-xl font-bold transition-colors text-sm
+                                                                hover:bg-gray-100 text-gray-600
+                                                                dark:hover:bg-gray-700 dark:text-gray-300">Cancelar</button>
            <button (click)="confirmarEliminar()" [disabled]="!motivoEliminacion" class="px-5 py-2.5 rounded-xl font-bold bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 disabled:opacity-50 disabled:shadow-none transition-all text-sm flex items-center gap-2">
               <span>Eliminar</span>
            </button>
         </div>
      </div>
   </div>
+
+<!-- MODAL PRESUPUESTO -->
+<div *ngIf="mostrarModalPresupuesto()" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700 animate-scale-up">
+    
+    <!-- Header -->
+    <div class="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+          <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-xl font-bold text-white">Nuevo Presupuesto</h3>
+          <p class="text-xs text-blue-100">Completa los datos y agrega productos</p>
+        </div>
+      </div>
+      <button (click)="cerrarModalPresupuesto()" class="text-white hover:bg-white/20 p-2 rounded-full transition-colors">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="p-6 space-y-6">
+      
+      <!-- Datos del Cliente -->
+      <div class="bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl border border-gray-200 dark:border-gray-600">
+        <h4 class="font-bold text-sm uppercase tracking-wider mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          Datos del Cliente
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input type="text" [(ngModel)]="presupuestoActual().cliente.nombre" placeholder="Nombre completo *" 
+                 class="px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"/>
+          <input type="text" [(ngModel)]="presupuestoActual().cliente.telefono" placeholder="Teléfono" 
+                 class="px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"/>
+          <input type="text" [(ngModel)]="presupuestoActual().cliente.direccion" placeholder="Dirección" 
+                 class="px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"/>
+          <input type="text" [(ngModel)]="presupuestoActual().cliente.ciudad" placeholder="Ciudad" 
+                 class="px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white"/>
+        </div>
+      </div>
+
+      <!-- Buscar y Agregar Productos -->
+<div class="bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl border border-gray-200 dark:border-gray-600">
+  <h4 class="font-bold text-sm uppercase tracking-wider mb-4 text-gray-700 dark:text-gray-200 flex items-center gap-2">
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+    Agregar Productos
+  </h4>
+  <div class="relative">
+    <!-- Capa invisible para cerrar dropdown -->
+    <div *ngIf="productosEncontrados().length > 0 || (!cargandoBusquedaPresupuesto() && busquedaProductoPresupuesto().trim() && productosEncontrados().length === 0)" 
+         (click)="cerrarDropdownProductos()" 
+         class="fixed inset-0 z-10"></div>
+
+    <div class="relative group z-20">
+      <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+        <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      
+      <input type="text" 
+             [value]="busquedaProductoPresupuesto()"
+             (input)="buscarProductoPresupuesto($any($event.target).value)"
+             (keydown)="onBusquedaPresupuestoKeydown($event)"
+             placeholder="Buscar por nombre, código o marca..."
+             autocomplete="off"
+             class="w-full pl-12 pr-16 py-3 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"/>
+      
+      <!-- Botón Scanner Móvil -->
+      <button (click)="abrirScannerPresupuesto()" 
+              type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+              title="Escanear con cámara">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      </button>
+    </div>
+    
+    <!-- Indicador de carga -->
+    <div *ngIf="cargandoBusquedaPresupuesto()" class="absolute right-16 top-3 z-30">
+      <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+    </div>
+
+    <!-- Ayuda para scanner USB -->
+    <div class="mt-2 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span>Escribe o escanea el código con lector USB y presiona Enter</span>
+    </div>
+
+    <!-- Lista de Resultados -->
+    <div *ngIf="productosEncontrados().length > 0" class="absolute z-30 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+      <button *ngFor="let prod of productosEncontrados()" 
+              (click)="agregarAlCarrito(prod)"
+              type="button"
+              class="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors">
+        <div>
+          <div class="font-medium text-gray-900 dark:text-white">{{ prod.nombre }}</div>
+          <div class="text-xs text-gray-500">{{ prod.codigo }} - {{ prod.marca }}</div>
+        </div>
+        <div class="text-right">
+          <div class="font-bold text-green-600 dark:text-green-400">
+            <span *ngIf="prod.tiene_promocion" class="text-[10px] line-through text-red-400 block">{{ prod.precio | monedaArs }}</span>
+            {{ (prod.precio_promocional || prod.precio) | monedaArs }}
+          </div>
+          <div class="text-xs text-gray-400">Stock: {{ prod.cantidad_stock }}</div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Mensaje cuando no hay resultados -->
+    <div *ngIf="!cargandoBusquedaPresupuesto() && busquedaProductoPresupuesto().trim() && productosEncontrados().length === 0" 
+         class="absolute z-30 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 text-center">
+      <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <p class="text-sm text-gray-500 dark:text-gray-400">No se encontraron productos</p>
+      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Intenta con otro término</p>
+    </div>
+  </div>
+</div>
+
+      <!-- Carrito -->
+      <div *ngIf="productosCarrito().length > 0" class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden">
+        <div class="bg-gray-50 dark:bg-gray-700 px-5 py-3 border-b border-gray-200 dark:border-gray-600">
+          <h4 class="font-bold text-sm uppercase tracking-wider text-gray-700 dark:text-gray-200">Productos Seleccionados ({{ productosCarrito().length }})</h4>
+        </div>
+        
+        <div class="divide-y divide-gray-100 dark:divide-gray-700 max-h-60 overflow-y-auto">
+          <div *ngFor="let item of productosCarrito()" class="px-5 py-4 flex items-center gap-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <div class="flex-1">
+              <div class="font-medium text-gray-900 dark:text-white">{{ item.producto.nombre }}</div>
+              <div class="text-xs text-gray-500">{{ item.producto.codigo }}</div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-lg px-3 py-1.5">
+                <button (click)="actualizarCantidadCarrito(item.producto.id, item.cantidad - 1)" 
+                        class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-lg leading-none">−</button>
+                <span class="w-8 text-center font-bold text-gray-900 dark:text-white">{{ item.cantidad }}</span>
+                <button (click)="actualizarCantidadCarrito(item.producto.id, item.cantidad + 1)" 
+                        class="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-lg leading-none">+</button>
+              </div>
+              <div class="text-right w-24">
+                <div class="font-bold text-green-600 dark:text-green-400">{{ (item.producto.precio_promocional || item.producto.precio) * item.cantidad | monedaArs }}</div>
+              </div>
+              <button (click)="eliminarDelCarrito(item.producto.id)" 
+                      class="text-red-500 hover:text-red-700 dark:hover:text-red-400 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Método de Pago y Descuentos -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl border border-gray-200 dark:border-gray-600">
+          <label class="block text-xs font-bold uppercase tracking-wider mb-3 text-gray-700 dark:text-gray-200">Método de Pago</label>
+          <select [(ngModel)]="presupuestoActual().metodoPago" 
+                  class="w-full px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white">
+            <option value="efectivo">Efectivo</option>
+            <option value="tarjeta">Tarjeta</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="mercadopago">Mercado Pago</option>
+          </select>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl border border-gray-200 dark:border-gray-600">
+  <label class="block text-xs font-bold uppercase tracking-wider mb-3 text-gray-700 dark:text-gray-200">Código de Descuento</label>
+  
+  <!-- Mostrar input solo si NO hay descuento aplicado -->
+  <div *ngIf="presupuestoActual().porcentajeDescuento === 0" class="flex gap-2">
+    <input type="text" 
+           [(ngModel)]="presupuestoActual().codigoDescuento"
+           placeholder="Ej: PROMO10"
+           (keydown.enter)="aplicarCodigoDescuento()"
+           class="flex-1 px-4 py-2.5 rounded-lg border-2 focus:ring-2 focus:ring-blue-500 outline-none transition-all bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white uppercase"/>
+    <button (click)="aplicarCodigoDescuento()" 
+            [disabled]="!presupuestoActual().codigoDescuento.trim()"
+            class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold transition-colors whitespace-nowrap flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      Aplicar
+    </button>
+  </div>
+
+  <!-- Mostrar confirmación solo si HAY descuento aplicado -->
+  <div *ngIf="presupuestoActual().porcentajeDescuento > 0" class="bg-green-50 dark:bg-green-900/20 border-2 border-green-300 dark:border-green-700 rounded-lg p-4">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span class="text-sm font-bold text-green-800 dark:text-green-300">Descuento Aplicado</span>
+        </div>
+        <div class="text-lg font-bold text-green-700 dark:text-green-400">
+          {{ presupuestoActual().codigoDescuento }} 
+          <span class="text-sm">(-{{ presupuestoActual().porcentajeDescuento }}%)</span>
+        </div>
+      </div>
+      <button (click)="eliminarDescuento()" 
+              class="px-3 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg font-bold transition-colors flex items-center gap-2 text-sm">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        Quitar
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+<!-- Totales -->
+  <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-900">
+    <div class="space-y-3">
+      <div class="flex justify-between text-sm">
+        <span class="text-gray-600 dark:text-gray-300">Subtotal:</span>
+        <span class="font-bold text-gray-900 dark:text-white">{{ presupuestoActual().subtotal | monedaArs }}</span>
+      </div>
+      <div *ngIf="presupuestoActual().descuentoAplicado > 0" class="flex justify-between text-sm">
+        <span class="text-red-600 dark:text-red-400">Descuento ({{ presupuestoActual().porcentajeDescuento }}%):</span>
+        <span class="font-bold text-red-600 dark:text-red-400">-{{ presupuestoActual().descuentoAplicado | monedaArs }}</span>
+      </div>
+      <div class="flex justify-between pt-3 border-t-2 border-blue-300 dark:border-blue-800">
+        <span class="text-lg font-bold text-gray-900 dark:text-white">TOTAL:</span>
+        <span class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ presupuestoActual().total | monedaArs }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones -->
+  <div class="flex gap-3 pt-4">
+    <button (click)="cerrarModalPresupuesto()" 
+            class="flex-1 px-6 py-3 rounded-xl font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+      Cancelar
+    </button>
+    <button (click)="generarPDFPresupuesto()" 
+            [disabled]="productosCarrito().length === 0 || !presupuestoActual().cliente.nombre.trim()"
+            class="flex-1 px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      Generar Presupuesto
+    </button>
+  </div>
+
+</div></div>
+</div>
 
 </div>

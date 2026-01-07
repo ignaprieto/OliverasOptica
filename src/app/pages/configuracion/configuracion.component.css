@@ -21,3 +21,18 @@ input[type="file"]::file-selector-button:hover {
 .dark input[type="file"]::file-selector-button:hover {
   background-color: rgb(29 78 216);
 }
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}

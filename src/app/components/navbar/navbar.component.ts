@@ -1,7 +1,9 @@
 import { Component, OnInit, HostListener, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
+import { FacturacionService } from '../../services/facturacion.service';
 
 export interface MenuOption {
   vista: string;
@@ -13,20 +15,21 @@ export interface MenuOption {
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class NavbarComponent implements OnInit {
   private router = inject(Router);
-  private supabase = inject(SupabaseService);
+  public supabase = inject(SupabaseService);
+  public facturacionService = inject(FacturacionService);
 
   // --- SIGNALS ---
   mostrarMenu = signal<boolean>(false);
   isVendedor = signal<boolean>(false);
   userName = signal<string>('');
-  permisosVendedor = signal<string[]>([]);
+  permisosVendedor = signal<string[]>([]); 
 
   // --- OPCIONES DE MENÚ ---
   readonly todasLasOpciones: MenuOption[] = [
@@ -46,38 +49,33 @@ export class NavbarComponent implements OnInit {
   ];
 
   // --- COMPUTED ---
-  // Filtra las opciones basándose en los permisos cargados
   opcionesMenu = computed(() => {
     const esVendedor = this.isVendedor();
     const permisos = this.permisosVendedor();
 
-    // Si no es vendedor (es Admin), muestra todo
     if (!esVendedor) return this.todasLasOpciones;
 
     const permisosSet = new Set(permisos);
 
     return this.todasLasOpciones.filter(opcion => {
-      // El dashboard siempre se oculta para vendedores (van directo a Ventas u otros)
       if (opcion.vista === 'dashboard') return false;
       return permisosSet.has(opcion.vista);
     });
   });
 
-  ngOnInit() {
-    // 1. Suscribirse al estado del usuario (Reactivo)
-    // Esto asegura que si recargas o cambias de usuario, el navbar se entere
+  async ngOnInit() {
+    await this.facturacionService.obtenerDatosFacturacionCompleta();    
+    // 2. Suscripción Usuario
     this.supabase.currentUser$.subscribe(async (user) => {
       if (user) {
         this.userName.set(user.nombre);
         const esVend = user.rol === 'vendedor';
         this.isVendedor.set(esVend);
 
-        // Si es vendedor, cargamos sus permisos usando el servicio
         if (esVend) {
           await this.cargarPermisosVendedor();
         }
       } else {
-        // Reset si no hay usuario
         this.userName.set('');
         this.isVendedor.set(false);
         this.permisosVendedor.set([]);
@@ -85,18 +83,25 @@ export class NavbarComponent implements OnInit {
     });
   }
 
+async toggleFacturacion() {
+    // Leemos el valor actual del signal y lo invertimos
+    const nuevoEstado = !this.facturacionService.facturacionHabilitada();
+    
+    try {
+      await this.facturacionService.actualizarEstadoGlobal(nuevoEstado);
+    } catch (error) {
+      console.error('Error al cambiar facturación:', error);
+      // El signal no se actualiza si hay error, visualmente volverá a su estado
+    }
+  }
+  
   async cargarPermisosVendedor() {
     try {
-      // Usamos el método centralizado del servicio
-      // El servicio ya sabe quién es el usuario actual y busca su ID de vendedor
       const permisos = await this.supabase.getPermisosUsuario();
-      
       if (permisos) {
-        // Filtramos solo las vistas que tiene permitidas (puede_ver = true)
         const vistasPermitidas = permisos
           .filter(p => p.puede_ver)
           .map(p => p.vista);
-          
         this.permisosVendedor.set(vistasPermitidas);
       }
     } catch (error) {
@@ -123,7 +128,6 @@ export class NavbarComponent implements OnInit {
   async cerrarSesion() {
     try {
       await this.supabase.signOut();
-      // La redirección ya la hace el servicio, pero por seguridad:
       await this.router.navigate(['/login']);
     } catch (error) {
       console.error('Error logout:', error);

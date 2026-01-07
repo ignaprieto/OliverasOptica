@@ -106,10 +106,10 @@ export class DepositoComponent implements OnInit {
   tipoTransferenciaCategoria = signal<'deposito_a_stock' | 'stock_a_deposito' | null>(null);
 
   // Toast
-  mensaje = signal('');
-  tipoMensaje = signal<'success' | 'error'>('success');
-  mostrarToast = signal(false);
-  private toastTimeout: any;
+isToastVisible = signal(false);
+mensajeToast = signal('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
+private toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
   Math = Math;
 
@@ -129,6 +129,10 @@ export class DepositoComponent implements OnInit {
     this.cargarHistorial();
   }
 
+
+  ngOnDestroy() {
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+}
   // TrackBy fns
   trackByProducto(index: number, item: Producto) { return item.id; }
   trackByHistorial(index: number, item: Transferencia) { return item.id; }
@@ -456,11 +460,15 @@ export class DepositoComponent implements OnInit {
     return tipo === 'deposito_a_stock' ? 'Deposito → Mostrador' : 'Mostrador → Deposito';
   }
 
-  mostrarNotificacion(msg: string, type: 'success' | 'error' = 'success') {
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.mensaje.set(msg);
-    this.tipoMensaje.set(type);
-    this.mostrarToast.set(true);
-    this.toastTimeout = setTimeout(() => this.mostrarToast.set(false), 3000);
-  }
+ mostrarNotificacion(msg: string, type: 'success' | 'error' | 'warning' = 'success') {
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+  
+  this.mensajeToast.set(msg);
+  this.tipoMensajeToast.set(type);
+  this.isToastVisible.set(true);
+  
+  this.toastTimeout = setTimeout(() => {
+    this.isToastVisible.set(false);
+  }, 3000);
+}
 }

@@ -107,9 +107,9 @@ export class DescuentosComponent implements OnInit, OnDestroy {
   idAEliminar = signal<string | null>(null);
   idPromocionAEliminar = signal<string | null>(null);
   
-  toastVisible = signal(false);
-  toastMensaje = signal('');
-  toastColor = signal('bg-green-600');
+  isToastVisible = signal(false);
+mensajeToast = signal('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
   
   mostrarConfirmacion = signal(false);
   mostrarConfirmacionPromocion = signal(false);
@@ -390,11 +390,11 @@ export class DescuentosComponent implements OnInit, OnDestroy {
     const promo = this.promocion;
     
     if (!promo.nombre.trim()) {
-      this.mostrarToast('Nombre obligatorio', 'bg-red-600');
+      this.mostrarToast('Nombre obligatorio', 'error');
       return;
     }
     if (this.productosSeleccionados().size === 0) {
-      this.mostrarToast('Selecciona al menos un producto', 'bg-red-600');
+      this.mostrarToast('Selecciona al menos un producto', 'error');
       return;
     }
 
@@ -435,13 +435,13 @@ export class DescuentosComponent implements OnInit, OnDestroy {
         if (errRel) throw errRel;
       }
 
-      this.mostrarToast('Promoción guardada correctamente', 'bg-green-600');
+      this.mostrarToast('Promoción guardada correctamente', 'success');
       this.cancelarEdicionPromocion();
       this.obtenerPromociones();
 
     } catch (error: any) {
       console.error(error);
-      this.mostrarToast('Error al guardar: ' + error.message, 'bg-red-600');
+      this.mostrarToast('Error al guardar: ' + error.message, 'error');
     } finally {
       this.isGuardando.set(false);
     }
@@ -514,7 +514,7 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
   } catch (error) {
     console.error('Error al obtener promociones:', error);
-    this.mostrarToast('Error al cargar promociones', 'bg-red-600');
+    this.mostrarToast('Error al cargar promociones', 'error');
   }
 }
 
@@ -534,11 +534,11 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
       if (error) throw error;
       
-      this.mostrarToast(`Promoción ${nuevoEstado ? 'activada' : 'desactivada'}`, 'bg-green-600');
+      this.mostrarToast(`Promoción ${nuevoEstado ? 'activada' : 'desactivada'}`, 'success');
       
     } catch (error) {
       this.obtenerPromociones(); // Rollback
-      this.mostrarToast('Error al cambiar estado', 'bg-red-600');
+      this.mostrarToast('Error al cambiar estado', 'error');
     }
   }
 
@@ -557,7 +557,7 @@ export class DescuentosComponent implements OnInit, OnDestroy {
     if (!id) return;
     
     await this.supabase.getClient().from('promociones').delete().eq('id', id);
-    this.mostrarToast('Promoción eliminada', 'bg-red-600');
+    this.mostrarToast('Promoción eliminada', 'success');
     this.mostrarConfirmacionPromocion.set(false);
     this.obtenerPromociones();
   }
@@ -571,7 +571,7 @@ export class DescuentosComponent implements OnInit, OnDestroy {
       .order('fecha_creacion', { ascending: false });
     
     if (error) {
-      this.mostrarToast('Error al obtener los descuentos', 'bg-red-600');
+      this.mostrarToast('Error al obtener los descuentos', 'error');
       return;
     }
     
@@ -582,7 +582,7 @@ export class DescuentosComponent implements OnInit, OnDestroy {
     const desc = this.descuento;
     
     if (!desc.codigo.trim()) {
-      this.mostrarToast('El código es obligatorio', 'bg-red-600');
+      this.mostrarToast('El código es obligatorio', 'error');
       return;
     }
 
@@ -603,11 +603,11 @@ export class DescuentosComponent implements OnInit, OnDestroy {
       if (this.modo === 'agregar') {
         const { error } = await client.from('descuentos').insert(datos);
         if (error) throw error;
-        this.mostrarToast('Descuento agregado', 'bg-green-600');
+        this.mostrarToast('Descuento agregado', 'success');
       } else {
         const { error } = await client.from('descuentos').update(datos).eq('id', desc.id);
         if (error) throw error;
-        this.mostrarToast('Descuento actualizado', 'bg-green-600');
+        this.mostrarToast('Descuento actualizado', 'success');
       }
 
       this.descuento = this.nuevoDescuento();
@@ -615,7 +615,7 @@ export class DescuentosComponent implements OnInit, OnDestroy {
       this.obtenerDescuentos();
 
     } catch (error: any) {
-      this.mostrarToast('Error: ' + error.message, 'bg-red-600');
+      this.mostrarToast('Error: ' + error.message, 'error');
     } finally {
       this.isGuardando.set(false);
     }
@@ -647,11 +647,11 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
       if (error) throw error;
       
-      this.mostrarToast(`Descuento ${nuevoEstado ? 'activado' : 'desactivado'}`, 'bg-green-600');
+      this.mostrarToast(`Descuento ${nuevoEstado ? 'activado' : 'desactivado'}`, 'success');
       
     } catch (error) {
       this.obtenerDescuentos(); // Rollback
-      this.mostrarToast('Error al cambiar estado', 'bg-red-600');
+      this.mostrarToast('Error al cambiar estado', 'error');
     }
   }
 
@@ -676,20 +676,20 @@ export class DescuentosComponent implements OnInit, OnDestroy {
 
   // ==================== UTILS ====================
 
-  mostrarToast(mensaje: string, color: string = 'bg-green-600') {
-    this.toastMensaje.set(mensaje);
-    this.toastColor.set(color);
-    this.toastVisible.set(true);
-    
-    if (this.toastTimeout) clearTimeout(this.toastTimeout);
-    this.toastTimeout = setTimeout(() => { 
-      this.cerrarToast(); 
-    }, 3000);
-  }
+  mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success') {
+  this.mensajeToast.set(mensaje);
+  this.tipoMensajeToast.set(tipo);
+  this.isToastVisible.set(true);
+  
+  if (this.toastTimeout) clearTimeout(this.toastTimeout);
+  this.toastTimeout = setTimeout(() => { 
+    this.cerrarToast(); 
+  }, 3000);
+}
   
   cerrarToast() { 
-    this.toastVisible.set(false);
-  }
+  this.isToastVisible.set(false);
+}
 
   toggleExpansion(id: string) {
     const actual = this.promocionExpandida();

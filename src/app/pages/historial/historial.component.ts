@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, signal, computed, ChangeDetectionStrategy, ChangeDetectorRef,inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SupabaseService } from '../../services/supabase.service';
 import { RouterModule } from '@angular/router';
 import { MonedaArsPipe } from '../../pipes/moneda-ars.pipe';
 import { ThemeService } from '../../services/theme.service';
 import { PermisoDirective } from '../../directives/permiso.directive';
-
+import { FacturacionService } from '../../services/facturacion.service';
+FacturacionService
 interface ProductoOriginal {
   producto_id: string;
   nombre: string;
@@ -39,6 +40,7 @@ interface ItemHistorial {
   tipo: 'venta' | 'recambio'| 'ventaEliminada';
   id: string;
   fecha: Date;
+  cliente_id?: string; 
   nombre_usuario?: string;
   cliente_nombre?: string;
   cliente_email?: string;
@@ -65,6 +67,16 @@ interface ItemHistorial {
   eliminado_por?: string;
   fecha_eliminacion?: Date;
   motivo_eliminacion?: string;
+  facturada?: boolean;
+  factura_tipo?: string;
+  factura_nro?: string;
+  factura_pdf_url?: string;
+  cliente_info?: { 
+    nombre: string;
+    cuit: string;
+    condicion_iva: string;
+  };
+  [key: string]: any;
 }
 
 interface ConfigRecibo {
@@ -92,8 +104,11 @@ interface ConfigRecibo {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HistorialComponent implements OnInit {
+  private facturacionService = inject(FacturacionService); // <--- INYECTADO
+filtroFacturacion = signal<'todas' |'facturadas' | 'no_facturadas'>('todas');
   // ==================== CONSTANTES DE COLUMNAS ====================
-private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nombre, cliente_email, metodo_pago, descuento_aplicado, total_final, productos, recambio_realizado, realizado_por, venta_id_referencia, motivo, observaciones, productos_devueltos, productos_recambio, total_original, total_devuelto, total_recambio, diferencia_abonada, metodo_pago_diferencia, monto_descuento_recambio, eliminado_por, fecha_eliminacion, id_texto';
+// AGREGA 'cliente_id' AL INICIO DE LA LISTA
+private readonly COLUMNAS_VISTA = 'id, cliente_id, tipo, fecha, nombre_usuario, cliente_nombre, cliente_email, metodo_pago, descuento_aplicado, total_final, productos, recambio_realizado, realizado_por, venta_id_referencia, motivo, observaciones, productos_devueltos, productos_recambio, total_original, total_devuelto, total_recambio, diferencia_abonada, metodo_pago_diferencia, monto_descuento_recambio, eliminado_por, fecha_eliminacion, id_texto, facturada, factura_tipo, factura_pdf_url';
   private readonly COLUMNAS_PRODUCTOS = 'id, nombre, marca, categoria, precio, talle, cantidad_stock, codigo';
 
   // ==================== SIGNALS DE DATOS ====================
@@ -147,10 +162,9 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
   observacionesRecambio = signal<string>('');
   
   // ==================== SIGNALS DE TOAST ====================
-  toastVisible = signal<boolean>(false);
-  toastMensaje = signal<string>('');
-  toastColor = signal<string>('bg-green-600');
-  
+ toastVisible = signal<boolean>(false);
+toastMensaje = signal<string>('');
+tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
   // ==================== SIGNALS DE ELIMINACIÓN ====================
   mostrandoConfirmacionEliminar = signal<boolean>(false);
   ventaAEliminar = signal<any>(null);
@@ -162,7 +176,8 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
   mostrarModalEmail = signal<boolean>(false);
   ventaParaEmail = signal<any>(null);
   emailDestino = signal<string>('');
-  
+  mostrarModalSeleccionFactura = signal<boolean>(false);
+  ventaParaFacturar = signal<any>(null);
   // ==================== SIGNALS DE CONFIGURACIÓN ====================
   configRecibo = signal<ConfigRecibo | null>(null);
   cardsExpandidos = signal<Set<string>>(new Set());
@@ -200,6 +215,11 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
       .slice(0, 10);
   });
 
+mostrarModalFormatoRecibo = signal<boolean>(false);
+ventaParaGenerarRecibo = signal<any>(null);
+accionRecibo = signal<'imprimir' | 'visualizar' | 'email'>('imprimir');
+private busquedaTimeout: any;
+
   constructor(
     private supabase: SupabaseService, 
     public themeService: ThemeService,
@@ -214,15 +234,15 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
   }
 
   // ==================== MÉTODOS DE UTILIDAD ====================
-  mostrarToast(mensaje: string, color: string) {
-    this.toastMensaje.set(mensaje);
-    this.toastColor.set(color);
-    this.toastVisible.set(true);
-    setTimeout(() => {
-      this.toastVisible.set(false);
-      this.cdr.markForCheck();
-    }, 2500);
-  }
+ mostrarToast(mensaje: string, tipo: 'success' | 'error' | 'warning' = 'success') {
+  this.toastMensaje.set(mensaje);
+  this.tipoMensajeToast.set(tipo);
+  this.toastVisible.set(true);
+  setTimeout(() => {
+    this.toastVisible.set(false);
+    this.cdr.markForCheck();
+  }, tipo === 'success' ? 3000 : tipo === 'warning' ? 3500 : 4000);
+}
 
   toggleCard(itemId: string): void {
     this.cardsExpandidos.update(cards => {
@@ -279,9 +299,15 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
   }
 
   filtrarPorBusqueda() {
+  if (this.busquedaTimeout) {
+    clearTimeout(this.busquedaTimeout);
+  }
+  
+  this.busquedaTimeout = setTimeout(() => {
     this.paginaActual.set(1);
     this.cargarDatos();
-  }
+  }, 300); 
+}
 
   async filtrarMetodoPago(metodoPago: any) {
     this.metodoPagoFiltro.set(metodoPago);
@@ -290,26 +316,33 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
   }
 
   trackByFn(index: number, item: ItemHistorial): string {
-    return item.id;
-  }
+  return `${item.tipo}-${item.id}`;
+}
 
   trackByProductoId(index: number, item: any): string {
     return item.producto_id || item.id || index.toString();
   }
 
   // ==================== SCROLL INFINITO ====================
-  async onScroll(event: any) {
-    const element = event.target;
-    const atBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 100;
-    
-    if (atBottom && !this.cargandoMas() && this.hayMasDatos()) {
-      await this.cargarMasDatos();
-    }
+async onScroll(event: any) {
+  const element = event.target;
+  const atBottom = element.scrollHeight - element.scrollTop <= element.clientHeight + 100;
+  
+  if (!atBottom || this.cargandoMas() || !this.hayMasDatos() || this.items().length >= this.totalItems()) {
+    return;
   }
+  
+  await this.cargarMasDatos();
+}
 
   async cargarMasDatos() {
     if (this.cargandoMas() || !this.hayMasDatos()) return;
     
+if (this.items().length >= this.totalItems()) {
+    this.hayMasDatos.set(false);
+    return;
+  }
+
     this.cargandoMas.set(true);
     const paginaSiguiente = this.paginaActual() + 1;
     
@@ -393,7 +426,7 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
 
     } catch (error: any) {
       console.error('Error cargando historial:', error.message);
-      this.mostrarToast('Error al cargar los datos', 'bg-red-600');
+      this.mostrarToast('Error al cargar los datos', 'error');
       this.cargando.set(false);
       this.cargandoTotales.set(false);
       this.cdr.markForCheck();
@@ -595,7 +628,7 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
     const codigo = this.codigoDescuentoRecambio();
     
     if (!codigo?.trim()) {
-      this.mostrarToast('Por favor, introduce un código de descuento.', 'bg-orange-600');
+      this.mostrarToast('Por favor, introduce un código de descuento.', 'warning');
       return;
     }
 
@@ -609,25 +642,25 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
 
     if (data) {
       if (data.tipo === 'cantidad') {
-        this.mostrarToast('❌ Los descuentos por cantidad (2x1, 3x2, etc.) no están disponibles para recambios. Solo se permiten descuentos por porcentaje.', 'bg-red-600');
+        this.mostrarToast(' Los descuentos por cantidad (2x1, 3x2, etc.) no están disponibles para recambios. Solo se permiten descuentos por porcentaje.', 'error');
         this.codigoDescuentoRecambio.set('');
         return;
       }
 
       if (!data.porcentaje || data.porcentaje <= 0) {
-        this.mostrarToast('❌ El descuento no tiene un porcentaje válido.', 'bg-red-600');
+        this.mostrarToast('El descuento no tiene un porcentaje válido.', 'error');
         this.codigoDescuentoRecambio.set('');
         return;
       }
 
       this.descuentoRecambioAplicado.set(data.porcentaje);
       this.calcularTotalesRecambio();
-      this.mostrarToast('✅ Descuento aplicado correctamente.', 'bg-green-600');
+      this.mostrarToast('Descuento aplicado correctamente.', 'success');
     } else {
       this.descuentoRecambioAplicado.set(0);
       this.codigoDescuentoRecambio.set('');
       this.calcularTotalesRecambio();
-      this.mostrarToast('❌ Código de descuento inválido o inactivo.', 'bg-red-600');
+      this.mostrarToast('Código de descuento inválido o inactivo.', 'error');
     }
     this.cdr.markForCheck();
   }
@@ -636,7 +669,7 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
     this.descuentoRecambioAplicado.set(0);
     this.codigoDescuentoRecambio.set('');
     this.calcularTotalesRecambio();
-    this.mostrarToast('Descuento eliminado.', 'bg-red-600');
+    this.mostrarToast('Descuento eliminado.', 'warning');
   }
 
   calcularTotalesRecambio() {
@@ -670,13 +703,13 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
   async procesarRecambio() {
     if (!this.puedeConfirmarRecambio()) {
       if (!this.productosOriginales().some(p => p.seleccionado)) {
-        this.mostrarToast('Debes seleccionar al menos un producto para devolver.', 'bg-red-600');
+        this.mostrarToast('Debes seleccionar al menos un producto para devolver.', 'warning');
       } else if (this.productosRecambio().length === 0) {
-        this.mostrarToast('Debes seleccionar al menos un producto para el recambio.', 'bg-red-600');
+        this.mostrarToast('Debes seleccionar al menos un producto para el recambio.', 'warning');
       } else if (!this.motivoRecambio().trim()) {
-        this.mostrarToast('Debes especificar un motivo para el recambio.', 'bg-red-600');
+        this.mostrarToast('Debes especificar un motivo para el recambio.', 'error');
       } else if (this.diferencia() > 0 && !this.metodoPagoSeleccionado()) {
-        this.mostrarToast('Debes seleccionar un método de pago para la diferencia.', 'bg-red-600');
+        this.mostrarToast('Debes seleccionar un método de pago para la diferencia.', 'error');
       }
       return;
     }
@@ -684,7 +717,7 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
     if (this.diferencia() < 0) {
       this.mostrarToast(
         'El recambio no puede generar un saldo a favor del cliente. El total de los productos de recambio debe ser igual o mayor al total de los productos devueltos.', 
-        'bg-orange-600'
+        'error'
       );
       return;
     }
@@ -738,7 +771,7 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
           }
           
           if (pagos && pagos.length > 0) {
-            this.mostrarToast('❌ No se puede eliminar la venta porque tiene pagos asociados. Debe contactar con el soporte del sistema.', 'bg-red-600');
+            this.mostrarToast(' No se puede eliminar la venta porque tiene pagos asociados. Debe contactar con el soporte del sistema.', 'error');
             this.procesandoRecambio.set(false);
             return;
           }
@@ -856,11 +889,11 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
         ? '¡Recambio procesado exitosamente! El saldo del cliente ha sido actualizado.'
         : '¡Recambio procesado exitosamente!';
       
-      this.mostrarToast(mensajeExito, 'bg-green-600');
+      this.mostrarToast(mensajeExito, 'success');
       
     } catch (error: any) {
       console.error('Error al procesar recambio:', error);
-      this.mostrarToast(`Error al procesar el recambio: ${error.message}`, 'bg-red-600');
+      this.mostrarToast(`Error al procesar el recambio: ${error.message}`, 'error');
     } finally {
       this.procesandoRecambio.set(false);
       this.cdr.markForCheck();
@@ -938,7 +971,7 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
   // ==================== MÉTODOS DE ELIMINACIÓN ====================
   iniciarEliminacionVenta(venta: any) {
     if (venta.recambio_realizado) {
-      this.mostrarToast('No se puede eliminar una venta que ya tiene un recambio realizado.', 'bg-red-600');
+      this.mostrarToast('No se puede eliminar una venta que ya tiene un recambio realizado.', 'error');
       return;
     }
     
@@ -959,7 +992,7 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
     if (!venta || this.eliminandoVenta()) return;
     
     if (!this.motivoEliminacion().trim()) {
-      this.mostrarToast('El motivo de eliminación es obligatorio.', 'bg-red-600');
+      this.mostrarToast('El motivo de eliminación es obligatorio.', 'error');
       return;
     }
 
@@ -1001,7 +1034,7 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
           }
           
           if (pagos && pagos.length > 0) {
-            this.mostrarToast('❌ No se puede eliminar la venta porque tiene pagos asociados. Debe contactar con el soporte del sistema.', 'bg-red-600');
+            this.mostrarToast(' No se puede eliminar la venta porque tiene pagos asociados. Debe contactar con el soporte del sistema.', 'error');
             this.eliminandoVenta.set(false);
             return;
           }
@@ -1083,14 +1116,14 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
       this.cancelarEliminacion();
       
       const mensajeExito = metodoPagoOriginal === 'fiado' 
-        ? '✅ Venta eliminada exitosamente. El stock y el saldo del cliente han sido restaurados.'
-        : '✅ Venta eliminada exitosamente. El stock ha sido restaurado.';
+        ? ' Venta eliminada exitosamente. El stock y el saldo del cliente han sido restaurados.'
+        : ' Venta eliminada exitosamente. El stock ha sido restaurado.';
       
-      this.mostrarToast(mensajeExito, 'bg-green-600');
+      this.mostrarToast(mensajeExito, 'success');
       
     } catch (error: any) {
       console.error('Error al eliminar venta:', error);
-      this.mostrarToast(`❌ Error al eliminar la venta: ${error.message}`, 'bg-red-600');
+      this.mostrarToast(` Error al eliminar la venta: ${error.message}`, 'error');
     } finally {
       this.eliminandoVenta.set(false);
       this.cdr.markForCheck();
@@ -1099,10 +1132,11 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
 
   // ==================== MÉTODOS DE RECIBO Y EMAIL ====================
   abrirModalRecibo(venta: any) {
-    this.ventaParaRecibo.set(venta);
-    this.mostrarModalRecibo.set(true);
-    this.cdr.markForCheck();
-  }
+  this.ventaParaGenerarRecibo.set(venta);
+  this.accionRecibo.set('imprimir');
+  this.mostrarModalFormatoRecibo.set(true);
+  this.cdr.markForCheck();
+}
 
   cerrarModalRecibo() {
     this.mostrarModalRecibo.set(false);
@@ -1111,11 +1145,11 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
   }
 
   abrirModalEmail(venta: any) {
-    this.ventaParaEmail.set(venta);
-    this.emailDestino.set(venta.cliente_email || '');
-    this.mostrarModalEmail.set(true);
-    this.cdr.markForCheck();
-  }
+  this.ventaParaGenerarRecibo.set(venta);
+  this.accionRecibo.set('email');
+  this.mostrarModalFormatoRecibo.set(true);
+  this.cdr.markForCheck();
+}
 
   cerrarModalEmail() {
     this.mostrarModalEmail.set(false);
@@ -1124,306 +1158,780 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
     this.cdr.markForCheck();
   }
 
-  async generarReciboPDF(venta: any, descargar: boolean = true): Promise<Blob | undefined> {
-    this.generandoRecibo.set(true);
-    
+// AGREGAR nuevo método para cerrar modal de formato:
+cerrarModalFormatoRecibo() {
+  this.mostrarModalFormatoRecibo.set(false);
+  this.ventaParaGenerarRecibo.set(null);
+  this.cdr.markForCheck();
+}
+
+// AGREGAR nuevo método para seleccionar formato:
+async seleccionarFormatoRecibo(formato: 'termica' | 'a4') {
+  const venta = this.ventaParaGenerarRecibo();
+  const accion = this.accionRecibo();
+  
+  this.cerrarModalFormatoRecibo();
+  
+  if (accion === 'imprimir') {
+    await this.generarReciboPDF(venta, true, formato);
+  } else if (accion === 'visualizar') {
+    await this.visualizarRecibo(venta, formato);
+  } else if (accion === 'email') {
+    this.ventaParaEmail.set(venta);
+    this.emailDestino.set(venta.cliente_email || '');
+    this.mostrarModalEmail.set(true);
+    this.cdr.markForCheck();
+  }
+}
+
+private async generarReciboA4(venta: any, descargar: boolean, jsPDF: any): Promise<Blob | undefined> {
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: 'a4'
+  });
+  
+  const config = this.configRecibo();
+  const margenIzq = 20;
+  const margenDer = 20;
+  const anchoUtil = 170; // 210mm - 40mm de márgenes
+  const anchoPagina = 210;
+  let y = 20;
+  
+  // ==================== ENCABEZADO CON LOGO Y EMPRESA ====================
+  // Fondo sutil para el encabezado
+  doc.setFillColor(245, 248, 250);
+  doc.rect(0, 0, anchoPagina, 70, 'F');
+  
+  if (config?.logo_url) {
     try {
-      // ✅ DYNAMIC IMPORT - Solo carga jsPDF cuando se necesita
-      const { default: jsPDF } = await import('jspdf');
-      
-      const alturaBase = 150;
-      const alturaPorProducto = 15;
-      const cantidadProductos = venta.productos.length;
-      const alturaEstimada = alturaBase + (cantidadProductos * alturaPorProducto);
-
-      const doc = new jsPDF({
-        unit: 'mm',
-        format: [80, Math.max(alturaEstimada, 170)]
-      });
-      
-      const config = this.configRecibo();
-      const margen = 5;
-      const anchoUtil = 70;
-      let y = 8;
-      
-      if (config?.logo_url) {
-        try {
-          const logoWidth = 35;
-          const logoHeight = 18;
-          const logoX = (80 - logoWidth) / 2;
-          doc.addImage(config.logo_url, 'JPG', logoX, y, logoWidth, logoHeight);
-          y += logoHeight + 5;
-        } catch (error) {
-          y += 2;
-        }
-      } else {
-        y += 2;
-      }
-
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text(config?.nombre_negocio || 'PRISYS SOLUTIONS', 40, y, { align: 'center' });
-      y += 6;
-      
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.text(config?.direccion || '9 DE JULIO 1718', 40, y, { align: 'center' });
-      y += 3.5;
-      doc.text(config?.ciudad || 'Corrientes - Capital (3400)', 40, y, { align: 'center' });
-      y += 3.5;
-      
-      const tel1 = config?.telefono1 || '(3735) 475716';
-      const tel2 = config?.telefono2 || '(3735) 410299';
-      doc.text(`Cel: ${tel1} - ${tel2}`, 40, y, { align: 'center' });
-      y += 3.5;
-      
-      const wsp1 = config?.whatsapp1 || '3735 475716';
-      const wsp2 = config?.whatsapp2 || '3735 410299';
-      doc.text(`WhatsApp: ${wsp1} - ${wsp2}`, 40, y, { align: 'center' });
-      y += 3.5;
-      
-      if (config?.email_empresa) {
-        doc.text(config.email_empresa, 40, y, { align: 'center' });
-        y += 3.5;
-      }
-      
-      y += 2.5;
-      
-      doc.setLineWidth(0.3);
-      doc.line(margen, y, margen + anchoUtil, y);
-      y += 1;
-      doc.line(margen, y, margen + anchoUtil, y);
-      y += 5;
-      
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text('COMPROBANTE DE VENTA', 40, y, { align: 'center' });
-      y += 4;
-      
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      doc.text('NO VÁLIDO COMO FACTURA', 40, y, { align: 'center' });
-      y += 6;
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Cod venta: ${venta.id.slice(-8)}`, margen, y);
-      y += 4;
-      
-      const fechaVenta = new Date(venta.fecha_venta);
-      const dia = String(fechaVenta.getDate()).padStart(2, '0');
-      const mes = String(fechaVenta.getMonth() + 1).padStart(2, '0');
-      const anio = fechaVenta.getFullYear();
-      const hora = String(fechaVenta.getHours()).padStart(2, '0');
-      const minutos = String(fechaVenta.getMinutes()).padStart(2, '0');
-      const fechaFormateada = `${dia}/${mes}/${anio} ${hora}:${minutos}`;
-
-      doc.text(`Fecha: ${fechaFormateada}`, margen, y);
-      y += 6;
-      
-      if (venta.cliente_nombre) {
-        doc.text(`Cliente: ${venta.cliente_nombre.toUpperCase()}`, margen, y);
-        y += 6;
-      }
-      
-      doc.text(`Vendedor/Cajero: ${venta.nombre_usuario}`, margen, y);
-      y += 6;
-      
-      doc.setLineWidth(0.2);
-      doc.line(margen, y, margen + anchoUtil, y);
-      y += 5;
-      
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'bold');
-      doc.text('CANT', margen, y);
-      doc.text('DESCRIPCIÓN', margen + 10, y);
-      doc.text('IMPORTE', margen + anchoUtil - 5, y, { align: 'right' });
-      y += 1;
-      doc.line(margen, y, margen + anchoUtil, y);
-      y += 4;
-      
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      
-      for (const producto of venta.productos) {
-        doc.text(`${producto.cantidad}`, margen + 2, y);
-        
-        const descripcion = `${producto.nombre}${producto.marca ? ' - ' + producto.marca : ''}`;
-        const descripcionLineas = doc.splitTextToSize(descripcion, 40);
-        doc.text(descripcionLineas, margen + 10, y);
-        
-        doc.text(`${producto.subtotal.toFixed(2)}`, margen + anchoUtil - 5, y, { align: 'right' });
-        
-        y += descripcionLineas.length * 4;
-        
-        doc.setFontSize(7);
-        doc.text(`  ${producto.precio_unitario.toFixed(2)} c/u`, margen + 10, y);
-        if (producto.talle) {
-          doc.text(`- Talle: ${producto.talle}`, margen + 30, y);
-        }
-        doc.setFontSize(8);
-        y += 4;
-      }
-      
-      y += 2;
-      
-      doc.line(margen, y, margen + anchoUtil, y);
-      y += 5;
-      
-      doc.setFontSize(9);
-      
-      const subtotal = venta.productos.reduce((sum: number, p: any) => sum + p.subtotal, 0);
-      
-      doc.text('SUBTOTAL $:', margen, y);
-      doc.text(`${subtotal.toFixed(2)}`, margen + anchoUtil - 5, y, { align: 'right' });
-      y += 5;
-      
-      if (venta.descuento_aplicado > 0) {
-        const montoDescuento = subtotal * venta.descuento_aplicado / 100;
-        doc.text(`Desc. ${venta.descuento_aplicado}% $:`, margen, y);
-        doc.text(`-${montoDescuento.toFixed(2)}`, margen + anchoUtil - 5, y, { align: 'right' });
-        y += 5;
-      }
-      
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(11);
-      doc.text('TOTAL $:', margen, y);
-      doc.text(`${venta.total_final.toFixed(2)}`, margen + anchoUtil - 5, y, { align: 'right' });
-      y += 6;
-      
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(8);
-      const metodoPagoNormalizado = this.normalizarMetodoPagoParaMostrar(venta.metodo_pago || '');
-      
-      const metodoPagoLineas = doc.splitTextToSize(`Forma de pago: ${metodoPagoNormalizado.toUpperCase()}`, anchoUtil);
-      metodoPagoLineas.forEach((linea: string) => {
-        doc.text(linea, margen, y);
-        y += 4;
-      });
-      y += 4;
-      
-      doc.setLineWidth(0.3);
-      doc.line(margen, y, margen + anchoUtil, y);
-      y += 1;
-      doc.line(margen, y, margen + anchoUtil, y);
-      y += 6;
-      
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      const mensajeGracias = config?.mensaje_agradecimiento || '¡Gracias por su compra!';
-      doc.text(mensajeGracias, 40, y, { align: 'center' });
-      y += 6;
-
-      doc.setFontSize(7);
-      doc.setFont('helvetica', 'normal');
-      const mensajePie = config?.mensaje_pie || 'DESARROLLADO POR PRISYS SOLUTIONS';
-      doc.text(mensajePie, 40, y, { align: 'center' });
-      y += 3.5;
-      const emailDev = config?.email_desarrollador || 'prisys.solutions@gmail.com';
-      doc.text(emailDev, 40, y, { align: 'center' });
-      y += 5;
-      
-      if (descargar) {
-        doc.save(`recibo-${venta.id.slice(-8)}.pdf`);
-        this.mostrarToast('✅ Recibo descargado correctamente', 'bg-green-600');
-        return undefined;
-      } else {
-        return doc.output('blob');
-      }
-      
-    } catch (error: any) {
-      console.error('Error al generar recibo:', error);
-      this.mostrarToast('❌ Error al generar el recibo', 'bg-red-600');
-      return undefined;
-    } finally {
-      this.generandoRecibo.set(false);
-      this.cdr.markForCheck();
+      const logoWidth = 50;
+      const logoHeight = 25;
+      const logoX = margenIzq;
+      doc.addImage(config.logo_url, 'JPG', logoX, y, logoWidth, logoHeight);
+    } catch (error) {
+      console.error('Error cargando logo:', error);
     }
   }
+  
+  // Información de la empresa (alineada a la derecha)
+  const xEmpresa = anchoPagina - margenDer;
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(31, 78, 120);
+  doc.text(config?.nombre_negocio || 'PRISYS SOLUTIONS', xEmpresa, y, { align: 'right' });
+  y += 6;
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(80, 80, 80);
+  doc.text(config?.direccion || '9 DE JULIO 1718', xEmpresa, y, { align: 'right' });
+  y += 4;
+  doc.text(config?.ciudad || 'Corrientes - Capital (3400)', xEmpresa, y, { align: 'right' });
+  y += 4;
+  doc.text(`Tel: ${config?.telefono1 || '(3735) 475716'} / ${config?.telefono2 || '(3735) 410299'}`, xEmpresa, y, { align: 'right' });
+  y += 4;
+  doc.text(`WhatsApp: ${config?.whatsapp1 || '3735 475716'} / ${config?.whatsapp2 || '3735 410299'}`, xEmpresa, y, { align: 'right' });
+  y += 4;
+  
+  if (config?.email_empresa) {
+    doc.text(config.email_empresa, xEmpresa, y, { align: 'right' });
+  }
+  
+  y = 70;
+  doc.setTextColor(0, 0, 0);
+  
+  // ==================== TÍTULO DEL DOCUMENTO ====================
+  y += 8;
+  doc.setFontSize(24);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(31, 78, 120);
+  doc.text('COMPROBANTE DE VENTA', anchoPagina / 2, y, { align: 'center' });
+  y += 6;
+  
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'italic');
+  doc.setTextColor(120, 120, 120);
+  doc.text('DOCUMENTO NO VÁLIDO COMO FACTURA', anchoPagina / 2, y, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
+  y += 12;
+  
+  // ==================== INFORMACIÓN DE LA VENTA ====================
+  const alturaInfoVenta = 32;
+  
+  // Borde decorativo
+  doc.setDrawColor(31, 78, 120);
+  doc.setLineWidth(0.5);
+  doc.line(margenIzq, y, anchoPagina - margenDer, y);
+  y += 2;
+  
+  // Contenedor con fondo
+  doc.setFillColor(250, 252, 254);
+  doc.rect(margenIzq, y, anchoUtil, alturaInfoVenta, 'F');
+  doc.setDrawColor(200, 210, 220);
+  doc.setLineWidth(0.3);
+  doc.rect(margenIzq, y, anchoUtil, alturaInfoVenta);
+  
+  const yInfo = y + 8;
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(60, 60, 60);
+  
+  // Columna izquierda
+  const col1X = margenIzq + 8;
+  const col2X = margenIzq + 50;
+  
+  doc.text('Nº Comprobante:', col1X, yInfo);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(31, 78, 120);
+  doc.setFontSize(11);
+  doc.text(`#${venta.id.slice(-8).toUpperCase()}`, col2X, yInfo);
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(60, 60, 60);
+  doc.text('Fecha y Hora:', col1X, yInfo + 7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
+  
+  const fechaVenta = new Date(venta.fecha_venta);
+  const fechaFormateada = fechaVenta.toLocaleDateString('es-AR', { 
+    day: '2-digit', 
+    month: '2-digit', 
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  doc.text(fechaFormateada, col2X, yInfo + 7);
+  
+  // Columna derecha
+  const col3X = margenIzq + 95;
+  const col4X = margenIzq + 130;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(60, 60, 60);
+  doc.text('Vendedor:', col3X, yInfo);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
+  const vendedor = doc.splitTextToSize(venta.nombre_usuario || 'N/A', 35);
+  doc.text(vendedor, col4X, yInfo);
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(60, 60, 60);
+  doc.text('Cliente:', col3X, yInfo + 7);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(0, 0, 0);
+  const cliente = venta.cliente_nombre ? venta.cliente_nombre.toUpperCase() : 'CONSUMIDOR FINAL';
+  const clienteLineas = doc.splitTextToSize(cliente, 35);
+  doc.text(clienteLineas, col4X, yInfo + 7);
+  
+  y += alturaInfoVenta + 2;
+  
+  // Línea decorativa
+  doc.setDrawColor(31, 78, 120);
+  doc.setLineWidth(0.5);
+  doc.line(margenIzq, y, anchoPagina - margenDer, y);
+  y += 12;
+  
+  // ==================== TABLA DE PRODUCTOS ====================
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(31, 78, 120);
+  doc.text('DETALLE DE PRODUCTOS', margenIzq, y);
+  y += 8;
+  
+  // Encabezado de tabla con diseño moderno
+  const alturaEncabezado = 9;
+  doc.setFillColor(31, 78, 120);
+  doc.rect(margenIzq, y - 6, anchoUtil, alturaEncabezado, 'F');
+  
+  const colCant = margenIzq + 5;
+const colDescripcion = margenIzq + 25;
+const colTalle = margenIzq + 110;
+// Ajustamos estas coordenadas para que sean el "tope derecho" de la columna
+const colPrecioUnit = margenIzq + 145; 
+const colSubtotal = margenIzq + 170;
+
+doc.setFontSize(9);
+doc.setFont('helvetica', 'bold');
+doc.setTextColor(255, 255, 255);
+
+doc.text('CANT.', colCant, y);
+doc.text('DESCRIPCIÓN', colDescripcion, y);
+doc.text('TALLE', colTalle, y);
+// Usamos el mismo punto X para el encabezado y el contenido
+doc.text('P. UNIT.', colPrecioUnit, y, { align: 'right' });
+doc.text('SUBTOTAL', colSubtotal, y, { align: 'right' });
+
+doc.setTextColor(0, 0, 0);
+y += alturaEncabezado;
+  
+  // Productos con diseño alternado
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  
+  let filaAlterna = false;
+  
+  for (const producto of venta.productos) {
+    const alturaFila = 10;
+    
+    // Fondo alternado
+    if (filaAlterna) {
+      doc.setFillColor(248, 250, 252);
+      doc.rect(margenIzq, y - 3, anchoUtil, alturaFila, 'F');
+    }
+    filaAlterna = !filaAlterna;
+    
+    // Cantidad
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${producto.cantidad}`, colCant + 3, y, { align: 'center' });
+    doc.setFont('helvetica', 'normal');
+    
+    // Descripción con marca
+    const nombreProducto = producto.nombre;
+    const marcaProducto = producto.marca ? ` - ${producto.marca}` : '';
+    const descripcionCompleta = `${nombreProducto}${marcaProducto}`;
+    const descripcionLineas = doc.splitTextToSize(descripcionCompleta, 80);
+    doc.text(descripcionLineas, colDescripcion, y);
+    
+    // Talle
+    doc.text(producto.talle || '-', colTalle, y);
+
+    // PRECIO UNITARIO: Ahora alineado exactamente al mismo eje 'right' del encabezado
+    doc.text(`$ ${producto.precio_unitario.toFixed(2)}`, colPrecioUnit, y, { align: 'right' });
+
+    const subtotalEsperado = producto.precio_unitario * producto.cantidad;
+    const hayPromocion = subtotalEsperado > producto.subtotal;
+
+    // SUBTOTAL: Ahora alineado exactamente al mismo eje 'right' del encabezado
+    doc.setFont('helvetica', 'bold');
+    if (hayPromocion) {
+        doc.setTextColor(31, 73, 125); 
+    }
+    doc.text(`$ ${producto.subtotal.toFixed(2)}`, colSubtotal, y, { align: 'right' });
+
+    if (hayPromocion) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7);
+        // Alineamos el texto "PROMOCIÓN" también al eje derecho
+        doc.text('PROMOCIÓN', colSubtotal, y + 3, { align: 'right' });
+        doc.setFontSize(9);
+    }
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    
+    y += alturaFila;
+    
+    // Línea separadora sutil
+    doc.setDrawColor(230, 235, 240);
+    doc.setLineWidth(0.1);
+    doc.line(margenIzq, y - 2, anchoPagina - margenDer, y - 2);
+  }
+  
+  y += 25; // CAMBIO: Incrementado de 25 a 35 (+10mm adicionales)
+  
+  // ==================== TOTALES CON DISEÑO MODERNO ====================
+  const anchoCajaTotal = 75;
+  const xCajaTotal = anchoPagina - margenDer - anchoCajaTotal;
+  const yCajaTotal = y;
+  
+  // Borde y sombra para la caja de totales
+  doc.setFillColor(250, 252, 254);
+  doc.rect(xCajaTotal, yCajaTotal, anchoCajaTotal, 40, 'F');
+  doc.setDrawColor(31, 78, 120);
+  doc.setLineWidth(0.5);
+  doc.rect(xCajaTotal, yCajaTotal, anchoCajaTotal, 40);
+  
+  y += 8;
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(60, 60, 60);
+  
+  const subtotal = venta.productos.reduce((sum: number, p: any) => sum + p.subtotal, 0);
+  
+  // Subtotal
+  doc.text('Subtotal:', xCajaTotal + 8, y);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
+  doc.text(`$ ${subtotal.toFixed(2)}`, xCajaTotal + anchoCajaTotal - 8, y, { align: 'right' });
+  y += 7;
+  
+  // Descuento si existe
+  if (venta.descuento_aplicado > 0) {
+    const montoDescuento = subtotal * venta.descuento_aplicado / 100;
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(220, 53, 69);
+    doc.text(`Descuento (${venta.descuento_aplicado}%):`, xCajaTotal + 8, y);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`- $ ${montoDescuento.toFixed(2)}`, xCajaTotal + anchoCajaTotal - 8, y, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+    y += 7;
+  }
+  
+  // Línea separadora
+  doc.setDrawColor(31, 78, 120);
+  doc.setLineWidth(0.3);
+  doc.line(xCajaTotal + 8, y - 2, xCajaTotal + anchoCajaTotal - 8, y - 2);
+  y += 5;
+  
+  // Total final destacado
+  doc.setFillColor(31, 78, 120);
+  doc.rect(xCajaTotal + 4, y - 5, anchoCajaTotal - 8, 10, 'F');
+  
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(255, 255, 255);
+  doc.text('TOTAL:', xCajaTotal + 8, y + 2);
+  doc.text(`$ ${venta.total_final.toFixed(2)}`, xCajaTotal + anchoCajaTotal - 8, y + 2, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
+  
+  y += 38; // CAMBIO: Incrementado de 28 a 38 (+10mm)
+  
+  // ==================== MÉTODO DE PAGO ====================
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(60, 60, 60);
+  const metodoPagoNormalizado = this.normalizarMetodoPagoParaMostrar(venta.metodo_pago || '');
+  
+  doc.setFillColor(245, 248, 250);
+  doc.rect(margenIzq, y - 4, anchoUtil, 10, 'F');
+  doc.setDrawColor(200, 210, 220);
+  doc.setLineWidth(0.3);
+  doc.rect(margenIzq, y - 4, anchoUtil, 10);
+  
+  doc.text('Forma de pago:', margenIzq + 8, y + 2);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(31, 78, 120);
+  doc.text(metodoPagoNormalizado.toUpperCase(), margenIzq + 45, y + 2);
+  
+  y += 28; // Mantiene el espacio original entre método de pago y agradecimiento
+  
+  // ==================== MENSAJE DE AGRADECIMIENTO ====================
+  // Asegurar que el agradecimiento quede antes de la línea del pie
+  const yPieLinea = 275; // Posición de la línea decorativa del pie
+  const espacioMinimo = 8; // Espacio mínimo antes de la línea
+  
+  // Si 'y' está muy cerca del pie, ajustarlo para que quede bien posicionado
+  if (y > yPieLinea - espacioMinimo) {
+    y = yPieLinea - espacioMinimo;
+  }
+  
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(31, 78, 120);
+  const mensajeGracias = config?.mensaje_agradecimiento || '¡Gracias por su compra!';
+  doc.text(mensajeGracias, anchoPagina / 2, y, { align: 'center' });
+  doc.setTextColor(0, 0, 0);
+  
+  // ==================== PIE DE PÁGINA ====================
+  const yPie = 280;
+  
+  // Línea decorativa
+  doc.setDrawColor(31, 78, 120);
+  doc.setLineWidth(0.3);
+  doc.line(margenIzq, yPieLinea, anchoPagina - margenDer, yPieLinea);
+  
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  
+  const mensajePie = config?.mensaje_pie || 'DESARROLLADO POR PRISYS SOLUTIONS';
+  doc.text(mensajePie, anchoPagina / 2, yPie, { align: 'center' });
+  
+  const emailDev = config?.email_desarrollador || 'prisys.solutions@gmail.com';
+  doc.text(emailDev, anchoPagina / 2, yPie + 4, { align: 'center' });
+  
+  doc.setTextColor(0, 0, 0);
+  
+  return doc.output('blob');
+}
+
+async generarReciboPDF(venta: any, descargar: boolean = true, formato: 'termica' | 'a4' = 'termica'): Promise<Blob | undefined> {
+  this.generandoRecibo.set(true);
+  
+  try {
+    const { default: jsPDF } = await import('jspdf');
+    
+    let pdfBlob: Blob | undefined;
+    
+    if (formato === 'a4') {
+      pdfBlob = await this.generarReciboA4(venta, false, jsPDF);
+    } else {
+      pdfBlob = await this.generarReciboTermica(venta, false, jsPDF); 
+    }
+    
+    if (pdfBlob) {
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const printWindow = window.open(pdfUrl, '_blank');
+      
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+          setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+        };
+      }
+      
+      this.mostrarToast('Abriendo vista de impresión...', 'success');
+    }
+    
+    return pdfBlob;
+    
+  } catch (error: any) {
+    console.error('Error al generar recibo:', error);
+    this.mostrarToast('Error al generar el recibo', 'error');
+    return undefined;
+  } finally {
+    this.generandoRecibo.set(false);
+    this.cdr.markForCheck();
+  }
+}
+
+private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): Promise<Blob | undefined> {
+  const alturaBase = 160;
+  const alturaPorProducto = 16;
+  const cantidadProductos = venta.productos.length;
+  const alturaEstimada = alturaBase + (cantidadProductos * alturaPorProducto);
+
+  const doc = new jsPDF({
+    unit: 'mm',
+    format: [80, Math.max(alturaEstimada, 180)]
+  });
+  
+  const config = this.configRecibo();
+  const margen = 5;
+  const anchoUtil = 70;
+  let y = 8;
+  
+  // Logo con mejor proporción
+  if (config?.logo_url) {
+    try {
+      const logoWidth = 30;
+      const logoHeight = 15;
+      const logoX = (80 - logoWidth) / 2;
+      doc.addImage(config.logo_url, 'JPG', logoX, y, logoWidth, logoHeight);
+      y += logoHeight + 3;
+    } catch (error) {
+      y += 2;
+    }
+  } else {
+    y += 2;
+  }
+
+  // Nombre del negocio más destacado
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text(config?.nombre_negocio || 'PRISYS SOLUTIONS', 40, y, { align: 'center' });
+  y += 5;
+  
+  // Información de contacto más compacta
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'normal');
+  doc.text(config?.direccion || '9 DE JULIO 1718', 40, y, { align: 'center' });
+  y += 3;
+  doc.text(config?.ciudad || 'Corrientes - Capital (3400)', 40, y, { align: 'center' });
+  y += 3;
+  
+  const tel1 = config?.telefono1 || '(3735) 475716';
+  const tel2 = config?.telefono2 || '(3735) 410299';
+  doc.text(`Tel: ${tel1} - ${tel2}`, 40, y, { align: 'center' });
+  y += 3;
+  
+  const wsp1 = config?.whatsapp1 || '3735 475716';
+  const wsp2 = config?.whatsapp2 || '3735 410299';
+  doc.text(`WhatsApp: ${wsp1} - ${wsp2}`, 40, y, { align: 'center' });
+  y += 3;
+  
+  if (config?.email_empresa) {
+    doc.text(config.email_empresa, 40, y, { align: 'center' });
+    y += 3;
+  }
+  
+  y += 3;
+  
+  // Línea separadora más elegante
+  doc.setLineWidth(0.4);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 5;
+  
+  // Encabezado de comprobante con caja
+  doc.setFillColor(240, 240, 240);
+  doc.rect(margen, y - 3, anchoUtil, 10, 'F');
+  
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text('COMPROBANTE DE VENTA', 40, y + 1, { align: 'center' });
+  y += 4;
+  
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text('NO VÁLIDO COMO FACTURA', 40, y + 1, { align: 'center' });
+  y += 7;
+  
+  // Información de venta en formato tabla
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  
+  const infoY = y;
+  doc.text('Código:', margen, infoY);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`#${venta.id.slice(-8)}`, margen + 20, infoY);
+  
+  const fechaVenta = new Date(venta.fecha_venta);
+  const dia = String(fechaVenta.getDate()).padStart(2, '0');
+  const mes = String(fechaVenta.getMonth() + 1).padStart(2, '0');
+  const anio = fechaVenta.getFullYear();
+  const hora = String(fechaVenta.getHours()).padStart(2, '0');
+  const minutos = String(fechaVenta.getMinutes()).padStart(2, '0');
+  const fechaFormateada = `${dia}/${mes}/${anio} ${hora}:${minutos}`;
+
+  doc.setFont('helvetica', 'normal');
+  doc.text('Fecha:', margen, infoY + 4);
+  doc.setFont('helvetica', 'bold');
+  doc.text(fechaFormateada, margen + 20, infoY + 4);
+  y = infoY + 8;
+  
+  if (venta.cliente_nombre) {
+    doc.setFont('helvetica', 'normal');
+    doc.text('Cliente:', margen, y);
+    doc.setFont('helvetica', 'bold');
+    const clienteTexto = doc.splitTextToSize(venta.cliente_nombre.toUpperCase(), 45);
+    doc.text(clienteTexto, margen + 20, y);
+    y += clienteTexto.length * 4;
+  }
+  
+  doc.setFont('helvetica', 'normal');
+  doc.text('Vendedor:', margen, y);
+  doc.setFont('helvetica', 'bold');
+  const vendedorTexto = doc.splitTextToSize(venta.nombre_usuario, 45);
+  doc.text(vendedorTexto, margen + 20, y);
+  y += vendedorTexto.length * 4 + 2;
+  
+  // Separador con estilo
+  doc.setLineWidth(0.3);
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 4;
+  
+  // Encabezado de productos con fondo
+  doc.setFillColor(245, 245, 245);
+  doc.rect(margen, y - 2, anchoUtil, 6, 'F');
+  
+  doc.setFontSize(7.5);
+  doc.setFont('helvetica', 'bold');
+  doc.setDrawColor(0, 0, 0);
+  doc.text('CANT', margen + 1, y + 2);
+  doc.text('DESCRIPCIÓN', margen + 12, y + 2);
+  doc.text('IMPORTE', margen + anchoUtil - 6, y + 2, { align: 'right' });
+  y += 5;
+  
+  doc.setLineWidth(0.2);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 3;
+  
+  // Productos con mejor formato
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  
+  for (const producto of venta.productos) {
+    // Cantidad
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${producto.cantidad}`, margen + 3, y, { align: 'center' });
+    
+    // Descripción del producto
+    doc.setFont('helvetica', 'normal');
+    const descripcion = `${producto.nombre}${producto.marca ? ' - ' + producto.marca : ''}`;
+    const descripcionLineas = doc.splitTextToSize(descripcion, 38);
+    doc.text(descripcionLineas, margen + 12, y);
+    
+    // Importe
+    doc.setFont('helvetica', 'bold');
+    doc.text(`$${producto.subtotal.toFixed(2)}`, margen + anchoUtil - 6, y, { align: 'right' });
+    
+    const alturaDescripcion = descripcionLineas.length * 3.5;
+    y += Math.max(alturaDescripcion, 4);
+    
+    // Detalle precio unitario y talle
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    let detalleTexto = `$${producto.precio_unitario.toFixed(2)} c/u`;
+    if (producto.talle) {
+      detalleTexto += ` • Talle: ${producto.talle}`;
+    }
+    doc.text(detalleTexto, margen + 12, y);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(8);
+    y += 4;
+    
+    // Línea separadora sutil entre productos
+    doc.setDrawColor(230, 230, 230);
+    doc.setLineWidth(0.1);
+    doc.line(margen + 12, y, margen + anchoUtil - 2, y);
+    y += 2;
+  }
+  
+  y += 1;
+  
+  // Línea antes de totales
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 5;
+  
+  // Cálculos de totales
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  
+  const subtotal = venta.productos.reduce((sum: number, p: any) => sum + p.subtotal, 0);
+  
+  doc.text('Subtotal:', margen + 30, y);
+  doc.text(`$${subtotal.toFixed(2)}`, margen + anchoUtil - 6, y, { align: 'right' });
+  y += 4;
+  
+  if (venta.descuento_aplicado > 0) {
+    const montoDescuento = subtotal * venta.descuento_aplicado / 100;
+    doc.setTextColor(200, 0, 0);
+    doc.text(`Descuento (${venta.descuento_aplicado}%):`, margen + 30, y);
+    doc.text(`-$${montoDescuento.toFixed(2)}`, margen + anchoUtil - 6, y, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+    y += 4;
+  }
+  
+  // Total destacado con fondo
+y += 1;
+doc.setFillColor(240, 240, 240);
+doc.rect(margen, y - 3, anchoUtil, 10, 'F'); 
+
+doc.setFont('helvetica', 'bold');
+doc.setFontSize(12);
+
+doc.text('TOTAL:', margen + 5, y + 3); 
+
+doc.text(`$${venta.total_final.toFixed(2)}`, margen + anchoUtil - 5, y + 3, { align: 'right' });
+
+y += 10;
+  
+  // Método de pago
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  const metodoPagoNormalizado = this.normalizarMetodoPagoParaMostrar(venta.metodo_pago || '');
+  
+  doc.text('Forma de pago:', margen, y);
+  doc.setFont('helvetica', 'bold');
+  doc.text(metodoPagoNormalizado.toUpperCase(), margen + 25, y);
+  y += 6;
+  
+  // Línea doble de cierre
+  doc.setLineWidth(0.4);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 1;
+  doc.setLineWidth(0.2);
+  doc.line(margen, y, margen + anchoUtil, y);
+  y += 6;
+  
+  // Mensaje de agradecimiento
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  const mensajeGracias = config?.mensaje_agradecimiento || '¡Gracias por su compra!';
+  doc.text(mensajeGracias, 40, y, { align: 'center' });
+  y += 5;
+
+  // Pie de página
+  doc.setFontSize(6.5);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(120, 120, 120);
+  const mensajePie = config?.mensaje_pie || 'DESARROLLADO POR PRISYS SOLUTIONS';
+  doc.text(mensajePie, 40, y, { align: 'center' });
+  y += 3;
+  const emailDev = config?.email_desarrollador || 'prisys.solutions@gmail.com';
+  doc.text(emailDev, 40, y, { align: 'center' });
+  y += 5;
+  
+  return doc.output('blob');
+}
 
   imprimirRecibo(venta: any) {
-    this.generarReciboPDF(venta, true);
-  }
+  // Este método ya no se usa directamente, se usa abrirModalRecibo
+  this.abrirModalRecibo(venta);
+}
 
-  async visualizarRecibo(venta: ItemHistorial) {
-    this.generandoRecibo.set(true);
-    
-    try {
-      // ✅ DYNAMIC IMPORT
-      const { default: jsPDF } = await import('jspdf');
-      
-      // ... mismo código que generarReciboPDF pero al final:
-      const pdfBlob = await this.generarReciboPDF(venta, false);
-      if (pdfBlob) {
-        const pdfUrl = URL.createObjectURL(pdfBlob);
-        window.open(pdfUrl, '_blank');
-        this.mostrarToast('✅ Recibo abierto en nueva pestaña', 'bg-green-600');
-      }
-      this.cerrarModalRecibo();
-    } catch (error) {
-      console.error('Error al visualizar recibo:', error);
-      this.mostrarToast('❌ Error al visualizar el recibo', 'bg-red-600');
-    } finally {
-      this.generandoRecibo.set(false);
-      this.cdr.markForCheck();
+  async visualizarRecibo(venta: ItemHistorial, formato: 'termica' | 'a4' = 'a4') {
+  this.generandoRecibo.set(true);
+  
+  try {
+    const pdfBlob = await this.generarReciboPDF(venta, false, formato);
+    if (pdfBlob) {
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      window.open(pdfUrl, '_blank');
+      this.mostrarToast('Recibo abierto en nueva pestaña', 'success');
     }
+    this.cerrarModalRecibo();
+  } catch (error) {
+    console.error('Error al visualizar recibo:', error);
+    this.mostrarToast('Error al visualizar el recibo', 'error');
+  } finally {
+    this.generandoRecibo.set(false);
+    this.cdr.markForCheck();
   }
+}
 
   async enviarDetalleEmail() {
-    const email = this.emailDestino();
-    
-    if (!email.trim()) {
-      this.mostrarToast('❌ Debes ingresar un email válido', 'bg-red-600');
-      return;
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      this.mostrarToast('❌ Formato de email inválido', 'bg-red-600');
-      return;
-    }
-    
-    this.enviandoEmail.set(true);
-    
-    try {
-      const venta = this.ventaParaEmail();
-      const pdfBlob = await this.generarReciboPDF(venta, false);
-      if (!pdfBlob) throw new Error('No se pudo generar PDF');
-      
-      const base64data = await this.blobToBase64(pdfBlob as Blob);
-      const base64Content = base64data.split(',')[1];
-      
-      const detalleVenta = {
-        id: venta.id.slice(-8),
-        fecha: new Date(venta.fecha_venta).toLocaleString('es-AR'),
-        cliente: venta.cliente_nombre || 'Cliente',
-        productos: venta.productos,
-        total: venta.total_final,
-        metodo_pago: venta.metodo_pago,
-        descuento: venta.descuento_aplicado || 0
-      };
-      
-      const { error } = await this.supabase.getClient().functions.invoke('enviar-detalle-venta', {
-        body: {
-          email: email,
-          detalle: detalleVenta,
-          pdfBase64: base64Content
-        }
-      });
-      
-      if (error) throw error;
-      
-      this.mostrarToast('✅ Email enviado correctamente', 'bg-green-600');
-      this.cerrarModalEmail();
-      
-    } catch (error: any) {
-      console.error('Error enviando email:', error);
-      this.mostrarToast('❌ Error al enviar email', 'bg-red-600');
-    } finally {
-      this.enviandoEmail.set(false);
-      this.cdr.markForCheck();
-    }
+  const email = this.emailDestino();
+  
+  if (!email.trim()) {
+    this.mostrarToast('Debes ingresar un email válido', 'error');
+    return;
   }
+  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    this.mostrarToast('Formato de email inválido', 'error');
+    return;
+  }
+  
+  this.enviandoEmail.set(true);
+  
+  try {
+    const venta = this.ventaParaEmail();
+    // CAMBIO IMPORTANTE: Siempre usar formato A4 para emails
+    const pdfBlob = await this.generarReciboPDF(venta, false, 'a4');
+    if (!pdfBlob) throw new Error('No se pudo generar PDF');
+    
+    const base64data = await this.blobToBase64(pdfBlob as Blob);
+    const base64Content = base64data.split(',')[1];
+    
+    const detalleVenta = {
+      id: venta.id.slice(-8),
+      fecha: new Date(venta.fecha_venta).toLocaleString('es-AR'),
+      cliente: venta.cliente_nombre || 'Cliente',
+      productos: venta.productos,
+      total: venta.total_final,
+      metodo_pago: venta.metodo_pago,
+      descuento: venta.descuento_aplicado || 0
+    };
+    
+    const { error } = await this.supabase.getClient().functions.invoke('enviar-detalle-venta', {
+      body: {
+        email: email,
+        detalle: detalleVenta,
+        pdfBase64: base64Content
+      }
+    });
+    
+    if (error) throw error;
+    
+    this.mostrarToast('Email enviado correctamente', 'success');
+    this.cerrarModalEmail();
+    
+  } catch (error: any) {
+    console.error('Error enviando email:', error);
+    this.mostrarToast('Error al enviar email', 'error');
+  } finally {
+    this.enviandoEmail.set(false);
+    this.cdr.markForCheck();
+  }
+}
 
   private blobToBase64(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -1473,13 +1981,22 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
 
   // ==================== FILTROS BASE ====================
   private aplicarFiltrosBase(query: any) {
-    const filtro = this.filtro();
-    const tipoFiltro = this.tipoFiltro();
-    const metodoPagoFiltro = this.metodoPagoFiltro();
-    const busqueda = this.busquedaCliente();
-    const fechaEsp = this.fechaEspecifica();
-    const fechaDesde = this.fechaDesde();
-    const fechaHasta = this.fechaHasta();
+  const filtro = this.filtro();
+  const tipoFiltro = this.tipoFiltro();
+  const metodoPagoFiltro = this.metodoPagoFiltro();
+  const busqueda = this.busquedaCliente();
+  const fechaEsp = this.fechaEspecifica();
+  const fechaDesde = this.fechaDesde();
+  const fechaHasta = this.fechaHasta();
+  
+  // FILTRO FACTURACIÓN
+  const filtroFacturacion = this.filtroFacturacion();
+  
+  if (filtroFacturacion === 'facturadas') {
+    query = query.eq('facturada', true);
+  } else if (filtroFacturacion === 'no_facturadas') {
+    query = query.not('facturada', 'eq', true);
+  }
 
     // Filtro de Fecha
     if (filtro === 'hoy') {
@@ -1528,4 +2045,148 @@ private readonly COLUMNAS_VISTA = 'id, tipo, fecha, nombre_usuario, cliente_nomb
 
     return query;
   }
+
+  async aplicarFiltros() {
+    this.paginaActual.set(1);
+    await this.cargarDatos();
+  }
+
+  async solicitarFacturacion(venta: any) {
+  try {
+    this.cargando.set(true);
+
+    // 1. Obtener configuración FISCAL REAL
+    const { data: config, error } = await this.supabase.getClient()
+      .from('facturacion')
+      .select('*')
+      .single();
+
+    if (error || !config) {
+      this.mostrarToast('No se encontró configuración de facturación.', 'error');
+      this.cargando.set(false);
+      return;
+    }
+
+    if (!config.facturacion_habilitada) {
+      this.mostrarToast('La facturación está deshabilitada.', 'warning');
+      this.cargando.set(false);
+      return;
+    }
+
+    // 2. Determinar flujo según condición IVA del EMISOR
+    if (config.condicion_iva === 'Responsable Inscripto') {
+      // Si la venta tiene cliente_id, verificar si puede emitir Factura A
+      if (venta.cliente_id) {
+        const { data: clienteData, error: errorCliente } = await this.supabase.getClient()
+          .from('clientes')
+          .select('cuit, condicion_iva, nombre')
+          .eq('id', venta.cliente_id)
+          .single();
+
+        if (!errorCliente && clienteData) {
+          // Si el cliente es RI con CUIT, ofrecer opción de Factura A
+          if (clienteData.condicion_iva === 'Responsable Inscripto' && clienteData.cuit) {
+            // Mostrar modal para elegir entre A o B
+            this.ventaParaFacturar.set({
+              ...venta,
+              cliente_info: clienteData // Agregar info del cliente
+            });
+            this.mostrarModalSeleccionFactura.set(true);
+            this.cargando.set(false);
+            return;
+          }
+        }
+      }
+      
+      // Si no tiene cliente o no es RI, factura B directamente
+      await this.ejecutarFacturacion(venta, 'B');
+    } else {
+      // Si es Monotributista o Exento, factura C directo
+      await this.ejecutarFacturacion(venta, 'C');
+    }
+
+  } catch (err: any) {
+    console.error(err);
+    this.mostrarToast("Error al verificar configuración: " + err.message, 'error');
+    this.cargando.set(false);
+  }
+}
+
+  cerrarModalFacturacion() {
+    this.mostrarModalSeleccionFactura.set(false);
+    this.ventaParaFacturar.set(null);
+  }
+
+  async confirmarFacturacion(tipo: string) {
+    const venta = this.ventaParaFacturar();
+    if (!venta) return;
+
+    this.cerrarModalFacturacion(); // Cerramos modal
+    await this.ejecutarFacturacion(venta, tipo); // Ejecutamos
+  }
+
+ private async ejecutarFacturacion(venta: any, tipoFactura: string) {
+  try {
+    this.cargando.set(true);
+
+    // Validación específica para Factura A
+    if (tipoFactura === 'A') {
+      if (!venta.cliente_id) {
+        this.mostrarToast("Error: Esta venta no tiene un cliente asociado.", 'error');
+        this.cargando.set(false);
+        return;
+      }
+
+      // Verificar datos del cliente
+      const clienteInfo = venta.cliente_info || await this.obtenerDatosCliente(venta.cliente_id);
+      
+      if (!clienteInfo?.cuit) {
+        this.mostrarToast("El cliente asociado no tiene un CUIT cargado.", 'error');
+        this.cargando.set(false);
+        return;
+      }
+      
+      if (clienteInfo.condicion_iva !== 'Responsable Inscripto') {
+        this.mostrarToast("El cliente no es Responsable Inscripto.", 'warning');
+        this.cargando.set(false);
+        return;
+      }
+    }
+
+    await this.facturacionService.facturarVenta(venta.id, tipoFactura);
+
+    this.mostrarToast(`Factura ${tipoFactura} generada con éxito`, 'success');
+    await this.cargarDatos(); // Recargar la lista
+
+  } catch (err: any) {
+    console.error(err);
+    this.mostrarToast("Error al facturar: " + (err.message || err), 'error');
+  } finally {
+    this.cargando.set(false);
+    this.cdr.markForCheck();
+  }
+}
+
+// Método auxiliar para obtener datos del cliente
+private async obtenerDatosCliente(clienteId: string) {
+  try {
+    const { data, error } = await this.supabase.getClient()
+      .from('clientes')
+      .select('cuit, condicion_iva, nombre')
+      .eq('id', clienteId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('Error al obtener datos del cliente:', err);
+    return null;
+  }
+}
+
+async filtrarFacturacion(tipo:'todas'| 'facturadas' | 'no_facturadas') {
+  this.filtroFacturacion.set(tipo);
+  this.paginaActual.set(1);
+  await this.cargarDatos();
+}
 }

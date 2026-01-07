@@ -1,21 +1,23 @@
-<div class="min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-300" 
-     [ngClass]="theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900' : 'bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50'">
+<div class="min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-300
+            bg-gradient-to-br from-gray-50 via-blue-50 to-gray-50
+            dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
   
   <div class="max-w-7xl mx-auto animate-fade-in-scale">
     
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
       <div>
-        <h1 class="text-3xl sm:text-4xl font-bold" [ngClass]="theme === 'dark' ? 'text-white' : 'text-gray-900'">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white">
           Configuración
         </h1>
-        <p class="mt-1 text-sm" [ngClass]="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
           Administra la apariencia y datos de tu sistema.
         </p>
       </div>
       
       <button routerLink="/dashboard"
-        class="group px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full sm:w-auto flex items-center justify-center gap-2"
-        [ngClass]="theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600' : 'bg-white hover:bg-gray-50 text-gray-800 border border-gray-200'">
+        class="group px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1 w-full sm:w-auto flex items-center justify-center gap-2
+               bg-white text-gray-800 border border-gray-200 hover:bg-gray-50
+               dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600">
         <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
@@ -23,7 +25,6 @@
       </button>
     </div>
 
-    <!-- ✅ Skeleton loading con signals -->
     <div *ngIf="isLoading()" class="animate-pulse space-y-6">
         <div class="h-14 bg-gray-300 dark:bg-gray-700 rounded-xl w-full"></div>
         <div class="grid md:grid-cols-2 gap-6">
@@ -32,17 +33,19 @@
         </div>
     </div>
 
-    <div *ngIf="!isLoading()" class="rounded-2xl shadow-2xl overflow-hidden backdrop-blur-sm transition-colors duration-300" 
-         [ngClass]="theme === 'dark' ? 'bg-gray-800/90 border border-gray-700' : 'bg-white/90 border border-gray-200'">
+    <div *ngIf="!isLoading()" 
+         class="rounded-2xl shadow-2xl overflow-hidden backdrop-blur-sm transition-colors duration-300
+                bg-white/90 border border-gray-200
+                dark:bg-gray-800/90 dark:border-gray-700">
       
-      <!-- ✅ Tabs con signals -->
-      <div class="border-b" [ngClass]="theme === 'dark' ? 'border-gray-700' : 'border-gray-200'">
+      <div class="border-b border-gray-200 dark:border-gray-700">
         <nav class="flex overflow-x-auto scrollbar-hide">
+          
           <button (click)="setActiveTab('apariencia')" 
                   class="px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
                   [ngClass]="activeTab() === 'apariencia' 
-                    ? (theme === 'dark' ? 'border-blue-500 text-blue-400 bg-gray-700/50' : 'border-blue-600 text-blue-600 bg-blue-50') 
-                    : (theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-200' : 'border-transparent text-gray-500 hover:text-gray-700')">
+                    ? 'border-blue-600 text-blue-600 bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:bg-gray-700/50' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'">
              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" /></svg>
              Apariencia
           </button>
@@ -50,17 +53,17 @@
           <button (click)="setActiveTab('facturacion')" 
                   class="px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
                   [ngClass]="activeTab() === 'facturacion' 
-                    ? (theme === 'dark' ? 'border-blue-500 text-blue-400 bg-gray-700/50' : 'border-blue-600 text-blue-600 bg-blue-50') 
-                    : (theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-200' : 'border-transparent text-gray-500 hover:text-gray-700')">
+                    ? 'border-blue-600 text-blue-600 bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:bg-gray-700/50' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'">
              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-             Facturación AFIP
+             Facturación ARCA
           </button>
           
           <button (click)="setActiveTab('recibo')" 
                   class="px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
                   [ngClass]="activeTab() === 'recibo' 
-                    ? (theme === 'dark' ? 'border-blue-500 text-blue-400 bg-gray-700/50' : 'border-blue-600 text-blue-600 bg-blue-50') 
-                    : (theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-200' : 'border-transparent text-gray-500 hover:text-gray-700')">
+                    ? 'border-blue-600 text-blue-600 bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:bg-gray-700/50' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'">
              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
              Config Recibo
           </button>
@@ -68,8 +71,8 @@
           <button (click)="setActiveTab('contacto')" 
                   class="px-6 py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap flex items-center gap-2"
                   [ngClass]="activeTab() === 'contacto' 
-                    ? (theme === 'dark' ? 'border-blue-500 text-blue-400 bg-gray-700/50' : 'border-blue-600 text-blue-600 bg-blue-50') 
-                    : (theme === 'dark' ? 'border-transparent text-gray-400 hover:text-gray-200' : 'border-transparent text-gray-500 hover:text-gray-700')">
+                    ? 'border-blue-600 text-blue-600 bg-blue-50 dark:border-blue-500 dark:text-blue-400 dark:bg-gray-700/50' 
+                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'">
              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
              Soporte
           </button>
@@ -78,32 +81,34 @@
 
       <div class="p-6 lg:p-8">
 
-        <!-- TAB: APARIENCIA -->
         <div *ngIf="activeTab() === 'apariencia'" class="animate-fadeIn space-y-6">
-            <div class="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-xl border transition-all"
-                 [ngClass]="theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-50'">
+            <div class="flex flex-col md:flex-row md:items-center justify-between p-6 rounded-xl border transition-all
+                        border-gray-200 bg-gray-50
+                        dark:border-gray-700 dark:bg-gray-800">
                  <div>
-                    <h3 class="font-bold text-lg mb-1" [ngClass]="theme === 'dark' ? 'text-white' : 'text-gray-900'">Tema del Sistema</h3>
-                    <p class="text-sm" [ngClass]="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">
+                    <h3 class="font-bold text-lg mb-1 text-gray-900 dark:text-white">Tema del Sistema</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">
                         Elige tu preferencia visual del sistema.
                     </p>
                  </div>
                  <div class="flex gap-4 mt-4 md:mt-0">
                     <button (click)="changeTheme('light')" 
-                            class="px-5 py-3 rounded-xl border-2 flex items-center gap-2 transition-all transform hover:scale-105"
+                            class="px-5 py-3 rounded-xl border-2 flex items-center gap-2 transition-all transform hover:scale-105
+                                   bg-white border-gray-200 text-gray-800
+                                   dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                             [class.ring-2]="theme === 'light'"
                             [class.ring-blue-500]="theme === 'light'"
-                            [class.border-blue-500]="theme === 'light'"
-                            [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-white border-gray-200 text-gray-800'">
+                            [class.border-blue-500]="theme === 'light'">
                         <svg class="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                         Claro
                     </button>
                     <button (click)="changeTheme('dark')" 
-                            class="px-5 py-3 rounded-xl border-2 flex items-center gap-2 transition-all transform hover:scale-105"
+                            class="px-5 py-3 rounded-xl border-2 flex items-center gap-2 transition-all transform hover:scale-105
+                                   bg-white border-gray-200 text-gray-800
+                                   dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                             [class.ring-2]="theme === 'dark'"
                             [class.ring-blue-500]="theme === 'dark'"
-                            [class.border-blue-500]="theme === 'dark'"
-                            [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-800'">
+                            [class.border-blue-500]="theme === 'dark'">
                         <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
                         Oscuro
                     </button>
@@ -111,69 +116,134 @@
             </div>
         </div>
 
-        <!-- TAB: FACTURACIÓN -->
         <div *ngIf="activeTab() === 'facturacion'" class="animate-fadeIn">
-            <div class="mb-6">
-                <h2 class="text-xl font-bold" [ngClass]="theme === 'dark' ? 'text-white' : 'text-gray-900'">Credenciales de AFIP</h2>
-                <p class="text-sm opacity-70" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Configura los datos para la facturación electrónica.</p>
+            
+            <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Facturación Electrónica (ARCA)</h2>
+                    <p class="text-sm opacity-70 text-gray-600 dark:text-gray-300">
+                        Configura los datos fiscales del emisor para facturas A, B y C.
+                    </p>
+                </div>
+                
             </div>
 
-            <form (ngSubmit)="saveAfipConfig()" class="space-y-6 max-w-4xl">
-                 <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">CUIT</label>
-                        <input [(ngModel)]="afipConfig().cuit" name="cuit" placeholder="XX-XXXXXXXX-X" class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Punto de Venta</label>
-                        <input [(ngModel)]="afipConfig().puntoVenta" name="puntoVenta" placeholder="0001" class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Certificado (.crt)</label>
-                        <input type="text" [(ngModel)]="afipConfig().certificado" name="certificado" placeholder="Nombre del archivo..." class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Clave Privada (.key)</label>
-                        <input type="password" [(ngModel)]="afipConfig().clavePrivada" name="clavePrivada" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'">
-                    </div>
-                 </div>
+<div class="mt-6 p-6 rounded-xl border border-gray-200 bg-gray-50 dark:bg-gray-700/30 dark:border-gray-600">
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Automatización por Método de Pago</h3>
+    <p class="text-sm text-gray-500 mb-4">Selecciona qué métodos de pago deben <strong>activar</strong> la facturación automáticamente. Si se desmarca, la facturación se desactivará al seleccionar ese método.</p>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div *ngFor="let metodo of metodosPagoConfig" class="flex items-center gap-3">
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer"
+                       [ngModel]="facturacion().reglas_facturacion?.[metodo.key]"
+                       (ngModelChange)="facturacion().reglas_facturacion = facturacion().reglas_facturacion || {}; facturacion().reglas_facturacion![metodo.key] = $event">
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <span class="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">{{ metodo.label }}</span>
+            </label>
+        </div>
+    </div>
+</div>
+            
+            <form (ngSubmit)="guardarFacturacion()" class="space-y-6 max-w-4xl">
+                
+                <div class="p-6 rounded-xl border border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 shadow-sm">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200 border-b pb-2 border-gray-100 dark:border-gray-700">
+                        Datos del Emisor
+                    </h3>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Razón Social *</label>
+                            <input [(ngModel)]="facturacion().razon_social" name="razon_social" required placeholder="Nombre o Razón Social"
+                                   class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                          bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                          dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
+                        </div>
 
-                 <div>
-                    <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Ambiente</label>
-                    <select [(ngModel)]="afipConfig().ambiente" name="ambiente" class="w-full md:w-1/2 px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                            [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500'">
-                        <option value="homologacion">Homologación (Pruebas)</option>
-                        <option value="produccion">Producción</option>
-                    </select>
-                 </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Condición frente al IVA</label>
+                            <select [(ngModel)]="facturacion().condicion_iva" name="condicion_iva"
+                                    class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                           bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                           dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
+                                <option value="Monotributista">Monotributista</option>
+                                <option value="Responsable Inscripto">Responsable Inscripto</option>
+                            </select>
+                            <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">
+                                {{ facturacion().condicion_iva === 'Responsable Inscripto' ? 'Permite emitir Facturas A y B.' : 'Solo permite emitir Factura C.' }}
+                            </p>
+                        </div>
 
-                 <div class="pt-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">CUIT (Sin guiones) *</label>
+                            <input [(ngModel)]="facturacion().cuit" name="cuit" required placeholder="20123456789" type="number"
+                                   class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                          bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                          dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Punto de Venta *</label>
+                            <input [(ngModel)]="facturacion().punto_venta" name="punto_venta" required type="number" placeholder="1"
+                                   class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                          bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                          dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Ingresos Brutos</label>
+                            <input [(ngModel)]="facturacion().ingresos_brutos" name="ingresos_brutos" placeholder="Nro de IIBB"
+                                   class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                          bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                          dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Inicio de Actividades</label>
+                            <input [(ngModel)]="facturacion().inicio_actividades" name="inicio_actividades" type="date"
+                                   class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                          bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                          dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
+                        </div>
+                    </div>
+                </div>
+
+                
+
+                <div class="pt-4 flex justify-end">
                     <button *appPermiso="['configuracion', 'editar']"
                             type="submit" 
-                            class="w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
-                        Guardar Configuración AFIP
+                            [disabled]="isGuardando()"
+                            class="w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105
+                                   bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        
+                        <span *ngIf="isGuardando()" class="flex items-center gap-2">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Guardando...
+                        </span>
+                        <span *ngIf="!isGuardando()">Guardar Datos Fiscales</span>
                     </button>
-                 </div>
+                </div>
             </form>
         </div>
 
-        <!-- TAB: RECIBO -->
         <div *ngIf="activeTab() === 'recibo'" class="animate-fadeIn">
             <div class="mb-6">
-                <h2 class="text-xl font-bold" [ngClass]="theme === 'dark' ? 'text-white' : 'text-gray-900'">Datos del Recibo</h2>
-                <p class="text-sm opacity-70" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">Esta información aparecerá impresa en los comprobantes.</p>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Datos del Recibo</h2>
+                <p class="text-sm opacity-70 text-gray-600 dark:text-gray-300">Esta información aparecerá impresa en los comprobantes.</p>
             </div>
 
             <form (ngSubmit)="guardarConfigRecibo()" class="space-y-6">
                 
-                <!-- ✅ Logo section con signals -->
-                <div class="p-6 rounded-xl border-2 border-dashed transition-colors"
-                     [ngClass]="theme === 'dark' ? 'border-gray-600 bg-gray-800/50' : 'border-blue-200 bg-blue-50/50'">
-                    <label class="block text-sm font-bold mb-4" [ngClass]="theme === 'dark' ? 'text-gray-200' : 'text-gray-800'">Logo del Negocio</label>
+                <div class="p-6 rounded-xl border-2 border-dashed transition-colors
+                            border-blue-200 bg-blue-50/50
+                            dark:border-gray-600 dark:bg-gray-800/50">
+                    <label class="block text-sm font-bold mb-4 text-gray-800 dark:text-gray-200">Logo del Negocio</label>
                     
                     <div class="flex flex-col sm:flex-row gap-6 items-start">
                         <div *ngIf="previsualizacionLogo()" class="relative group shrink-0">
@@ -195,89 +265,97 @@
                                    type="file" 
                                    accept="image/*" 
                                    (change)="onLogoSeleccionado($event)" 
-                                   class="block w-full text-sm file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold cursor-pointer transition-colors"
-                                   [ngClass]="theme === 'dark' ? 'text-gray-300 file:bg-gray-700 file:text-blue-400 hover:file:bg-gray-600' : 'text-gray-700 file:bg-white file:text-blue-700 hover:file:bg-blue-50 border border-dashed rounded-xl p-2'">
+                                   class="block w-full text-sm file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold cursor-pointer transition-colors
+                                          text-gray-700 file:bg-white file:text-blue-700 hover:file:bg-blue-50 border border-dashed rounded-xl p-2
+                                          dark:text-gray-300 dark:file:bg-gray-700 dark:file:text-blue-400 dark:hover:file:bg-gray-600">
                             
-                            <p class="text-xs mt-2" [ngClass]="theme === 'dark' ? 'text-gray-400' : 'text-gray-500'">
+                            <p class="text-xs mt-2 text-gray-500 dark:text-gray-400">
                                 Formatos: PNG, JPG. Tamaño máximo: 2MB.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- ✅ Form fields con signals -->
                 <div class="grid md:grid-cols-2 gap-6">
                     
                     <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Nombre del Negocio *</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Nombre del Negocio *</label>
                         <input type="text" [(ngModel)]="configRecibo().nombre_negocio" name="nombre_negocio" required placeholder="Ej: Mi Empresa S.A."
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Email Público</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Email Público</label>
                         <input type="email" [(ngModel)]="configRecibo().email_empresa" name="email_empresa" placeholder="contacto@empresa.com"
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
                     </div>
 
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Dirección *</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Dirección *</label>
                         <input type="text" [(ngModel)]="configRecibo().direccion" name="direccion" required placeholder="Ej: Av. Siempre Viva 123"
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Ciudad / CP *</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Ciudad / CP *</label>
                         <input type="text" [(ngModel)]="configRecibo().ciudad" name="ciudad" required placeholder="Ej: Corrientes (3400)"
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Teléfono 1</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Teléfono 1</label>
                         <input type="text" [(ngModel)]="configRecibo().telefono1" name="telefono1" placeholder="(0379) ..."
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Teléfono 2</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Teléfono 2</label>
                         <input type="text" [(ngModel)]="configRecibo().telefono2" name="telefono2"
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">WhatsApp 1</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">WhatsApp 1</label>
                         <input type="text" [(ngModel)]="configRecibo().whatsapp1" name="whatsapp1" placeholder="549..."
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
                     </div>
                     <div>
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">WhatsApp 2</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">WhatsApp 2</label>
                         <input type="text" [(ngModel)]="configRecibo().whatsapp2" name="whatsapp2"
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
                     </div>
 
                     <div class="md:col-span-2">
-                        <label class="block text-sm font-semibold mb-2" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-700'">Mensaje de Agradecimiento</label>
+                        <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Mensaje de Agradecimiento</label>
                         <input type="text" [(ngModel)]="configRecibo().mensaje_agradecimiento" name="mensaje_agradecimiento" maxlength="100" placeholder="¡Gracias por su compra!"
-                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2"
-                               [ngClass]="theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500/20' : 'bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100'">
-                        <p class="text-xs mt-1" [ngClass]="theme === 'dark' ? 'text-gray-400' : 'text-gray-500'">Se imprime al pie del recibo.</p>
+                               class="w-full px-4 py-3 rounded-xl border-2 outline-none transition-all focus:ring-2
+                                      bg-white border-gray-300 text-gray-900 focus:border-blue-500 focus:ring-blue-100
+                                      dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:border-blue-500 dark:focus:ring-blue-500/20">
+                        <p class="text-xs mt-1 text-gray-500 dark:text-gray-400">Se imprime al pie del recibo.</p>
                     </div>
                 </div>
 
-                <!-- ✅ Botón guardar con signals -->
-                <div class="flex justify-end pt-6 border-t" [ngClass]="theme === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+                <div class="flex justify-end pt-6 border-t border-gray-100 dark:border-gray-700">
                     <button *appPermiso="['configuracion', 'editar']"
                             type="submit" 
                             [disabled]="isGuardando() || isSubiendoLogo()"
-                            class="w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
-                            [ngClass]="theme === 'dark' ? 'bg-blue-600 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'">
+                            class="w-full sm:w-auto px-8 py-3 rounded-xl font-bold text-white shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2
+                                   bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-500">
                         
                         <svg *ngIf="isGuardando() || isSubiendoLogo()" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -290,49 +368,48 @@
             </form>
         </div>
 
-        <!-- TAB: CONTACTO -->
         <div *ngIf="activeTab() === 'contacto'" class="animate-fadeIn">
             <div class="mb-6">
-                <h2 class="text-xl font-bold" [ngClass]="theme === 'dark' ? 'text-white' : 'text-gray-900'">Contacto y Soporte</h2>
-                <p class="text-sm opacity-70" [ngClass]="theme === 'dark' ? 'text-gray-300' : 'text-gray-600'">¿Necesitas ayuda? Contáctanos.</p>
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white">Contacto y Soporte</h2>
+                <p class="text-sm opacity-70 text-gray-600 dark:text-gray-300">¿Necesitas ayuda? Contáctanos.</p>
             </div>
             
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Email -->
-                <div class="p-6 rounded-xl border flex items-start gap-4 hover:shadow-lg transition-shadow"
-                     [ngClass]="theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
-                     <div class="p-3 rounded-full" [ngClass]="theme === 'dark' ? 'bg-blue-900/30 text-blue-400' : 'bg-blue-100 text-blue-600'">
+                <div class="p-6 rounded-xl border flex items-start gap-4 hover:shadow-lg transition-shadow
+                            bg-white border-gray-200
+                            dark:bg-gray-800 dark:border-gray-700">
+                     <div class="p-3 rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                      </div>
                      <div>
-                        <h4 class="font-bold" [ngClass]="theme === 'dark' ? 'text-white' : 'text-gray-900'">Email</h4>
-                        <p class="text-sm break-all mb-2" [ngClass]="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ contactInfo.email }}</p>
+                        <h4 class="font-bold text-gray-900 dark:text-white">Email</h4>
+                        <p class="text-sm break-all mb-2 text-gray-600 dark:text-gray-400">{{ contactInfo.email }}</p>
                         <a [href]="'mailto:' + contactInfo.email" class="text-sm font-medium hover:underline text-blue-500">Enviar correo &rarr;</a>
                      </div>
                 </div>
 
-                <!-- Teléfono -->
-                <div class="p-6 rounded-xl border flex items-start gap-4 hover:shadow-lg transition-shadow"
-                     [ngClass]="theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
-                     <div class="p-3 rounded-full" [ngClass]="theme === 'dark' ? 'bg-green-900/30 text-green-400' : 'bg-green-100 text-green-600'">
+                <div class="p-6 rounded-xl border flex items-start gap-4 hover:shadow-lg transition-shadow
+                            bg-white border-gray-200
+                            dark:bg-gray-800 dark:border-gray-700">
+                     <div class="p-3 rounded-full bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
                      </div>
                      <div>
-                        <h4 class="font-bold" [ngClass]="theme === 'dark' ? 'text-white' : 'text-gray-900'">Teléfono</h4>
-                        <p class="text-sm mb-2" [ngClass]="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ contactInfo.telefono }}</p>
+                        <h4 class="font-bold text-gray-900 dark:text-white">Teléfono</h4>
+                        <p class="text-sm mb-2 text-gray-600 dark:text-gray-400">{{ contactInfo.telefono }}</p>
                         <a [href]="'tel:' + contactInfo.telefono" class="text-sm font-medium hover:underline text-green-500">Llamar ahora &rarr;</a>
                      </div>
                 </div>
 
-                <!-- Horario -->
-                <div class="p-6 rounded-xl border flex items-start gap-4 hover:shadow-lg transition-shadow"
-                     [ngClass]="theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'">
-                     <div class="p-3 rounded-full" [ngClass]="theme === 'dark' ? 'bg-purple-900/30 text-purple-400' : 'bg-purple-100 text-purple-600'">
+                <div class="p-6 rounded-xl border flex items-start gap-4 hover:shadow-lg transition-shadow
+                            bg-white border-gray-200
+                            dark:bg-gray-800 dark:border-gray-700">
+                     <div class="p-3 rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                      </div>
                      <div>
-                        <h4 class="font-bold" [ngClass]="theme === 'dark' ? 'text-white' : 'text-gray-900'">Horario</h4>
-                        <p class="text-sm" [ngClass]="theme === 'dark' ? 'text-gray-400' : 'text-gray-600'">{{ contactInfo.horario }}</p>
+                        <h4 class="font-bold text-gray-900 dark:text-white">Horario</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ contactInfo.horario }}</p>
                      </div>
                 </div>
             </div>
@@ -342,13 +419,25 @@
     </div> 
   </div> 
   
-  <!-- ✅ Toast con signals -->
-  <div *ngIf="toastVisible()" class="fixed bottom-6 right-6 z-50 animate-slide-up">
-      <div class="px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 text-white font-medium" [ngClass]="toastColor()">
-          <svg *ngIf="toastColor().includes('green')" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-          <svg *ngIf="toastColor().includes('red')" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          <svg *ngIf="toastColor().includes('yellow')" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-          <span>{{ toastMensaje() }}</span>
+  <div *ngIf="isToastVisible()" class="fixed bottom-6 right-6 z-[10000] animate-slide-in-right">
+      <div class="flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border
+                  bg-white border-gray-100 text-gray-800
+                  dark:bg-gray-800 dark:border-gray-700 dark:text-white">
+          
+          <div [ngClass]="{
+            'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400': tipoMensajeToast() === 'success',
+            'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': tipoMensajeToast() === 'error',
+            'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400': tipoMensajeToast() === 'warning'
+          }" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg *ngIf="tipoMensajeToast() === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+              <svg *ngIf="tipoMensajeToast() === 'error'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              <svg *ngIf="tipoMensajeToast() === 'warning'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+
+          <div>
+              <h4 class="font-bold text-sm">{{ tipoMensajeToast() === 'success' ? '¡Éxito!' : (tipoMensajeToast() === 'error' ? 'Error' : 'Atención') }}</h4>
+              <p class="text-sm opacity-80">{{ mensajeToast() }}</p>
+          </div>
       </div>
   </div>
 </div>

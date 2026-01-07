@@ -1,65 +1,71 @@
-<div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-slate-50 to-slate-100'" 
-     class="min-h-screen p-4 sm:p-6 animate-fade-in-scale relative z-0">
+<div class="min-h-screen p-4 sm:p-6 animate-fade-in-scale relative z-0 transition-colors duration-300
+            bg-gradient-to-br from-slate-50 to-slate-100
+            dark:from-gray-900 dark:to-gray-900">
   
-  <div class="max-w-6xl mx-auto transition-colors duration-300">
+  <div class="max-w-6xl mx-auto">
     
     <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
         </div>
         <div>
-          <h1 [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'" class="text-3xl font-bold tracking-tight">Empleados</h1>
-          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'" class="text-sm">Gestiona tu equipo y sus permisos</p>
+          <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Empleados</h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400">Gestiona tu equipo y sus permisos</p>
         </div>
       </div>
       
       <button routerLink="/dashboard" 
-        [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-white text-gray-600 hover:bg-gray-50'"
-        class="px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm border border-transparent hover:shadow-md transition-all flex items-center gap-2">
+        class="px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm border border-transparent hover:shadow-md transition-all flex items-center gap-2
+               bg-white text-gray-600 hover:bg-gray-50
+               dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         Volver al Panel
       </button>
     </div>
 
-    <!-- ✅ OPTIMIZACIÓN 2: Signals con () -->
-    <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'" 
-          class="rounded-3xl shadow-xl border overflow-hidden mb-8 transition-colors">
+    <div class="rounded-3xl shadow-xl border overflow-hidden mb-8 transition-colors
+                bg-white border-gray-100
+                dark:bg-gray-800 dark:border-gray-700">
       <div class="p-6 sm:p-8">
         <div class="flex items-center gap-3 mb-6">
           <span class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm">1</span>
-          <h2 [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'" class="text-lg font-bold">Registrar Nuevo Colaborador</h2>
+          <h2 class="text-lg font-bold text-gray-900 dark:text-white">Registrar Nuevo Colaborador</h2>
         </div>
 
         <form (ngSubmit)="crearVendedor()">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             <div class="space-y-2">
-              <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" class="text-sm font-semibold ml-1">Nombre Completo</label>
+              <label class="text-sm font-semibold ml-1 text-gray-700 dark:text-gray-300">Nombre Completo</label>
               <input type="text" [ngModel]="nuevoNombre()" (ngModelChange)="nuevoNombre.set($event)" name="nombre" placeholder="Ej: Juan Pérez"
-                     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:ring-blue-500'"
-                     class="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all" required />
+                     class="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all
+                            bg-gray-50 border-gray-200 text-gray-900 focus:ring-blue-500
+                            dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
             </div>
 
             <div class="space-y-2">
-              <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" class="text-sm font-semibold ml-1">Documento (DNI)</label>
+              <label class="text-sm font-semibold ml-1 text-gray-700 dark:text-gray-300">Documento (DNI)</label>
               <input type="text" [ngModel]="nuevoDni()" name="dni" (input)="onDniInput($event)" maxlength="8" placeholder="Sin puntos"
-                     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:ring-blue-500'"
-                     class="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all font-mono" required />
+                     class="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all font-mono
+                            bg-gray-50 border-gray-200 text-gray-900 focus:ring-blue-500
+                            dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
             </div>
 
             <div class="space-y-2">
-              <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" class="text-sm font-semibold ml-1">Email (Usuario)</label>
+              <label class="text-sm font-semibold ml-1 text-gray-700 dark:text-gray-300">Email (Usuario)</label>
               <input type="email" [ngModel]="nuevoEmail()" (ngModelChange)="nuevoEmail.set($event)" name="email" placeholder="usuario@sistema.com"
-                     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:ring-blue-500'"
-                     class="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all" required />
+                     class="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all
+                            bg-gray-50 border-gray-200 text-gray-900 focus:ring-blue-500
+                            dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
             </div>
 
             <div class="space-y-2">
-              <label [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'" class="text-sm font-semibold ml-1">Contraseña</label>
+              <label class="text-sm font-semibold ml-1 text-gray-700 dark:text-gray-300">Contraseña</label>
               <input type="password" [ngModel]="nuevoPassword()" (ngModelChange)="nuevoPassword.set($event)" name="password" placeholder="Mínimo 6 caracteres"
-                     [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-500' : 'bg-gray-50 border-gray-200 text-gray-900 focus:ring-blue-500'"
-                     class="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all" required />
+                     class="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2 transition-all
+                            bg-gray-50 border-gray-200 text-gray-900 focus:ring-blue-500
+                            dark:bg-gray-700 dark:border-gray-600 dark:text-white" required />
             </div>
 
           </div>
@@ -75,13 +81,15 @@
       </div>
     </div>
 
-    <!-- ✅ OPTIMIZACIÓN 5: Scroll Infinito -->
-    <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'" 
-          class="rounded-3xl shadow-xl border overflow-hidden">
+    <div class="rounded-3xl shadow-xl border overflow-hidden
+                bg-white border-gray-100
+                dark:bg-gray-800 dark:border-gray-700">
       
       <div class="overflow-x-auto max-h-[600px] overflow-y-auto" (scroll)="onScroll($event)">
         <table class="w-full">
-          <thead [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-50 text-gray-500'" class="sticky top-0 z-10">
+          <thead class="sticky top-0 z-10
+                        bg-gray-50 text-gray-500
+                        dark:bg-gray-700/50 dark:text-gray-400">
             <tr>
               <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Empleado</th>
               <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">DNI</th>
@@ -89,24 +97,28 @@
               <th class="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider">Gestión</th>
             </tr>
           </thead>
-          <tbody [ngClass]="themeService.theme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'" class="divide-y">
-            <!-- ✅ OPTIMIZACIÓN 7: trackBy para performance -->
+          <tbody class="divide-y
+                        divide-gray-100
+                        dark:divide-gray-700">
+            
             @for (vendedor of vendedores(); track trackByVendedorId($index, vendedor)) {
-              <tr [ngClass]="themeService.theme() === 'dark' ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50/80'" class="group transition-colors">
+              <tr class="group transition-colors
+                         hover:bg-gray-50/80
+                         dark:hover:bg-gray-700/50">
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-4">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-md">
                       {{ vendedor.nombre.charAt(0).toUpperCase() }}
                     </div>
                     <div>
-                      <div [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'" class="font-semibold">{{ vendedor.nombre }}</div>
-                      <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-500' : 'text-gray-400'" class="text-xs">
+                      <div class="font-semibold text-gray-900 dark:text-white">{{ vendedor.nombre }}</div>
+                      <div class="text-xs text-gray-400 dark:text-gray-500">
                         {{ vendedor.email || 'Colaborador' }}
                       </div>
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 font-mono text-sm" [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">
+                <td class="px-6 py-4 font-mono text-sm text-gray-600 dark:text-gray-300">
                   {{ vendedor.dni }}
                 </td>
                 <td class="px-6 py-4 text-center">
@@ -159,7 +171,6 @@
           </tbody>
         </table>
 
-        <!-- ✅ OPTIMIZACIÓN 5: Indicador de carga para scroll infinito -->
         @if (isLoadingMore()) {
           <div class="px-6 py-4 text-center">
             <div class="inline-flex items-center gap-2 text-gray-500">
@@ -173,16 +184,17 @@
   </div>
 </div>
 
-<!-- ✅ MODAL PERMISOS: Actualizado con Signals -->
 <div *ngIf="showPermisosModal()" class="fixed inset-0 z-[9999] overflow-y-auto" role="dialog" aria-modal="true">
   <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" (click)="cerrarModalPermisos()"></div>
 
   <div class="flex min-h-screen items-center justify-center p-4">
-    <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-gray-900 border-gray-100'"
-          class="relative w-full max-w-5xl rounded-3xl shadow-2xl border transform transition-all overflow-hidden flex flex-col max-h-[90vh]">
+    <div class="relative w-full max-w-5xl rounded-3xl shadow-2xl border transform transition-all overflow-hidden flex flex-col max-h-[90vh]
+                bg-white text-gray-900 border-gray-100
+                dark:bg-gray-800 dark:text-white dark:border-gray-700">
       
-      <div class="px-6 py-5 border-b flex justify-between items-center bg-gray-50 dark:bg-gray-800/50" 
-            [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
+      <div class="px-6 py-5 border-b flex justify-between items-center
+                  bg-gray-50 border-gray-100
+                  dark:bg-gray-800/50 dark:border-gray-700">
         <div>
           <h3 class="text-xl font-bold">Matriz de Permisos</h3>
           <p class="text-sm opacity-70">Configurando acceso para: <span class="font-semibold text-blue-600">{{ empleadoSeleccionado()?.nombre }}</span></p>
@@ -194,17 +206,22 @@
 
       <div class="p-0 overflow-y-auto flex-1">
         <table class="w-full text-sm">
-          <thead [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50 text-gray-300' : 'bg-slate-50 text-gray-500'">
+          <thead class="sticky top-0 z-10
+                        bg-slate-50 text-gray-500
+                        dark:bg-gray-800 dark:text-gray-300">
             <tr>
-              <th class="px-6 py-4 text-left font-bold uppercase tracking-wider w-1/4 sticky top-0 bg-inherit z-10">Módulo</th>
-              <th class="px-4 py-4 text-center font-bold uppercase tracking-wider sticky top-0 bg-inherit z-10">Ver</th>
-              <th class="px-4 py-4 text-center font-bold uppercase tracking-wider sticky top-0 bg-inherit z-10">Crear</th>
-              <th class="px-4 py-4 text-center font-bold uppercase tracking-wider sticky top-0 bg-inherit z-10">Editar</th>
-              <th class="px-4 py-4 text-center font-bold uppercase tracking-wider sticky top-0 bg-inherit z-10">Eliminar</th>
+              <th class="px-6 py-4 text-left font-bold uppercase tracking-wider w-1/4">Módulo</th>
+              <th class="px-4 py-4 text-center font-bold uppercase tracking-wider">Ver</th>
+              <th class="px-4 py-4 text-center font-bold uppercase tracking-wider">Crear</th>
+              <th class="px-4 py-4 text-center font-bold uppercase tracking-wider">Editar</th>
+              <th class="px-4 py-4 text-center font-bold uppercase tracking-wider">Eliminar</th>
             </tr>
           </thead>
-          <tbody [ngClass]="themeService.theme() === 'dark' ? 'divide-gray-700' : 'divide-gray-100'" class="divide-y">
-            <tr *ngFor="let permiso of permisosGestion(); trackBy: trackByPermisoVista" [ngClass]="themeService.theme() === 'dark' ? 'hover:bg-gray-700/30' : 'hover:bg-slate-50'">
+          <tbody class="divide-y
+                        divide-gray-100
+                        dark:divide-gray-700">
+            <tr *ngFor="let permiso of permisosGestion(); trackBy: trackByPermisoVista" 
+                class="hover:bg-slate-50 dark:hover:bg-gray-700/30">
               <td class="px-6 py-4 font-medium text-base">{{ permiso.label }}</td>
               
               <td class="px-4 py-4 text-center">
@@ -239,8 +256,12 @@
         </table>
       </div>
 
-      <div class="p-6 border-t bg-gray-50 dark:bg-gray-800/50 flex justify-end gap-3" [ngClass]="themeService.theme() === 'dark' ? 'border-gray-700' : 'border-gray-100'">
-        <button (click)="cerrarModalPermisos()" class="px-5 py-2.5 rounded-xl border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">
+      <div class="p-6 border-t flex justify-end gap-3
+                  bg-gray-50 border-gray-100
+                  dark:bg-gray-800/50 dark:border-gray-700">
+        <button (click)="cerrarModalPermisos()" class="px-5 py-2.5 rounded-xl border font-medium transition-colors
+               border-gray-300 text-gray-700 hover:bg-gray-100
+               dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
           Cancelar
         </button>
         <button (click)="guardarPermisos()" [disabled]="isLoading()" class="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-medium hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all transform active:scale-95">
@@ -251,13 +272,13 @@
   </div>
 </div>
 
-<!-- ✅ MODAL EDITAR: Actualizado con Signals -->
 <div *ngIf="showEditModal()" class="fixed inset-0 z-[9999] overflow-y-auto" role="dialog" aria-modal="true">
   <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" (click)="cerrarModalEditar()"></div>
 
   <div class="flex min-h-screen items-center justify-center p-4">
-    <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'"
-          class="relative w-full max-w-md rounded-3xl shadow-2xl p-8 transform transition-all">
+    <div class="relative w-full max-w-md rounded-3xl shadow-2xl p-8 transform transition-all
+                bg-white text-gray-900
+                dark:bg-gray-800 dark:text-white">
       
       <div class="mb-6">
         <h3 class="text-2xl font-bold">Editar Empleado</h3>
@@ -267,28 +288,34 @@
       <div class="space-y-4">
         <div>
           <label class="block text-sm font-bold mb-2 ml-1">Nombre Completo</label>
-          <input type="text" [ngModel]="editNombre()" (ngModelChange)="editNombre.set($event)" class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'">
+          <input type="text" [ngModel]="editNombre()" (ngModelChange)="editNombre.set($event)" class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                 bg-gray-50 border-gray-200
+                 dark:bg-gray-700 dark:border-gray-600">
         </div>
         
         <div>
           <label class="block text-sm font-bold mb-2 ml-1">Documento (DNI)</label>
-          <input type="text" [ngModel]="editDni()" (ngModelChange)="editDni.set($event)" maxlength="8" class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono"
-                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'">
+          <input type="text" [ngModel]="editDni()" (ngModelChange)="editDni.set($event)" maxlength="8" class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono
+                 bg-gray-50 border-gray-200
+                 dark:bg-gray-700 dark:border-gray-600">
         </div>
 
         <div>
           <label class="block text-sm font-bold mb-2 ml-1">Email (Acceso)</label>
-          <input type="email" [ngModel]="editEmail()" (ngModelChange)="editEmail.set($event)" class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+          <input type="email" [ngModel]="editEmail()" (ngModelChange)="editEmail.set($event)" 
                  placeholder="nuevo@email.com"
-                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'">
+                 class="w-full px-4 py-3 rounded-xl border focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                        bg-gray-50 border-gray-200
+                        dark:bg-gray-700 dark:border-gray-600">
         </div>
 
         <div>
           <label class="block text-sm font-bold mb-2 ml-1 text-blue-600 dark:text-blue-400">Nueva Contraseña</label>
-          <input type="password" [ngModel]="editPassword()" (ngModelChange)="editPassword.set($event)" class="w-full px-4 py-3 rounded-xl border-2 border-blue-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+          <input type="password" [ngModel]="editPassword()" (ngModelChange)="editPassword.set($event)" 
                  placeholder="Dejar vacío para NO cambiar"
-                 [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-gray-50'">
+                 class="w-full px-4 py-3 rounded-xl border-2 border-blue-100 focus:ring-2 focus:ring-blue-500 outline-none transition-all
+                        bg-gray-50
+                        dark:bg-gray-700 dark:border-gray-600">
            <p class="text-xs mt-1 opacity-60">Solo escribe aquí si quieres cambiar la clave.</p>
         </div>
       </div>
@@ -307,12 +334,12 @@
   </div>
 </div>
 
-<!-- ✅ MODAL ELIMINAR: Actualizado con Signals -->
 <div *ngIf="showDeleteModal()" class="fixed inset-0 z-[9999] flex items-center justify-center p-4">
   <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" (click)="cancelarEliminar()"></div>
   
-  <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'" 
-       class="relative w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center transform transition-all border border-red-100 dark:border-red-900/30">
+  <div class="relative w-full max-w-sm rounded-3xl shadow-2xl p-6 text-center transform transition-all
+              bg-white text-gray-900 border border-red-100
+              dark:bg-gray-800 dark:text-white dark:border-red-900/30">
       
      <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
@@ -322,25 +349,25 @@
      <p class="text-sm opacity-70 mb-6">Estás a punto de eliminar a <span class="font-bold text-red-500">{{ vendedorAEliminar()?.nombre }}</span>. Esta acción es irreversible.</p>
 
      <div class="flex gap-3">
-        <button (click)="cancelarEliminar()" class="flex-1 px-4 py-2.5 rounded-xl border font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
-          Cancelar
-        </button>
-        <button (click)="eliminarVendedor()" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 shadow-lg shadow-red-500/30">
-          Sí, Eliminar
-        </button>
+       <button (click)="cancelarEliminar()" class="flex-1 px-4 py-2.5 rounded-xl border font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700">
+         Cancelar
+       </button>
+       <button (click)="eliminarVendedor()" class="flex-1 px-4 py-2.5 rounded-xl bg-red-600 text-white font-medium hover:bg-red-700 shadow-lg shadow-red-500/30">
+         Sí, Eliminar
+       </button>
      </div>
   </div>
 </div>
 
-<!-- ✅ TOAST: Actualizado con Signals -->
 <div *ngIf="isToastVisible()" class="fixed bottom-6 right-6 z-[10000] animate-slide-in-right">
-  <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 text-gray-800'"
-       class="flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border">
+  <div class="flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border
+              bg-white border-gray-100 text-gray-800
+              dark:bg-gray-800 dark:border-gray-700 dark:text-white">
     
     <div [ngClass]="{
-      'bg-green-100 text-green-600': tipoMensajeToast() === 'success',
-      'bg-red-100 text-red-600': tipoMensajeToast() === 'error',
-      'bg-amber-100 text-amber-600': tipoMensajeToast() === 'warning'
+      'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400': tipoMensajeToast() === 'success',
+      'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': tipoMensajeToast() === 'error',
+      'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400': tipoMensajeToast() === 'warning'
     }" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
       <svg *ngIf="tipoMensajeToast() === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
       <svg *ngIf="tipoMensajeToast() === 'error'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>

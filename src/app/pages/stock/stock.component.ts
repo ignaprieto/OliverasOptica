@@ -70,7 +70,9 @@ export class StockComponent implements OnInit, OnDestroy {
   error: WritableSignal<string> = signal('');
   categoriasDisponibles: WritableSignal<string[]> = signal([]);
   productosEliminados: WritableSignal<Producto[]> = signal([]);
-  mostrarToast: WritableSignal<boolean> = signal(false);
+ mostrarToast: WritableSignal<boolean> = signal(false);
+tipoMensajeToast: WritableSignal<'success' | 'error' | 'warning'> = signal('success');
+mensajeToast: WritableSignal<string> = signal('');
 
   // === CONSTANTES ===
   private readonly COLUMNAS_PRODUCTO = 'id, codigo, nombre, marca, talle, categoria, precio, cantidad_stock, cantidad_deposito, activo, eliminado, motivo_eliminacion, eliminado_por, eliminado_en';
@@ -119,6 +121,38 @@ export class StockComponent implements OnInit, OnDestroy {
 
   mapaDescuentos: Map<string, number> = new Map();
 
+// ==================== PRESUPUESTOS ====================
+
+mostrarModalPresupuesto = signal(false);
+isGuardando = signal(false);
+presupuestoActual = signal<{
+  cliente: { nombre: string; direccion: string; ciudad: string; telefono: string };
+  productos: Array<{ producto: Producto; cantidad: number; precioUnitario: number; total: number }>;
+  metodoPago: string;
+  codigoDescuento: string;
+  porcentajeDescuento: number;
+  subtotal: number;
+  descuentoAplicado: number;
+  total: number;
+}>({
+  cliente: { nombre: '', direccion: '', ciudad: '', telefono: '' },
+  productos: [],
+  metodoPago: 'efectivo',
+  codigoDescuento: '',
+  porcentajeDescuento: 0,
+  subtotal: 0,
+  descuentoAplicado: 0,
+  total: 0
+});
+
+productosCarrito = signal<Array<{ producto: Producto; cantidad: number }>>([]);
+busquedaProductoPresupuesto = signal('');
+productosEncontrados = signal<Producto[]>([]);
+cargandoBusquedaPresupuesto = signal(false);
+configRecibo = signal<any>(null);
+descuentosDisponibles = signal<any[]>([]);
+private busquedaPresupuestoSubject = new Subject<string>();
+private busquedaPresupuestoSubscription: Subscription | null = null;
   constructor(
     private supabase: SupabaseService, 
     public themeService: ThemeService, 
@@ -138,6 +172,12 @@ export class StockComponent implements OnInit, OnDestroy {
       this.resetearVirtualScroll();
     });
 
+    this.busquedaPresupuestoSubscription = this.busquedaPresupuestoSubject.pipe(
+  debounceTime(300),
+  distinctUntilChanged()
+).subscribe(termino => {
+  this.buscarProductoPresupuestoReal(termino);
+});
     // Carga inicial
     this.cargarPromocionesActivas().then(() => {
       this.cargarMasProductos();
@@ -151,6 +191,10 @@ export class StockComponent implements OnInit, OnDestroy {
     if (this.searchSubscription) {
       this.searchSubscription.unsubscribe();
     }
+
+    if (this.busquedaPresupuestoSubscription) {
+  this.busquedaPresupuestoSubscription.unsubscribe();
+}
   }
 
   // ==================== CARGA DE DATOS ====================
@@ -761,19 +805,567 @@ export class StockComponent implements OnInit, OnDestroy {
   }
   deseleccionarTodos() { this.productosSeleccionados.clear(); }
   
-  mostrarMensaje(m: string) { 
-    this.mensaje.set(m); 
-    this.mostrarToast.set(true); 
-    setTimeout(() => this.mostrarToast.set(false), 3000); 
-  }
+  mostrarMensaje(m: string, tipo: 'success' | 'warning' = 'success') { 
+  this.mensajeToast.set(m);
+  this.tipoMensajeToast.set(tipo);
+  this.mostrarToast.set(true); 
+  setTimeout(() => this.mostrarToast.set(false), 3000); 
+}
 
-  mostrarError(m: string) {
-    this.error.set(m);
-    this.mostrarToast.set(true);
-    setTimeout(() => { this.mostrarToast.set(false); this.error.set(''); }, 4000);
-  }
+mostrarError(m: string) {
+  this.mensajeToast.set(m);
+  this.tipoMensajeToast.set('error');
+  this.mostrarToast.set(true);
+  setTimeout(() => this.mostrarToast.set(false), 4000);
+}
+
+isToastVisible(): boolean {
+  return this.mostrarToast();
+}
 
   trackByFn(index: number, item: Producto): string {
     return item.id;
   }
+
+  busquedaInmediata() {
+    this.resetearVirtualScroll();
+  }
+
+  abrirModalPresupuesto() {
+  this.mostrarModalPresupuesto.set(true);
+  this.cargarConfigRecibo();
+  this.cargarDescuentosActivos();
+  this.resetearPresupuesto();
+}
+
+cerrarModalPresupuesto() {
+  this.mostrarModalPresupuesto.set(false);
+  this.resetearPresupuesto();
+}
+
+resetearPresupuesto() {
+  this.presupuestoActual.set({
+    cliente: { nombre: '', direccion: '', ciudad: '', telefono: '' },
+    productos: [],
+    metodoPago: 'efectivo',
+    codigoDescuento: '',
+    porcentajeDescuento: 0,
+    subtotal: 0,
+    descuentoAplicado: 0,
+    total: 0
+  });
+  this.productosCarrito.set([]);
+  this.busquedaProductoPresupuesto.set('');
+  this.productosEncontrados.set([]);
+}
+
+async cargarConfigRecibo() {
+  try {
+    const { data, error } = await this.supabase.getClient()
+      .from('configuracion_recibo')
+      .select('logo_url, nombre_negocio, direccion, ciudad, telefono1, telefono2, whatsapp1, whatsapp2, email_empresa')
+      .single();
+    
+    if (!error && data) {
+      this.configRecibo.set(data);
+    }
+  } catch (error) {
+    console.error('Error cargando config recibo:', error);
+  }
+}
+
+async cargarDescuentosActivos() {
+  try {
+    const { data, error } = await this.supabase.getClient()
+      .from('descuentos')
+      .select('*')
+      .eq('activo', true);
+    
+    if (!error && data) {
+      this.descuentosDisponibles.set(data);
+    }
+  } catch (error) {
+    console.error('Error cargando descuentos:', error);
+  }
+}
+
+buscarProductoPresupuesto(termino: string) {
+  this.busquedaProductoPresupuesto.set(termino);
+  
+  if (!termino.trim()) {
+    this.productosEncontrados.set([]);
+    this.cargandoBusquedaPresupuesto.set(false);
+    return;
+  }
+
+  this.cargandoBusquedaPresupuesto.set(true);
+  this.busquedaPresupuestoSubject.next(termino);
+}
+
+async buscarProductoPresupuestoReal(termino: string) {
+  if (!termino.trim()) {
+    this.productosEncontrados.set([]);
+    this.cargandoBusquedaPresupuesto.set(false);
+    return;
+  }
+
+  try {
+    const t = termino.trim();
+    const { data, error } = await this.supabase.getClient()
+      .from('productos')
+      .select('id, codigo, nombre, marca, talle, categoria, precio, cantidad_stock, cantidad_deposito, activo')
+      .eq('activo', true)
+      .eq('eliminado', false)
+      .or(`nombre.ilike.%${t}%,codigo.ilike.%${t}%,marca.ilike.%${t}%`)
+      .limit(10);
+
+    if (error) throw error;
+    
+    if (data) {
+      // Procesar productos con promociones
+      const productosProcesados = data.map((p: any) => {
+        const descuento = this.mapaDescuentos.get(p.id);
+        if (descuento) {
+          return { 
+            ...p, 
+            tiene_promocion: true, 
+            precio_promocional: p.precio - (p.precio * (descuento / 100)), 
+            porcentaje_promocion: descuento 
+          };
+        }
+        return p;
+      });
+
+      // Si es un código exacto y hay solo un resultado, agregarlo automáticamente
+      if (productosProcesados.length === 1 && productosProcesados[0].codigo?.toLowerCase() === t.toLowerCase()) {
+        this.agregarAlCarrito(productosProcesados[0] as Producto);
+        this.busquedaProductoPresupuesto.set('');
+        this.productosEncontrados.set([]);
+      } else {
+        this.productosEncontrados.set(productosProcesados as Producto[]);
+      }
+    }
+  } catch (error) {
+    console.error('Error buscando productos:', error);
+  } finally {
+    this.cargandoBusquedaPresupuesto.set(false);
+  }
+}
+
+abrirScannerPresupuesto(): void {
+  this.mostrarScanner = true;
+  this.error.set('');
+  setTimeout(() => this.iniciarScannerPresupuesto(), 500);
+}
+
+async iniciarScannerPresupuesto(): Promise<void> {
+  const Quagga = (window as any).Quagga as QuaggaAPI;
+  
+  if (!Quagga) {
+    this.mostrarError('Cargando scanner... intenta nuevamente.');
+    return;
+  }
+
+  const container = document.querySelector('#scanner-container');
+  if (!container) return;
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    stream.getTracks().forEach(t => t.stop());
+
+    Quagga.init({
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: container,
+        constraints: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "environment" },
+      },
+      decoder: { readers: ["ean_reader", "ean_8_reader", "code_128_reader", "upc_reader"] },
+      locate: true
+    }, (err: any) => {
+      if (err) {
+        console.error(err);
+        this.mostrarError('No se pudo acceder a la cámara.');
+        return;
+      }
+      Quagga.start();
+      this.scannerActivo = true;
+    });
+
+    Quagga.onDetected(async (data: any) => {
+      const codigo = data.codeResult.code;
+      if (navigator.vibrate) navigator.vibrate(200);
+
+      // Buscar el producto por código
+      this.busquedaProductoPresupuesto.set(codigo);
+      await this.buscarProductoPresupuesto(codigo);
+      
+      this.mostrarMensaje(`✅ Código detectado: ${codigo}`);
+      this.cerrarScanner();
+    });
+
+  } catch (err) {
+    this.mostrarError('Permiso de cámara denegado o no disponible.');
+  }
+}
+
+// Función para detectar scanner USB (lectura automática)
+onBusquedaPresupuestoKeydown(event: KeyboardEvent) {
+  // Enter: buscar o agregar producto si hay coincidencia exacta
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const termino = this.busquedaProductoPresupuesto().trim();
+    if (termino) {
+      this.buscarProductoPresupuesto(termino);
+    }
+  }
+}
+
+// Reemplaza agregarAlCarrito para mejor performance:
+agregarAlCarrito(producto: Producto) {
+  const carrito = [...this.productosCarrito()];
+  const indice = carrito.findIndex(item => item.producto.id === producto.id);
+  
+  if (indice !== -1) {
+    carrito[indice] = { ...carrito[indice], cantidad: carrito[indice].cantidad + 1 };
+  } else {
+    carrito.push({ producto, cantidad: 1 });
+  }
+  
+  this.productosCarrito.set(carrito);
+  this.calcularTotalesPresupuesto();
+  this.busquedaProductoPresupuesto.set('');
+  this.productosEncontrados.set([]);
+}
+
+// Reemplaza eliminarDelCarrito:
+eliminarDelCarrito(productoId: string) {
+  this.productosCarrito.set(
+    this.productosCarrito().filter(item => item.producto.id !== productoId)
+  );
+  this.calcularTotalesPresupuesto();
+}
+
+// Reemplaza actualizarCantidadCarrito:
+actualizarCantidadCarrito(productoId: string, cantidad: number) {
+  if (cantidad <= 0) {
+    this.eliminarDelCarrito(productoId);
+    return;
+  }
+  
+  const carrito = this.productosCarrito().map(item => 
+    item.producto.id === productoId ? { ...item, cantidad } : item
+  );
+  
+  this.productosCarrito.set(carrito);
+  this.calcularTotalesPresupuesto();
+}
+
+aplicarCodigoDescuento() {
+  const codigo = this.presupuestoActual().codigoDescuento.trim().toUpperCase();
+  if (!codigo) return;
+
+  const descuento = this.descuentosDisponibles().find(d => d.codigo === codigo && d.activo);
+  
+  if (descuento && descuento.tipo === 'porcentaje') {
+    this.presupuestoActual.update(p => ({
+      ...p,
+      porcentajeDescuento: descuento.porcentaje
+    }));
+    this.calcularTotalesPresupuesto();
+    this.mostrarMensaje('Código aplicado correctamente', 'success');
+  } else {
+    this.mostrarError('Código inválido o descuento no disponible');
+    this.presupuestoActual.update(p => ({
+      ...p,
+      codigoDescuento: '',
+      porcentajeDescuento: 0
+    }));
+  }
+}
+
+calcularTotalesPresupuesto() {
+  const carrito = this.productosCarrito();
+  const productos = carrito.map(item => ({
+    producto: item.producto,
+    cantidad: item.cantidad,
+    precioUnitario: item.producto.precio_promocional || item.producto.precio,
+    total: (item.producto.precio_promocional || item.producto.precio) * item.cantidad
+  }));
+
+  const subtotal = productos.reduce((sum, p) => sum + p.total, 0);
+  const porcentajeDesc = this.presupuestoActual().porcentajeDescuento;
+  const descuentoAplicado = (subtotal * porcentajeDesc) / 100;
+  const total = subtotal - descuentoAplicado;
+
+  this.presupuestoActual.update(p => ({
+    ...p,
+    productos,
+    subtotal,
+    descuentoAplicado,
+    total
+  }));
+}
+
+async generarPDFPresupuesto() {
+  const presupuesto = this.presupuestoActual();
+  const config = this.configRecibo();
+  
+  if (!presupuesto.cliente.nombre.trim()) {
+    this.mostrarError('Ingresa el nombre del cliente');
+    return;
+  }
+  
+  if (presupuesto.productos.length === 0) {
+    this.mostrarError('Agrega productos al presupuesto');
+    return;
+  }
+
+  try {
+    this.isGuardando.set(true);
+    
+    const { default: jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    
+    const pageWidth = doc.internal.pageSize.width;
+    let yPos = 20;
+
+    // === ENCABEZADO ===
+    if (config?.logo_url) {
+      try {
+        doc.addImage(config.logo_url, 'PNG', 15, yPos, 35, 18);
+      } catch (e) {
+        console.warn('No se pudo cargar el logo');
+      }
+    }
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(config?.nombre_negocio || 'EMPRESA', config?.logo_url ? 55 : 15, yPos + 2);
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(config?.direccion || '', config?.logo_url ? 55 : 15, yPos + 8);
+    doc.text(config?.ciudad || '', config?.logo_url ? 55 : 15, yPos + 12);
+    doc.text(`Tel: ${config?.telefono1 || ''}${config?.telefono2 ? ' / ' + config.telefono2 : ''}`, config?.logo_url ? 55 : 15, yPos + 16);
+    if (config?.email_empresa) {
+      doc.text(config.email_empresa, config?.logo_url ? 55 : 15, yPos + 20);
+    }
+
+    // X CON ESTÉTICA EN NEGRO (alineada más a la derecha y arriba)
+    const xPosBox = pageWidth - 95;
+    const yPosBox = yPos - 5;
+    const anchoBox = 14;
+    const altoBox = 20;
+    
+    // Cuadro rectangular vertical con sombra sutil (línea fina)
+    doc.setFillColor(245, 245, 245);
+    doc.rect(xPosBox + 1, yPosBox + 1, anchoBox, altoBox, 'F');
+    
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.5);
+    doc.rect(xPosBox, yPosBox, anchoBox, altoBox, 'S');
+    
+    // X en negro adaptada al rectángulo vertical (líneas muy finas)
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(1);
+    doc.line(xPosBox + 3, yPosBox + 3, xPosBox + anchoBox - 3, yPosBox + altoBox - 3);
+    doc.line(xPosBox + anchoBox - 3, yPosBox + 3, xPosBox + 3, yPosBox + altoBox - 3);
+    
+    // Texto debajo en negro
+    doc.setFontSize(6);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text('DOCUMENTO NO VÁLIDO', xPosBox + (anchoBox / 2), yPosBox + altoBox + 4, { align: 'center' });
+    doc.text('COMO FACTURA', xPosBox + (anchoBox / 2), yPosBox + altoBox + 7, { align: 'center' });
+
+    // PRESUPUESTO (derecha)
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(59, 130, 246);
+    doc.text('PRESUPUESTO', pageWidth - 15, yPos + 2, { align: 'right' });
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Fecha: ${new Date().toLocaleDateString('es-AR')}`, pageWidth - 15, yPos + 10, { align: 'right' });
+    doc.text(`N° ${Date.now().toString().slice(-8)}`, pageWidth - 15, yPos + 14, { align: 'right' });
+
+    yPos += 32;
+
+    doc.setDrawColor(59, 130, 246);
+    doc.setLineWidth(0.8);
+    doc.line(15, yPos, pageWidth - 15, yPos);
+    yPos += 10;
+
+    // === DATOS DEL CLIENTE Y PAGO ===
+    // Cliente (izquierda)
+    doc.setFillColor(248, 250, 252);
+    doc.rect(15, yPos, (pageWidth - 35) / 2, 28, 'F');
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(59, 130, 246);
+    doc.text('CLIENTE', 18, yPos + 5);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.text(presupuesto.cliente.nombre, 18, yPos + 11);
+    if (presupuesto.cliente.direccion) {
+      doc.text(presupuesto.cliente.direccion, 18, yPos + 15);
+    }
+    if (presupuesto.cliente.ciudad) {
+      doc.text(presupuesto.cliente.ciudad, 18, yPos + 19);
+    }
+    if (presupuesto.cliente.telefono) {
+      doc.text(`Tel: ${presupuesto.cliente.telefono}`, 18, yPos + 23);
+    }
+
+    // Método de pago y descuento (derecha) - CORREGIDO
+    const xPosDerecha = (pageWidth / 2) + 5;
+    doc.setFillColor(248, 250, 252);
+    doc.rect(xPosDerecha, yPos, (pageWidth - 35) / 2, 28, 'F');
+    
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(59, 130, 246);
+    doc.text('MÉTODO DE PAGO', xPosDerecha + 3, yPos + 5);
+    
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(presupuesto.metodoPago.toUpperCase(), xPosDerecha + 3, yPos + 11);
+    
+    if (presupuesto.codigoDescuento) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.setTextColor(59, 130, 246);
+      doc.text('DESCUENTO', xPosDerecha + 3, yPos + 17);
+      doc.setTextColor(220, 38, 38);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text(`${presupuesto.codigoDescuento} (-${presupuesto.porcentajeDescuento}%)`, xPosDerecha + 3, yPos + 22);
+      doc.setTextColor(0, 0, 0);
+    }
+
+    yPos += 36;
+
+    // === TABLA DE PRODUCTOS ===
+    doc.setFillColor(59, 130, 246);
+    doc.rect(15, yPos, pageWidth - 30, 7, 'F');
+    
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('DESCRIPCIÓN', 18, yPos + 4.5);
+    doc.text('CANT.', pageWidth - 90, yPos + 4.5, { align: 'center' });
+    doc.text('P. UNIT.', pageWidth - 60, yPos + 4.5, { align: 'right' });
+    doc.text('TOTAL', pageWidth - 18, yPos + 4.5, { align: 'right' });
+
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    
+    presupuesto.productos.forEach((item, index) => {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+
+      if (index % 2 === 0) {
+        doc.setFillColor(249, 250, 251);
+        doc.rect(15, yPos - 3, pageWidth - 30, 6, 'F');
+      }
+
+      doc.text(item.producto.nombre, 18, yPos);
+      doc.text(`${item.cantidad}`, pageWidth - 90, yPos, { align: 'center' });
+      doc.text(`$${item.precioUnitario.toFixed(2)}`, pageWidth - 60, yPos, { align: 'right' });
+      doc.text(`$${item.total.toFixed(2)}`, pageWidth - 18, yPos, { align: 'right' });
+      
+      yPos += 6;
+    });
+
+    yPos += 5;
+
+    // === TOTALES ===
+    doc.setDrawColor(229, 231, 235);
+    doc.setLineWidth(0.3);
+    doc.line(pageWidth - 85, yPos, pageWidth - 15, yPos);
+
+    yPos += 6;
+    
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Subtotal:', pageWidth - 80, yPos);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`$${presupuesto.subtotal.toFixed(2)}`, pageWidth - 18, yPos, { align: 'right' });
+
+    if (presupuesto.descuentoAplicado > 0) {
+      yPos += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(220, 38, 38);
+      doc.text(`Descuento (${presupuesto.porcentajeDescuento}%):`, pageWidth - 80, yPos);
+      doc.text(`-$${presupuesto.descuentoAplicado.toFixed(2)}`, pageWidth - 18, yPos, { align: 'right' });
+      doc.setTextColor(0, 0, 0);
+    }
+
+    yPos += 8;
+    doc.setFillColor(59, 130, 246);
+    doc.rect(pageWidth - 85, yPos - 4, 70, 8, 'F');
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('TOTAL:', pageWidth - 80, yPos);
+    doc.text(`$${presupuesto.total.toFixed(2)}`, pageWidth - 18, yPos, { align: 'right' });
+    
+    doc.setTextColor(0, 0, 0);
+
+    // === PIE DE PÁGINA ===
+    yPos = doc.internal.pageSize.height - 20;
+    doc.setDrawColor(59, 130, 246);
+    doc.setLineWidth(0.5);
+    doc.line(15, yPos, pageWidth - 15, yPos);
+
+    yPos += 5;
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'italic');
+    doc.setTextColor(100, 100, 100);
+    doc.text('Presupuesto válido por 15 días desde la fecha de emisión', pageWidth / 2, yPos, { align: 'center' });
+    
+    yPos += 4;
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text(`WhatsApp: ${config?.whatsapp1 || ''}${config?.whatsapp2 ? ' / ' + config.whatsapp2 : ''}`, pageWidth / 2, yPos, { align: 'center' });
+
+    const pdfBlob = doc.output('blob');
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    window.open(pdfUrl, '_blank');
+
+    this.mostrarMensaje('Presupuesto generado correctamente', 'success');
+    
+  } catch (error) {
+    console.error('Error generando PDF:', error);
+    this.mostrarError('Error al generar el presupuesto');
+  } finally {
+    this.isGuardando.set(false);
+  }
+}
+
+eliminarDescuento() {
+  this.presupuestoActual.update(p => ({
+    ...p,
+    codigoDescuento: '',
+    porcentajeDescuento: 0
+  }));
+  this.calcularTotalesPresupuesto();
+  this.mostrarMensaje('Descuento eliminado', 'success');
+}
+
+cerrarDropdownProductos() {
+  this.productosEncontrados.set([]);
+}
 }

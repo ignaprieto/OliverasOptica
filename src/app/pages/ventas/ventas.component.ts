@@ -195,6 +195,7 @@ tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
   escaneando = signal<boolean>(false);
   intentosScanner = signal<number>(0);
   errorScanner = signal<string>('');
+mediaStream: MediaStream | null = null;
 
   Math = Math;
 
@@ -377,7 +378,7 @@ configRecibo = signal<any>(null);
     }
   }
 
-  // ✅ CAMBIO 7: Método para scroll infinito
+  // Método para scroll infinito
   onScrollProductos(event: any) {
     if (this.cargandoMas() || this.buscandoProductos() || !this.hayMasProductos()) return;
 
@@ -388,37 +389,59 @@ configRecibo = signal<any>(null);
     }
   }
 
-  async buscarProductoExacto(codigo: string) {
-    try {
-      const { data, error } = await this.supabase.getClient()
-        .from('productos')
-        .select(this.COLUMNAS_PRODUCTOS) // ✅ Columnas específicas
-        .eq('codigo', codigo)
-        .eq('activo', true)
-        .eq('eliminado', false)
-        .single();
+ async buscarProductoExacto(codigo: string) {
+  try {
+    const { data, error } = await this.supabase.getClient()
+      .from('productos')
+      .select(this.COLUMNAS_PRODUCTOS)
+      .eq('codigo', codigo)
+      .eq('activo', true)
+      .eq('eliminado', false)
+      .single();
 
-      if (data) {
-        const mapaDesc = this.mapaDescuentos();
-        const descuento = mapaDesc.get(data.id);
-        const prodProcesado = descuento ? {
-          ...data,
-          tiene_promocion: true,
-          precio_promocional: data.precio - (data.precio * (descuento / 100)),
-          porcentaje_promocion: descuento
-        } : data;
+    if (data) {
+      const mapaDesc = this.mapaDescuentos();
+      const descuento = mapaDesc.get(data.id);
+      const prodProcesado = descuento ? {
+        ...data,
+        tiene_promocion: true,
+        precio_promocional: data.precio - (data.precio * (descuento / 100)),
+        porcentaje_promocion: descuento
+      } : data;
 
-        this.cantidades.update(c => ({ ...c, [prodProcesado.id]: 1 }));
-        this.agregarAlCarrito(prodProcesado);
-        this.mostrarToast(`Producto agregado: ${prodProcesado.nombre}`, 'success');
-        this._filtroGeneral.set('');
-      } else {
-        this.mostrarToast('Producto no encontrado', 'error');
-      }
-    } catch (err) {
-      console.error('Error buscando exacto', err);
+      this.cantidades.update(c => ({ ...c, [prodProcesado.id]: 1 }));
+      this.agregarAlCarrito(prodProcesado);
+      this.mostrarToast(`Producto agregado: ${prodProcesado.nombre}`, 'success');
+      
+      // ✅ CORRECCIÓN: Usar el setter (this.filtroGeneral) en lugar de la señal privada.
+      // Esto empuja '' al Subject, cancelando la búsqueda del debounce anterior.
+      this.filtroGeneral = ''; 
+      
+      this.paginaActual.set(0);
+      this.hayMasProductos.set(true);
+      
+      await this.realizarBusquedaProductos('', true);
+      
+      this.cdr.markForCheck();
+    } else {
+      this.mostrarToast('Producto no encontrado', 'error');
+      // ✅ CORRECCIÓN
+      this.filtroGeneral = '';
+      this.paginaActual.set(0);
+      this.hayMasProductos.set(true);
+      await this.realizarBusquedaProductos('', true);
+      this.cdr.markForCheck();
     }
+  } catch (err) {
+    console.error('Error buscando exacto', err);
+    // ✅ CORRECCIÓN
+    this.filtroGeneral = '';
+    this.paginaActual.set(0);
+    this.hayMasProductos.set(true);
+    await this.realizarBusquedaProductos('', true);
+    this.cdr.markForCheck();
   }
+}
 
   async realizarBusquedaClientes(termino: string) {
     if (!termino.trim()) {
@@ -429,7 +452,7 @@ configRecibo = signal<any>(null);
     try {
       const { data, error } = await this.supabase.getClient()
         .from('clientes')
-        .select(this.COLUMNAS_CLIENTES) // ✅ Columnas específicas
+        .select(this.COLUMNAS_CLIENTES)
         .eq('activo', true)
         .or(`nombre.ilike.%${termino}%,dni.ilike.%${termino}%,email.ilike.%${termino}%`)
         .limit(10);
@@ -510,16 +533,16 @@ configRecibo = signal<any>(null);
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: { ideal: "environment" } } 
-      });
-      stream.getTracks().forEach(track => track.stop());
-      this.inicializarQuagga();
-    } catch (err) {
-      console.error('Error cámara:', err);
-      this.errorScanner.set('Error al acceder a la cámara.');
-      this.cerrarScanner();
-    }
+  this.mediaStream = await navigator.mediaDevices.getUserMedia({ 
+    video: { facingMode: { ideal: "environment" } } 
+  });
+  this.inicializarQuagga();
+} catch (err) {
+  console.error('Error cámara:', err);
+  this.errorScanner.set('Error al acceder a la cámara.');
+  this.liberarCamara();
+  this.cerrarScanner();
+}
   }
 
   inicializarQuagga(): void {
@@ -549,14 +572,15 @@ configRecibo = signal<any>(null);
     };
 
     Quagga.init(config, (err: Error | null) => {
-      if (err) {
-        this.errorScanner.set('Error al iniciar el scanner');
-        this.cerrarScanner();
-        return;
-      }
-      Quagga.start();
-      this.scannerActivo.set(true);
-    });
+  if (err) {
+    this.errorScanner.set('Error al iniciar el scanner');
+    this.liberarCamara(); 
+    this.cerrarScanner();
+    return;
+  }
+  Quagga.start();
+  this.scannerActivo.set(true);
+});
 
     let lastCode = '';
     let lastTime = 0;
@@ -578,13 +602,29 @@ configRecibo = signal<any>(null);
   }
 
   detenerScanner(): void {
-    if (this.scannerActivo() && typeof window.Quagga !== 'undefined') {
-      try { window.Quagga!.stop(); } catch (err) { console.error(err); }
-      this.scannerActivo.set(false);
+  if (this.scannerActivo() && typeof window.Quagga !== 'undefined') {
+    try { 
+      window.Quagga!.stop(); 
+    } catch (err) { 
+      console.error(err); 
     }
-    const container = document.querySelector('#scanner-container');
-    if (container) container.innerHTML = '';
+    this.scannerActivo.set(false);
   }
+    this.liberarCamara();
+  
+  const container = document.querySelector('#scanner-container');
+  if (container) container.innerHTML = '';
+}
+
+liberarCamara(): void {
+  if (this.mediaStream) {
+    this.mediaStream.getTracks().forEach(track => {
+      track.stop();
+      console.log('Track de cámara detenido:', track.label);
+    });
+    this.mediaStream = null;
+  }
+}
 
   cerrarScanner(): void {
     this.detenerScanner();
@@ -600,7 +640,7 @@ configRecibo = signal<any>(null);
 
   onTipoPagoChange() {
   if (this.esVentaCredito()) {
-    // Si es crédito, aplicamos la regla de 'fiado'
+    // Si es crédito, se aplica 'fiado'
     this.facturacionService.aplicarReglaPorMetodo('fiado');
     
     this.mostrarListaClientes.set(true);
@@ -1274,7 +1314,7 @@ async seleccionarFormatoReciboPostVenta(formato: 'termica' | 'a4') {
   
   this.esVentaCredito.set(false);
   this.limpiarCliente();
-  this.clienteParaFacturaA.set(null); // <-- AGREGAR ESTA LÍNEA
+  this.clienteParaFacturaA.set(null);
   this.fechaVencimiento.set('');
   this.observacionesCredito.set('');
 }
@@ -1344,28 +1384,21 @@ seleccionarTexto(event: any) {
     event.target.select();
   }
 
-  // NUEVO: Maneja el ENTER del lector de código de barras
   async manejarEscaneo(event: Event) {
-    // Evita que el formulario se envíe si está dentro de uno
-    event.preventDefault(); 
-    
-    const termino = this.filtroGeneral.trim();
-    if (!termino) return;
+  event.preventDefault(); 
+  
+  const termino = this.filtroGeneral.trim();
+  if (!termino) return;
 
-    // Lógica inteligente: 
-    // Si parece un código de barras (solo números y longitud > 3), buscamos exacto para agregar al carrito.
-    // Si es texto, dejamos que el buscador normal (debounce) haga su trabajo o forzamos búsqueda.
-    const esCodigoBarras = /^\d+$/.test(termino) && termino.length > 3;
+  const esCodigoBarras = /^\d+$/.test(termino) && termino.length > 3;
 
-    if (esCodigoBarras) {
-      // Usamos tu método existente que busca exacto y agrega al carrito
-      await this.buscarProductoExacto(termino);
-      
-    } else {
-      // Si escribió "Coca", forzamos la búsqueda de lista inmediatamente sin esperar el debounce
-      this.realizarBusquedaProductos(termino, true);
-    }
+  if (esCodigoBarras) {
+    await this.buscarProductoExacto(termino);
+    // Ya no es necesario resetear aquí porque buscarProductoExacto lo hace
+  } else {
+    this.realizarBusquedaProductos(termino, true);
   }
+}
 
 async generarReciboPDF(venta: any, descargar: boolean = true, formato: 'termica' | 'a4' = 'termica'): Promise<Blob | undefined> {
   this.generandoReciboPostVenta.set(true);

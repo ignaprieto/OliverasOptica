@@ -9,8 +9,8 @@
         </a>
 
         <button (click)="toggleMenu($event)"
-                class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95 md:hidden"
-                aria-label="Toggle menu">
+        class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 ease-in-out transform hover:scale-110 active:scale-95"
+        aria-label="Toggle menu">
           <svg *ngIf="!mostrarMenu()" class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
@@ -60,20 +60,23 @@
 
       <div class="md:hidden flex items-center gap-4">
         
-        <div class="flex items-center gap-2">
-            <span class="text-[10px] text-gray-400 font-bold uppercase hidden sm:block">Fact.</span>
-            <label class="relative inline-flex items-center cursor-pointer scale-90">
-                <input type="checkbox" 
-                       [checked]="facturacionService.facturacionHabilitada()" 
-                       (change)="toggleFacturacion()"
-                       class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer 
-                            peer-checked:after:translate-x-full peer-checked:after:border-white 
-                            after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
-                            after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all 
-                            peer-checked:bg-green-600"></div>
-            </label>
-        </div>
+        <div class="flex items-center gap-2 bg-gray-800/50 px-2 py-1.5 rounded-lg border border-gray-700">
+    <span class="text-[9px] font-bold uppercase tracking-tight transition-colors"
+          [ngClass]="facturacionService.facturacionHabilitada() ? 'text-green-400' : 'text-gray-400'">
+      {{ facturacionService.facturacionHabilitada() ? 'ON' : 'OFF' }}
+    </span>
+    <label class="relative inline-flex items-center cursor-pointer">
+        <input type="checkbox" 
+               [checked]="facturacionService.facturacionHabilitada()" 
+               (change)="toggleFacturacion()"
+               class="sr-only peer">
+        <div class="w-9 h-5 bg-gray-600 peer-focus:outline-none rounded-full peer 
+                    peer-checked:after:translate-x-full peer-checked:after:border-white 
+                    after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                    after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all 
+                    peer-checked:bg-green-600"></div>
+    </label>
+</div>
 
         <button (click)="cerrarSesion()" 
                 class="p-2 rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-110 active:scale-95 text-red-400">

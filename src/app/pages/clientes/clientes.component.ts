@@ -81,7 +81,7 @@ export class ClientesComponent implements OnInit {
   public themeService = inject(ThemeService);
 
   // Columnas optimizadas para Supabase
-private readonly COLUMNAS_CLIENTES = 'id, nombre, email, telefono, dni, cuit, condicion_iva, direccion, limite_credito, saldo_actual, activo, observaciones';
+private readonly COLUMNAS_CLIENTES = 'id, nombre, email, telefono, dni, cuit, condicion_iva, direccion, segundo_contacto, limite_credito, saldo_actual, activo, observaciones';
   private readonly COLUMNAS_RECIBO = 'venta_id, diferencia_abonada, metodo_pago_diferencia';
 
   // Signals de Estado
@@ -185,9 +185,10 @@ ngOnDestroy() {
     email: '',
     telefono: '',
     dni: '',
-    cuit: '', // <--- AGREGAR
-    condicion_iva: 'Consumidor Final', // <--- AGREGAR
+    cuit: '',
+    condicion_iva: 'Consumidor Final',
     direccion: '',
+    segundo_contacto: '',
     limite_credito: 0,
     saldo_actual: 0,
     activo: true,
@@ -232,7 +233,7 @@ ngOnDestroy() {
 
 if (this.busqueda()) {
   const term = this.busqueda();
-  query = query.or(`nombre.ilike.%${term}%,dni.ilike.%${term}%,cuit.ilike.%${term}%,email.ilike.%${term}%`);
+  query = query.or(`nombre.ilike.%${term}%,dni.ilike.%${term}%,cuit.ilike.%${term}%,email.ilike.%${term}%,segundo_contacto.ilike.%${term}%`); // 👈 AGREGAR segundo_contacto
 }
 
 if (this.filtroEstado() !== 'todos') {

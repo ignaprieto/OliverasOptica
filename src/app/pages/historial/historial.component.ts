@@ -108,8 +108,9 @@ export class HistorialComponent implements OnInit {
 filtroFacturacion = signal<'todas' |'facturadas' | 'no_facturadas'>('todas');
   // ==================== CONSTANTES DE COLUMNAS ====================
 // AGREGA 'cliente_id' AL INICIO DE LA LISTA
+// Al inicio del componente, verifica que esta línea incluya cliente_id:
 private readonly COLUMNAS_VISTA = 'id, cliente_id, tipo, fecha, nombre_usuario, cliente_nombre, cliente_email, metodo_pago, descuento_aplicado, total_final, productos, recambio_realizado, realizado_por, venta_id_referencia, motivo, observaciones, productos_devueltos, productos_recambio, total_original, total_devuelto, total_recambio, diferencia_abonada, metodo_pago_diferencia, monto_descuento_recambio, eliminado_por, fecha_eliminacion, id_texto, facturada, factura_tipo, factura_pdf_url';
-  private readonly COLUMNAS_PRODUCTOS = 'id, nombre, marca, categoria, precio, talle, cantidad_stock, codigo';
+private readonly COLUMNAS_PRODUCTOS = 'id, nombre, marca, categoria, precio, talle, cantidad_stock, codigo';
 
   // ==================== SIGNALS DE DATOS ====================
   items = signal<ItemHistorial[]>([]);
@@ -1145,9 +1146,9 @@ if (this.items().length >= this.totalItems()) {
   }
 
   abrirModalEmail(venta: any) {
-  this.ventaParaGenerarRecibo.set(venta);
-  this.accionRecibo.set('email');
-  this.mostrarModalFormatoRecibo.set(true);
+  this.ventaParaEmail.set(venta);
+  this.emailDestino.set(venta.cliente_email || '');
+  this.mostrarModalEmail.set(true);
   this.cdr.markForCheck();
 }
 
@@ -1158,14 +1159,14 @@ if (this.items().length >= this.totalItems()) {
     this.cdr.markForCheck();
   }
 
-// AGREGAR nuevo método para cerrar modal de formato:
+//método para cerrar modal de formato:
 cerrarModalFormatoRecibo() {
   this.mostrarModalFormatoRecibo.set(false);
   this.ventaParaGenerarRecibo.set(null);
   this.cdr.markForCheck();
 }
 
-// AGREGAR nuevo método para seleccionar formato:
+// método para seleccionar formato:
 async seleccionarFormatoRecibo(formato: 'termica' | 'a4') {
   const venta = this.ventaParaGenerarRecibo();
   const accion = this.accionRecibo();
@@ -1176,12 +1177,7 @@ async seleccionarFormatoRecibo(formato: 'termica' | 'a4') {
     await this.generarReciboPDF(venta, true, formato);
   } else if (accion === 'visualizar') {
     await this.visualizarRecibo(venta, formato);
-  } else if (accion === 'email') {
-    this.ventaParaEmail.set(venta);
-    this.emailDestino.set(venta.cliente_email || '');
-    this.mostrarModalEmail.set(true);
-    this.cdr.markForCheck();
-  }
+  } 
 }
 
 private async generarReciboA4(venta: any, descargar: boolean, jsPDF: any): Promise<Blob | undefined> {
@@ -1561,7 +1557,8 @@ async generarReciboPDF(venta: any, descargar: boolean = true, formato: 'termica'
       pdfBlob = await this.generarReciboTermica(venta, false, jsPDF); 
     }
     
-    if (pdfBlob) {
+    // SOLO abre la ventana de impresión si descargar es true
+    if (pdfBlob && descargar) {
       const pdfUrl = URL.createObjectURL(pdfBlob);
       const printWindow = window.open(pdfUrl, '_blank');
       
@@ -1601,16 +1598,19 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
   const config = this.configRecibo();
   const margen = 5;
   const anchoUtil = 70;
+  const alturaPagina = doc.internal.pageSize.height;
   let y = 8;
   
-  // Logo con mejor proporción
+  // ========== ENCABEZADO ==========
+  
+  // Logo centrado
   if (config?.logo_url) {
     try {
       const logoWidth = 30;
       const logoHeight = 15;
       const logoX = (80 - logoWidth) / 2;
       doc.addImage(config.logo_url, 'JPG', logoX, y, logoWidth, logoHeight);
-      y += logoHeight + 3;
+      y += logoHeight + 4;
     } catch (error) {
       y += 2;
     }
@@ -1618,43 +1618,48 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
     y += 2;
   }
 
-  // Nombre del negocio más destacado
+  // Nombre del negocio
   doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
   doc.text(config?.nombre_negocio || 'PRISYS SOLUTIONS', 40, y, { align: 'center' });
-  y += 5;
+  y += 6;
   
-  // Información de contacto más compacta
+  // Información de contacto
   doc.setFontSize(7.5);
   doc.setFont('helvetica', 'normal');
+  
   doc.text(config?.direccion || '9 DE JULIO 1718', 40, y, { align: 'center' });
-  y += 3;
+  y += 3.5;
+  
   doc.text(config?.ciudad || 'Corrientes - Capital (3400)', 40, y, { align: 'center' });
-  y += 3;
+  y += 3.5;
   
   const tel1 = config?.telefono1 || '(3735) 475716';
   const tel2 = config?.telefono2 || '(3735) 410299';
   doc.text(`Tel: ${tel1} - ${tel2}`, 40, y, { align: 'center' });
-  y += 3;
+  y += 3.5;
   
   const wsp1 = config?.whatsapp1 || '3735 475716';
   const wsp2 = config?.whatsapp2 || '3735 410299';
   doc.text(`WhatsApp: ${wsp1} - ${wsp2}`, 40, y, { align: 'center' });
-  y += 3;
+  y += 3.5;
   
   if (config?.email_empresa) {
     doc.text(config.email_empresa, 40, y, { align: 'center' });
-    y += 3;
+    y += 3.5;
   }
   
-  y += 3;
+  y += 4;
   
-  // Línea separadora más elegante
+  // Línea separadora
   doc.setLineWidth(0.4);
+  doc.setDrawColor(0, 0, 0);
   doc.line(margen, y, margen + anchoUtil, y);
   y += 5;
   
-  // Encabezado de comprobante con caja
+  // ========== COMPROBANTE ==========
+  
+  // Caja de comprobante
   doc.setFillColor(240, 240, 240);
   doc.rect(margen, y - 3, anchoUtil, 10, 'F');
   
@@ -1666,17 +1671,20 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
   doc.text('NO VÁLIDO COMO FACTURA', 40, y + 1, { align: 'center' });
-  y += 7;
+  y += 8;
   
-  // Información de venta en formato tabla
+  // ========== DATOS DE LA VENTA ==========
+  
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   
-  const infoY = y;
-  doc.text('Código:', margen, infoY);
+  // Código
+  doc.text('Código:', margen, y);
   doc.setFont('helvetica', 'bold');
-  doc.text(`#${venta.id.slice(-8)}`, margen + 20, infoY);
+  doc.text(`#${venta.id.slice(-8)}`, margen + 20, y);
+  y += 4.5;
   
+  // Fecha
   const fechaVenta = new Date(venta.fecha_venta);
   const dia = String(fechaVenta.getDate()).padStart(2, '0');
   const mes = String(fechaVenta.getMonth() + 1).padStart(2, '0');
@@ -1686,34 +1694,38 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
   const fechaFormateada = `${dia}/${mes}/${anio} ${hora}:${minutos}`;
 
   doc.setFont('helvetica', 'normal');
-  doc.text('Fecha:', margen, infoY + 4);
+  doc.text('Fecha:', margen, y);
   doc.setFont('helvetica', 'bold');
-  doc.text(fechaFormateada, margen + 20, infoY + 4);
-  y = infoY + 8;
+  doc.text(fechaFormateada, margen + 20, y);
+  y += 4.5;
   
+  // Cliente (si existe)
   if (venta.cliente_nombre) {
     doc.setFont('helvetica', 'normal');
     doc.text('Cliente:', margen, y);
     doc.setFont('helvetica', 'bold');
     const clienteTexto = doc.splitTextToSize(venta.cliente_nombre.toUpperCase(), 45);
     doc.text(clienteTexto, margen + 20, y);
-    y += clienteTexto.length * 4;
+    y += clienteTexto.length * 4 + 0.5;
   }
   
+  // Vendedor
   doc.setFont('helvetica', 'normal');
   doc.text('Vendedor:', margen, y);
   doc.setFont('helvetica', 'bold');
   const vendedorTexto = doc.splitTextToSize(venta.nombre_usuario, 45);
   doc.text(vendedorTexto, margen + 20, y);
-  y += vendedorTexto.length * 4 + 2;
+  y += vendedorTexto.length * 4 + 3;
   
-  // Separador con estilo
+  // Separador
   doc.setLineWidth(0.3);
   doc.setDrawColor(200, 200, 200);
   doc.line(margen, y, margen + anchoUtil, y);
-  y += 4;
+  y += 4.5;
   
-  // Encabezado de productos con fondo
+  // ========== PRODUCTOS ==========
+  
+  // Encabezado de productos
   doc.setFillColor(245, 245, 245);
   doc.rect(margen, y - 2, anchoUtil, 6, 'F');
   
@@ -1727,9 +1739,9 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
   
   doc.setLineWidth(0.2);
   doc.line(margen, y, margen + anchoUtil, y);
-  y += 3;
+  y += 3.5;
   
-  // Productos con mejor formato
+  // Lista de productos
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   
@@ -1738,7 +1750,7 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
     doc.setFont('helvetica', 'bold');
     doc.text(`${producto.cantidad}`, margen + 3, y, { align: 'center' });
     
-    // Descripción del producto
+    // Descripción
     doc.setFont('helvetica', 'normal');
     const descripcion = `${producto.nombre}${producto.marca ? ' - ' + producto.marca : ''}`;
     const descripcionLineas = doc.splitTextToSize(descripcion, 38);
@@ -1751,7 +1763,7 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
     const alturaDescripcion = descripcionLineas.length * 3.5;
     y += Math.max(alturaDescripcion, 4);
     
-    // Detalle precio unitario y talle
+    // Detalle (precio unitario y talle)
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 100, 100);
@@ -1764,14 +1776,16 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
     doc.setFontSize(8);
     y += 4;
     
-    // Línea separadora sutil entre productos
+    // Línea separadora entre productos
     doc.setDrawColor(230, 230, 230);
     doc.setLineWidth(0.1);
     doc.line(margen + 12, y, margen + anchoUtil - 2, y);
-    y += 2;
+    y += 2.5;
   }
   
-  y += 1;
+  y += 2;
+  
+  // ========== TOTALES ==========
   
   // Línea antes de totales
   doc.setDrawColor(0, 0, 0);
@@ -1779,38 +1793,36 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
   doc.line(margen, y, margen + anchoUtil, y);
   y += 5;
   
-  // Cálculos de totales
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   
   const subtotal = venta.productos.reduce((sum: number, p: any) => sum + p.subtotal, 0);
   
+  // Subtotal
   doc.text('Subtotal:', margen + 30, y);
   doc.text(`$${subtotal.toFixed(2)}`, margen + anchoUtil - 6, y, { align: 'right' });
-  y += 4;
+  y += 4.5;
   
+  // Descuento (si aplica)
   if (venta.descuento_aplicado > 0) {
     const montoDescuento = subtotal * venta.descuento_aplicado / 100;
     doc.setTextColor(200, 0, 0);
     doc.text(`Descuento (${venta.descuento_aplicado}%):`, margen + 30, y);
     doc.text(`-$${montoDescuento.toFixed(2)}`, margen + anchoUtil - 6, y, { align: 'right' });
     doc.setTextColor(0, 0, 0);
-    y += 4;
+    y += 4.5;
   }
   
-  // Total destacado con fondo
-y += 1;
-doc.setFillColor(240, 240, 240);
-doc.rect(margen, y - 3, anchoUtil, 10, 'F'); 
-
-doc.setFont('helvetica', 'bold');
-doc.setFontSize(12);
-
-doc.text('TOTAL:', margen + 5, y + 3); 
-
-doc.text(`$${venta.total_final.toFixed(2)}`, margen + anchoUtil - 5, y + 3, { align: 'right' });
-
-y += 10;
+  // Total destacado
+  y += 2;
+  doc.setFillColor(240, 240, 240);
+  doc.rect(margen, y - 3, anchoUtil, 10, 'F');
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('TOTAL:', margen + 5, y + 3);
+  doc.text(`$${venta.total_final.toFixed(2)}`, margen + anchoUtil - 5, y + 3, { align: 'right' });
+  y += 10;
   
   // Método de pago
   doc.setFont('helvetica', 'normal');
@@ -1820,33 +1832,35 @@ y += 10;
   doc.text('Forma de pago:', margen, y);
   doc.setFont('helvetica', 'bold');
   doc.text(metodoPagoNormalizado.toUpperCase(), margen + 25, y);
-  y += 6;
+  y += 8;
+  
+  // ========== PIE DE PÁGINA (AL FINAL) ==========
+  
+  // Calcular posición del pie de página (10mm desde el final)
+  const yPie = alturaPagina - 15;
   
   // Línea doble de cierre
   doc.setLineWidth(0.4);
-  doc.line(margen, y, margen + anchoUtil, y);
-  y += 1;
+  doc.line(margen, yPie, margen + anchoUtil, yPie);
   doc.setLineWidth(0.2);
-  doc.line(margen, y, margen + anchoUtil, y);
-  y += 6;
+  doc.line(margen, yPie + 1, margen + anchoUtil, yPie + 1);
   
   // Mensaje de agradecimiento
   doc.setFontSize(9);
   doc.setFont('helvetica', 'bold');
+  doc.setTextColor(0, 0, 0);
   const mensajeGracias = config?.mensaje_agradecimiento || '¡Gracias por su compra!';
-  doc.text(mensajeGracias, 40, y, { align: 'center' });
-  y += 5;
-
-  // Pie de página
+  doc.text(mensajeGracias, 40, yPie + 6, { align: 'center' });
+  
+  // Información del desarrollador
   doc.setFontSize(6.5);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(120, 120, 120);
   const mensajePie = config?.mensaje_pie || 'DESARROLLADO POR PRISYS SOLUTIONS';
-  doc.text(mensajePie, 40, y, { align: 'center' });
-  y += 3;
+  doc.text(mensajePie, 40, yPie + 10, { align: 'center' });
+  
   const emailDev = config?.email_desarrollador || 'prisys.solutions@gmail.com';
-  doc.text(emailDev, 40, y, { align: 'center' });
-  y += 5;
+  doc.text(emailDev, 40, yPie + 13, { align: 'center' });
   
   return doc.output('blob');
 }
@@ -1876,7 +1890,7 @@ y += 10;
   }
 }
 
-  async enviarDetalleEmail() {
+ async enviarDetalleEmail() {
   const email = this.emailDestino();
   
   if (!email.trim()) {
@@ -1894,7 +1908,7 @@ y += 10;
   
   try {
     const venta = this.ventaParaEmail();
-    // CAMBIO IMPORTANTE: Siempre usar formato A4 para emails
+    // SIEMPRE usar formato A4 para emails, sin abrir el PDF
     const pdfBlob = await this.generarReciboPDF(venta, false, 'a4');
     if (!pdfBlob) throw new Error('No se pudo generar PDF');
     
@@ -1922,7 +1936,7 @@ y += 10;
     if (error) throw error;
     
     this.mostrarToast('Email enviado correctamente', 'success');
-    this.cerrarModalEmail();
+    this.cerrarModalEmail(); // Cierra el modal directamente sin abrir PDF
     
   } catch (error: any) {
     console.error('Error enviando email:', error);
@@ -2051,66 +2065,88 @@ y += 10;
     await this.cargarDatos();
   }
 
-  async solicitarFacturacion(venta: any) {
-  try {
-    this.cargando.set(true);
 
-    // 1. Obtener configuración FISCAL REAL
-    const { data: config, error } = await this.supabase.getClient()
-      .from('facturacion')
-      .select('*')
-      .single();
+async solicitarFacturacion(venta: any) {
+    try {
+      this.cargando.set(true);
 
-    if (error || !config) {
-      this.mostrarToast('No se encontró configuración de facturación.', 'error');
-      this.cargando.set(false);
-      return;
-    }
+      // 1. Obtener configuración FISCAL REAL
+      const { data: config, error } = await this.supabase.getClient()
+        .from('facturacion')
+        .select('*')
+        .single();
 
-    if (!config.facturacion_habilitada) {
-      this.mostrarToast('La facturación está deshabilitada.', 'warning');
-      this.cargando.set(false);
-      return;
-    }
+      if (error || !config) {
+        this.mostrarToast('No se encontró configuración de facturación.', 'error');
+        this.cargando.set(false);
+        return;
+      }
 
-    // 2. Determinar flujo según condición IVA del EMISOR
-    if (config.condicion_iva === 'Responsable Inscripto') {
-      // Si la venta tiene cliente_id, verificar si puede emitir Factura A
-      if (venta.cliente_id) {
+      if (!config.facturacion_habilitada) {
+        this.mostrarToast('La facturación está deshabilitada.', 'warning');
+        this.cargando.set(false);
+        return;
+      }
+
+      const condicionEmisor = config.condicion_iva;
+
+      // 2. Si es Monotributista o Exento, solo emite Factura C
+      if (condicionEmisor === 'Monotributista' || condicionEmisor === 'Exento') {
+        await this.ejecutarFacturacion(venta, 'C');
+        this.cargando.set(false);
+        return;
+      }
+
+      // 3. Si es Responsable Inscripto, siempre mostrar modal de selección
+      if (condicionEmisor === 'Responsable Inscripto') {
+        // Si no tiene cliente asociado
+        if (!venta.cliente_id) {
+          this.ventaParaFacturar.set({
+            ...venta,
+            cliente_info: {
+              nombre: 'CONSUMIDOR FINAL',
+              cuit: null,
+              condicion_iva: 'Consumidor Final'
+            }
+          });
+          this.mostrarModalSeleccionFactura.set(true);
+          this.cargando.set(false);
+          return;
+        }
+
+        // Obtener datos del cliente
         const { data: clienteData, error: errorCliente } = await this.supabase.getClient()
           .from('clientes')
           .select('cuit, condicion_iva, nombre')
           .eq('id', venta.cliente_id)
           .single();
 
-        if (!errorCliente && clienteData) {
-          // Si el cliente es RI con CUIT, ofrecer opción de Factura A
-          if (clienteData.condicion_iva === 'Responsable Inscripto' && clienteData.cuit) {
-            // Mostrar modal para elegir entre A o B
-            this.ventaParaFacturar.set({
-              ...venta,
-              cliente_info: clienteData // Agregar info del cliente
-            });
-            this.mostrarModalSeleccionFactura.set(true);
-            this.cargando.set(false);
-            return;
-          }
+        if (errorCliente || !clienteData) {
+          this.mostrarToast('Error al obtener datos del cliente.', 'error');
+          this.cargando.set(false);
+          return;
         }
-      }
-      
-      // Si no tiene cliente o no es RI, factura B directamente
-      await this.ejecutarFacturacion(venta, 'B');
-    } else {
-      // Si es Monotributista o Exento, factura C directo
-      await this.ejecutarFacturacion(venta, 'C');
-    }
 
-  } catch (err: any) {
-    console.error(err);
-    this.mostrarToast("Error al verificar configuración: " + err.message, 'error');
-    this.cargando.set(false);
+        // Siempre mostrar modal con información del cliente
+        this.ventaParaFacturar.set({
+          ...venta,
+          cliente_info: clienteData
+        });
+        this.mostrarModalSeleccionFactura.set(true);
+        this.cargando.set(false);
+        return;
+      }
+
+      // Caso por defecto
+      this.mostrarToast('Condición IVA del emisor no reconocida.', 'error');
+      this.cargando.set(false);
+
+    } catch (err: any) {
+      console.error(err);
+      this.mostrarToast("Error al verificar configuración: " + err.message, 'error');
+      this.cargando.set(false);
+    }
   }
-}
 
   cerrarModalFacturacion() {
     this.mostrarModalSeleccionFactura.set(false);
@@ -2118,54 +2154,55 @@ y += 10;
   }
 
   async confirmarFacturacion(tipo: string) {
-    const venta = this.ventaParaFacturar();
-    if (!venta) return;
+  const venta = this.ventaParaFacturar();
+  if (!venta) return;
 
-    this.cerrarModalFacturacion(); // Cerramos modal
-    await this.ejecutarFacturacion(venta, tipo); // Ejecutamos
-  }
-
- private async ejecutarFacturacion(venta: any, tipoFactura: string) {
-  try {
-    this.cargando.set(true);
-
-    // Validación específica para Factura A
-    if (tipoFactura === 'A') {
-      if (!venta.cliente_id) {
-        this.mostrarToast("Error: Esta venta no tiene un cliente asociado.", 'error');
-        this.cargando.set(false);
-        return;
-      }
-
-      // Verificar datos del cliente
-      const clienteInfo = venta.cliente_info || await this.obtenerDatosCliente(venta.cliente_id);
-      
-      if (!clienteInfo?.cuit) {
-        this.mostrarToast("El cliente asociado no tiene un CUIT cargado.", 'error');
-        this.cargando.set(false);
-        return;
-      }
-      
-      if (clienteInfo.condicion_iva !== 'Responsable Inscripto') {
-        this.mostrarToast("El cliente no es Responsable Inscripto.", 'warning');
-        this.cargando.set(false);
-        return;
-      }
-    }
-
-    await this.facturacionService.facturarVenta(venta.id, tipoFactura);
-
-    this.mostrarToast(`Factura ${tipoFactura} generada con éxito`, 'success');
-    await this.cargarDatos(); // Recargar la lista
-
-  } catch (err: any) {
-    console.error(err);
-    this.mostrarToast("Error al facturar: " + (err.message || err), 'error');
-  } finally {
-    this.cargando.set(false);
-    this.cdr.markForCheck();
-  }
+  const requiereLeyenda = tipo === 'A'; 
+  
+  this.cerrarModalFacturacion();
+  await this.ejecutarFacturacion(venta, tipo, requiereLeyenda);
 }
+
+private async ejecutarFacturacion(venta: any, tipoFactura: string, requiereLeyenda: boolean = false) {
+    try {
+      this.cargando.set(true);
+
+      // Validación específica para Factura A
+      if (tipoFactura === 'A') {
+        const clienteInfo = venta.cliente_info;
+        const condicionCliente = clienteInfo?.condicion_iva;
+
+        // Si es Responsable Inscripto, debe tener CUIT
+        if (condicionCliente === 'Responsable Inscripto' && !clienteInfo?.cuit) {
+          this.mostrarToast("El cliente Responsable Inscripto no tiene un CUIT cargado.", 'error');
+          this.cargando.set(false);
+          return;
+        }
+
+        // Si es Monotributista, activar leyenda especial
+        if (condicionCliente === 'Monotributista' || condicionCliente === 'Monotributo') {
+          requiereLeyenda = true;
+        }
+      }
+
+      // Llamar al servicio de facturación
+      await this.facturacionService.facturarVenta(venta.id, tipoFactura, requiereLeyenda);
+
+      const mensajeExito = requiereLeyenda 
+        ? `Factura ${tipoFactura} generada con éxito (con leyenda especial para monotributista)`
+        : `Factura ${tipoFactura} generada con éxito`;
+      
+      this.mostrarToast(mensajeExito, 'success');
+      await this.cargarDatos();
+
+    } catch (err: any) {
+      console.error(err);
+      this.mostrarToast("Error al facturar: " + (err.message || err), 'error');
+    } finally {
+      this.cargando.set(false);
+      this.cdr.markForCheck();
+    }
+  }
 
 // Método auxiliar para obtener datos del cliente
 private async obtenerDatosCliente(clienteId: string) {
@@ -2188,5 +2225,10 @@ async filtrarFacturacion(tipo:'todas'| 'facturadas' | 'no_facturadas') {
   this.filtroFacturacion.set(tipo);
   this.paginaActual.set(1);
   await this.cargarDatos();
+}
+
+limpiarBusquedaProducto(): void {
+  this.busquedaProducto.set('');
+  this.cdr.markForCheck();
 }
 }

@@ -471,4 +471,10 @@ private toastTimeout: ReturnType<typeof setTimeout> | null = null;
     this.isToastVisible.set(false);
   }, 3000);
 }
+
+limpiarBusqueda(): void {
+  this.filtroTexto.set('');
+  this.searchSubject.next('');
+  this.reiniciarCargaProductos();
+}
 }

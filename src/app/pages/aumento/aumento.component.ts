@@ -15,6 +15,7 @@ interface ProductoAumento {
   nombre: string;
   marca: string;
   categoria: string;
+  talle: string;
   precio: number;
   cantidad_stock: number;
   cantidad_deposito: number;
@@ -35,8 +36,7 @@ export class AumentoComponent implements OnInit, OnDestroy {
 
   // Columnas específicas para consultas optimizadas
   private readonly COLUMNAS_CATEGORIA = 'categoria';
-  private readonly COLUMNAS_PRODUCTO = 'id, codigo, nombre, marca, categoria, precio, cantidad_stock, cantidad_deposito, activo';
-
+private readonly COLUMNAS_PRODUCTO = 'id, codigo, nombre, marca, categoria, talle, precio, cantidad_stock, cantidad_deposito, activo';
   // --- SIGNALS PARA ESTADO DEL COMPONENTE ---
   isLoading = signal(true);
   cargandoProductosCategoria = signal<{ [key: string]: boolean }>({});
@@ -248,53 +248,60 @@ tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
   }
 
   async filtrarProductosGlobal(termino: string) {
-    if (!termino.trim()) {
-      this.resetearPaginacion();
-      if (this.categorias().length === 0) await this.cargarCategoriasUnicas();
-      return;
-    }
+  if (!termino.trim()) {
+    // Resetear productos y expandidos
+    this.productosPorCategoria.set({});
+    this.expandido.set({});
     
-    try {
-      this.isLoading.set(true);
-      const t = termino.trim();
-
-      const { data, error } = await this.supabase.getClient()
-        .from('productos')
-        .select(this.COLUMNAS_PRODUCTO)
-        .eq('activo', true)
-        .eq('eliminado', false)
-        .or(`nombre.ilike.%${t}%,marca.ilike.%${t}%,categoria.ilike.%${t}%`)
-        .limit(100);
-
-      if (error) throw error;
-
-      const resultados = data || [];
-      const nuevoProductosPorCategoria: { [key: string]: ProductoAumento[] } = {};
-      const categoriasEncontradas = new Set<string>();
-
-      resultados.forEach((prod: any) => {
-        categoriasEncontradas.add(prod.categoria);
-        if (!nuevoProductosPorCategoria[prod.categoria]) {
-          nuevoProductosPorCategoria[prod.categoria] = [];
-        }
-        nuevoProductosPorCategoria[prod.categoria].push(prod);
-      });
-
-      this.productosPorCategoria.set(nuevoProductosPorCategoria);
-      this.categorias.set(Array.from(categoriasEncontradas).sort());
-      
-      const nuevosExpandidos: { [key: string]: boolean } = {};
-      Array.from(categoriasEncontradas).forEach(c => nuevosExpandidos[c] = true);
-      this.expandido.set(nuevosExpandidos);
-      
-      this.resetearPaginacion();
-
-    } catch (error) {
-      console.error('Error en búsqueda:', error);
-    } finally {
-      this.isLoading.set(false);
-    }
+    // Recargar categorías originales
+    this.isLoading.set(true);
+    await this.cargarCategoriasUnicas();
+    this.resetearPaginacion();
+    this.isLoading.set(false);
+    return;
   }
+  
+  try {
+    this.isLoading.set(true);
+    const t = termino.trim();
+
+    const { data, error } = await this.supabase.getClient()
+      .from('productos')
+      .select(this.COLUMNAS_PRODUCTO)
+      .eq('activo', true)
+      .eq('eliminado', false)
+      .or(`nombre.ilike.%${t}%,marca.ilike.%${t}%,categoria.ilike.%${t}%,codigo.ilike.%${t}%`)
+      .limit(100);
+
+    if (error) throw error;
+
+    const resultados = data || [];
+    const nuevoProductosPorCategoria: { [key: string]: ProductoAumento[] } = {};
+    const categoriasEncontradas = new Set<string>();
+
+    resultados.forEach((prod: any) => {
+      categoriasEncontradas.add(prod.categoria);
+      if (!nuevoProductosPorCategoria[prod.categoria]) {
+        nuevoProductosPorCategoria[prod.categoria] = [];
+      }
+      nuevoProductosPorCategoria[prod.categoria].push(prod);
+    });
+
+    this.productosPorCategoria.set(nuevoProductosPorCategoria);
+    this.categorias.set(Array.from(categoriasEncontradas).sort());
+    
+    const nuevosExpandidos: { [key: string]: boolean } = {};
+    Array.from(categoriasEncontradas).forEach(c => nuevosExpandidos[c] = true);
+    this.expandido.set(nuevosExpandidos);
+    
+    this.resetearPaginacion();
+
+  } catch (error) {
+    console.error('Error en búsqueda:', error);
+  } finally {
+    this.isLoading.set(false);
+  }
+}
 
   cambiarPagina(pagina: number) {
     const total = this.totalPaginas();
@@ -477,4 +484,19 @@ tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
   trackByResumen(index: number, item: string): number {
     return index;
   }
+
+  async limpiarBusqueda(): Promise<void> {
+  this._filtroTexto.set('');
+  this.searchSubject.next('');
+  
+  // Resetear productos y expandidos
+  this.productosPorCategoria.set({});
+  this.expandido.set({});
+  
+  // Recargar categorías originales
+  this.isLoading.set(true);
+  await this.cargarCategoriasUnicas();
+  this.resetearPaginacion();
+  this.isLoading.set(false);
+}
 }

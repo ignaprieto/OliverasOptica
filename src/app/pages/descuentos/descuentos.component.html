@@ -272,44 +272,75 @@
                  
                  <div class="p-3 gap-3 flex flex-col">
                      <div class="relative">
-                         <input type="text" [ngModel]="busquedaProducto" (ngModelChange)="onSearchProducto($event)" name="search" placeholder="Buscar producto..."
-                           class="w-full text-sm pl-8 px-3 py-2 border rounded-lg
-                                  bg-white border-gray-300 text-gray-800
-                                  dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200" />
-                         <div *ngIf="cargandoProductos()" class="absolute right-3 top-2.5">
-                             <div class="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
-                         </div>
-                         <div class="absolute left-2.5 top-2.5 text-gray-400">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                         </div>
-                     </div>
+  <input type="text" 
+    [ngModel]="busquedaProducto" 
+    (ngModelChange)="onSearchProducto($event)" 
+    name="search" 
+    placeholder="Buscar producto..."
+    class="w-full text-sm pl-8 px-3 py-2 border rounded-lg
+           bg-white border-gray-300 text-gray-800
+           dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"
+    [style.padding-right]="busquedaProducto.trim().length > 0 ? '6rem' : '3rem'" />
+  
+  <!-- Botón X para limpiar búsqueda -->
+  <button
+    *ngIf="busquedaProducto.trim().length > 0 && !cargandoProductos()"
+    (click)="limpiarBusquedaProducto()"
+    type="button"
+    class="absolute right-9 top-1/2 transform -translate-y-1/2 p-1 rounded-lg transition-all duration-200 hover:bg-red-100 dark:hover:bg-red-900/30
+           text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400"
+    title="Limpiar búsqueda">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+    </svg>
+  </button>
+  
+  <div *ngIf="cargandoProductos()" class="absolute right-3 top-2.5">
+    <div class="animate-spin h-4 w-4 border-2 border-blue-500 rounded-full border-t-transparent"></div>
+  </div>
+  <div class="absolute left-2.5 top-2.5 text-gray-400">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+    </svg>
+  </div>
+</div>
 
                      <div *ngIf="busquedaProducto.trim().length > 0" 
-                          class="max-h-60 overflow-y-auto rounded-lg border
-                                 bg-white border-gray-300
-                                 dark:bg-gray-800 dark:border-gray-600">
-                         
-                         <div *ngFor="let prod of productosBuscados(); trackBy: trackByProductoId" 
-                             (click)="toggleProducto(prod)"
-                             class="p-2 text-sm cursor-pointer flex justify-between items-center border-b last:border-0 transition-colors
-                                    border-gray-100 hover:bg-gray-50
-                                    dark:border-gray-700 dark:hover:bg-gray-700">
-                             
-                             <div class="flex flex-col">
-                                 <span class="text-gray-800 dark:text-gray-200">{{ prod.nombre }}</span>
-                                 <span class="text-xs opacity-60">{{ prod.categoria }} | {{ prod.marca }}</span>
-                             </div>
+     class="max-h-60 overflow-y-auto rounded-lg border
+            bg-white border-gray-300
+            dark:bg-gray-800 dark:border-gray-600">
+    
+    <div *ngFor="let prod of productosBuscados(); trackBy: trackByProductoId" 
+        (click)="toggleProducto(prod)"
+        class="p-2 text-sm cursor-pointer flex justify-between items-center border-b last:border-0 transition-colors
+               border-gray-100 hover:bg-gray-50
+               dark:border-gray-700 dark:hover:bg-gray-700">
+        
+        <div class="flex flex-col flex-1 min-w-0">
+            <span class="text-gray-800 dark:text-gray-200 truncate">{{ prod.nombre }}</span>
+            <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-xs opacity-60">{{ prod.categoria }} | {{ prod.marca }}</span>
+                <span *ngIf="prod.talle" 
+                      class="text-[10px] px-1.5 py-0.5 rounded font-medium
+                             bg-gray-200 text-gray-700
+                             dark:bg-gray-700 dark:text-gray-300">
+                    {{ prod.talle }}
+                </span>
+            </div>
+        </div>
 
-                             <div class="w-5 h-5 rounded border flex items-center justify-center ml-2 transition-colors"
-                                  [ngClass]="estaSeleccionado(prod.id) ? 'bg-blue-500 border-blue-500' : 'border-gray-300 dark:border-gray-500'">
-                                 <svg *ngIf="estaSeleccionado(prod.id)" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                             </div>
-                         </div>
-                         
-                         <div *ngIf="productosBuscados().length === 0 && !cargandoProductos()" class="p-4 text-center text-xs opacity-60">
-                             No se encontraron productos con "{{ busquedaProducto }}"
-                         </div>
-                     </div>
+        <div class="w-5 h-5 rounded border flex items-center justify-center ml-2 transition-colors flex-shrink-0"
+             [ngClass]="estaSeleccionado(prod.id) ? 'bg-blue-500 border-blue-500' : 'border-gray-300 dark:border-gray-500'">
+            <svg *ngIf="estaSeleccionado(prod.id)" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+    </div>
+    
+    <div *ngIf="productosBuscados().length === 0 && !cargandoProductos()" class="p-4 text-center text-xs opacity-60">
+        No se encontraron productos con "{{ busquedaProducto }}"
+    </div>
+</div>
 
                      <div *ngIf="busquedaProducto.trim().length === 0" class="max-h-80 overflow-y-auto border rounded-lg
                           border-gray-300 dark:border-gray-700">
@@ -347,24 +378,36 @@
                                 </div>
 
                                 <div *ngIf="!cargandoCategoria()[cat]" class="grid grid-cols-1 gap-1">
-                                      <div *ngFor="let prod of productosPorCategoria()[cat]; trackBy: trackByProductoId" 
-                                           class="flex items-center gap-3 p-2 rounded cursor-pointer
-                                                  hover:bg-gray-200 dark:hover:bg-gray-700"
-                                           (click)="toggleProducto(prod, cat)">
-                                         
-                                         <div class="w-4 h-4 rounded border flex items-center justify-center
-                                              bg-white dark:bg-gray-800"
-                                              [ngClass]="estaSeleccionado(prod.id) ? 'border-blue-500' : 'border-gray-400'">
-                                              <div *ngIf="estaSeleccionado(prod.id)" class="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
-                                         </div>
-                                         
-                                         <div class="flex-1 min-w-0">
-                                              <div class="text-xs font-medium truncate text-gray-800 dark:text-gray-200">{{ prod.nombre }}</div>
-                                              <div class="text-[10px] text-gray-500">{{ prod.marca }}</div>
-                                         </div>
-                                         <div class="text-xs font-bold text-green-600 whitespace-nowrap">{{ prod.precio | monedaArs }}</div>
-                                      </div>
-                                </div>
+    <div *ngFor="let prod of productosPorCategoria()[cat]; trackBy: trackByProductoId" 
+         class="flex items-center gap-3 p-2 rounded cursor-pointer
+                hover:bg-gray-200 dark:hover:bg-gray-700"
+         (click)="toggleProducto(prod, cat)">
+       
+       <div class="w-4 h-4 rounded border flex items-center justify-center flex-shrink-0
+            bg-white dark:bg-gray-800"
+            [ngClass]="estaSeleccionado(prod.id) ? 'border-blue-500' : 'border-gray-400'">
+            <div *ngIf="estaSeleccionado(prod.id)" class="w-2.5 h-2.5 bg-blue-500 rounded-sm"></div>
+       </div>
+       
+       <div class="flex-1 min-w-0">
+            <div class="text-xs font-medium truncate text-gray-800 dark:text-gray-200">
+                {{ prod.nombre }}
+            </div>
+            <div class="flex items-center gap-2 mt-0.5">
+                <span class="text-[10px] text-gray-500">{{ prod.marca }}</span>
+                <span *ngIf="prod.talle" 
+                      class="text-[9px] px-1 py-0.5 rounded font-medium
+                             bg-gray-200 text-gray-600
+                             dark:bg-gray-700 dark:text-gray-400">
+                    {{ prod.talle }}
+                </span>
+            </div>
+       </div>
+       <div class="text-xs font-bold text-green-600 whitespace-nowrap flex-shrink-0">
+           {{ prod.precio | monedaArs }}
+       </div>
+    </div>
+</div>
                            </div>
                         </div>
                      </div>
@@ -489,13 +532,24 @@
                                          <h4 class="text-xs font-bold uppercase tracking-wider mb-3 text-gray-500 dark:text-gray-400">Productos en la campaña</h4>
                                          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                                               <div *ngFor="let prod of p.productos; trackBy: trackByProductoId" 
-                                                   class="flex items-center p-2 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                                                   <div class="w-1.5 h-8 bg-blue-500 rounded-l mr-3"></div>
-                                                   <div class="flex-1 min-w-0">
-                                                       <div class="text-sm font-medium truncate text-gray-900 dark:text-gray-100">{{ prod.nombre }}</div>
-                                                       <div class="text-xs text-gray-500 font-mono">{{ prod.codigo }} | {{ prod.marca }}</div>
-                                                   </div>
-                                              </div>
+     class="flex items-center p-2 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+     <div class="w-1.5 h-8 bg-blue-500 rounded-l mr-3 flex-shrink-0"></div>
+     <div class="flex-1 min-w-0">
+         <div class="text-sm font-medium truncate text-gray-900 dark:text-gray-100">
+             {{ prod.nombre }}
+         </div>
+         <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+             <span class="text-xs text-gray-500 font-mono">{{ prod.codigo }}</span>
+             <span class="text-xs text-gray-500">{{ prod.marca }}</span>
+             <span *ngIf="prod.talle" 
+                   class="text-[10px] px-1.5 py-0.5 rounded font-medium
+                          bg-blue-100 text-blue-700
+                          dark:bg-blue-900/30 dark:text-blue-400">
+                 Talle: {{ prod.talle }}
+             </span>
+         </div>
+     </div>
+</div>
                                          </div>
                                          <div *ngIf="!p.productos?.length" class="text-xs italic text-gray-500">Cargando productos o sin items asignados...</div>
                                      </div>

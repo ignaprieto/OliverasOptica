@@ -90,14 +90,18 @@ async obtenerDatosFacturacionCompleta() {
   }
 
   // Llama a la Edge Function para facturar en AFIP
-  async facturarVenta(ventaId: string, tipoFactura: string) {
-    const { data, error } = await this.supabase.functions.invoke('afip-facturacion', {
-      body: { ventaId, tipoFactura }
-    });
+  async facturarVenta(ventaId: string, tipoFactura: string, requiereLeyenda: boolean = false) {
+  const { data, error } = await this.supabase.functions.invoke('arca-facturacion', {
+    body: { 
+      ventaId, 
+      tipoFactura,
+      requiereLeyenda 
+    }
+  });
 
-    if (error) throw error;
-    return data;
-  }
+  if (error) throw error;
+  return data;
+}
 
   async obtenerEstadoFacturacion() {
     const { data, error } = await this.supabase

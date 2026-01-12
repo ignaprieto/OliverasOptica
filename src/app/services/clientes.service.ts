@@ -8,6 +8,7 @@ export interface Cliente {
   telefono?: string;
   dni?: string;
   direccion?: string;
+  segundo_contacto?: string;
   limite_credito: number;
   saldo_actual: number;
   activo: boolean;

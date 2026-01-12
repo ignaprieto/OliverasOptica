@@ -481,4 +481,10 @@ onEnterBusqueda() {
   trackByEstado(index: number, estado: string): string {
     return estado;
   }
+
+  limpiarBusqueda(): void {
+  this._filtroInterno.set('');
+  this.searchSubject.next('');
+  this.resetearVirtualScroll();
+}
 }

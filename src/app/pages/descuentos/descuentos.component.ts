@@ -27,13 +27,13 @@ export class DescuentosComponent implements OnInit, OnDestroy {
   // Columnas específicas para consultas optimizadas
   private readonly COLUMNAS_DESCUENTOS = '*';
   private readonly COLUMNAS_PRODUCTOS = 'id, codigo, nombre, marca, categoria, precio, talle, cantidad_stock';
-  private readonly COLUMNAS_PROMOCIONES = `
-    *,
-    promocion_productos (
-      producto_id,
-      productos ( id, codigo, nombre, marca, categoria, precio )
-    )
-  `;
+ private readonly COLUMNAS_PROMOCIONES = `
+  *,
+  promocion_productos (
+    producto_id,
+    productos ( id, codigo, nombre, marca, categoria, precio, talle )
+  )
+`;
   
   // --- SIGNALS PARA ESTADO DEL COMPONENTE ---
   tabActivo = signal<'descuentos' | 'promociones'>('descuentos');
@@ -715,4 +715,9 @@ tipoMensajeToast = signal<'success' | 'error' | 'warning'>('success');
     if (now > fin) return 'finalizada';
     return 'en_curso';
   }
+
+  limpiarBusquedaProducto(): void {
+  this._busquedaProducto.set('');
+  this.productosBuscados.set([]);
+}
 }

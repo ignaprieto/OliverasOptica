@@ -2,7 +2,7 @@
             bg-gray-50 text-gray-800
             dark:bg-gray-900 dark:text-gray-100">
   
-  <div class="max-w-[1920px] mx-auto space-y-6">
+  <div class="max-w-480 mx-auto space-y-6">
 
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
@@ -170,7 +170,7 @@
              <button *appPermiso="['stock', modo === 'agregar' ? 'crear' : 'editar']"
                (click)="guardarProducto()" 
                class="w-full py-3.5 rounded-xl font-bold text-white shadow-lg transform active:scale-[0.98] transition-all flex justify-center items-center gap-2"
-               [ngClass]="modo === 'agregar' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500' : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400'">
+               [ngClass]="modo === 'agregar' ? 'bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500' : 'bg-linear-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400'">
                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                <span>{{ modo === 'agregar' ? 'Guardar Producto' : 'Actualizar Cambios' }}</span>
              </button>
@@ -259,10 +259,10 @@
     </svg>
   </button>
 
-  <div *ngIf="mostrarMenuExportar" (click)="mostrarMenuExportar = false" class="fixed inset-0 z-[60]"></div>
+  <div *ngIf="mostrarMenuExportar" (click)="mostrarMenuExportar = false" class="fixed inset-0 z-60"></div>
 
   <div *ngIf="mostrarMenuExportar" 
-       class="absolute right-0 mt-2 w-56 rounded-xl shadow-xl z-[70] border overflow-hidden animate-fade-in-up origin-top-right ring-1 ring-black ring-opacity-5
+       class="absolute right-0 mt-2 w-56 rounded-xl shadow-xl z-70 border overflow-hidden animate-fade-in-up origin-top-right ring-1 ring-black ring-opacity-5
               bg-white border-gray-100
               dark:bg-gray-800 dark:border-gray-700">
     
@@ -339,6 +339,13 @@
                </svg>
                {{ mostrarProductosEliminados ? 'Volver al inventario' : 'Ver papelera' }}
             </button>
+
+            <button (click)="verHistorialAuditoria()" class="text-xs font-bold flex items-center gap-1 hover:underline transition-colors text-indigo-600 dark:text-indigo-400">
+               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+               </svg>
+               Ver auditoría
+            </button>
         </div>
 
         <div *ngIf="modoSeleccionMultiple && productosSeleccionados.size > 0" class="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in shadow-sm">
@@ -367,7 +374,7 @@
            </div>
         </div>
 
-        <div class="rounded-2xl shadow-xl border overflow-hidden flex flex-col h-[650px] relative
+        <div class="rounded-2xl shadow-xl border overflow-hidden flex flex-col h-162.5 relative
                     bg-white border-white
                     dark:bg-gray-800 dark:border-gray-700">
           
@@ -411,22 +418,22 @@
                    }"
                    (click)="!modoSeleccionMultiple && !mostrarProductosEliminados && seleccionarProducto(prod)">
                  
-                 <div *ngIf="modoSeleccionMultiple" class="w-12 text-center flex-shrink-0" (click)="$event.stopPropagation()">
+                 <div *ngIf="modoSeleccionMultiple" class="w-12 text-center shrink-0" (click)="$event.stopPropagation()">
                     <input type="checkbox" [checked]="isProductoSeleccionado(prod.id)" (change)="toggleSeleccionProducto(prod.id, $event)"
                            class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer transition-transform transform active:scale-90">
                  </div>
 
-                 <div class="w-32 font-mono text-xs opacity-70 truncate pr-2 flex-shrink-0">{{ prod.codigo }}</div>
+                 <div class="w-32 font-mono text-xs opacity-70 truncate pr-2 shrink-0">{{ prod.codigo }}</div>
                  <div class="flex-1 font-medium truncate pr-4 text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                     {{ prod.nombre }}
                  </div>
-                 <div class="w-24 hidden md:block text-gray-500 truncate pr-2 flex-shrink-0">{{ prod.marca }}</div>
-                 <div class="w-20 hidden sm:block text-center flex-shrink-0">
+                 <div class="w-24 hidden md:block text-gray-500 truncate pr-2 shrink-0">{{ prod.marca }}</div>
+                 <div class="w-20 hidden sm:block text-center shrink-0">
                     <span class="bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded text-xs font-medium text-gray-600 dark:text-gray-300">{{ prod.talle }}</span>
                  </div>
-                 <div class="w-24 hidden lg:block text-gray-500 truncate text-xs flex-shrink-0">{{ prod.categoria }}</div>
+                 <div class="w-24 hidden lg:block text-gray-500 truncate text-xs shrink-0">{{ prod.categoria }}</div>
 
-                 <div class="w-28 text-right font-bold text-green-600 dark:text-green-400 flex-shrink-0">
+                 <div class="w-28 text-right font-bold text-green-600 dark:text-green-400 shrink-0">
                     <div *ngIf="prod.tiene_promocion" class="flex flex-col">
                        <span class="text-[10px] line-through text-red-400 decoration-red-400 opacity-70">{{ prod.precio | monedaArs }}</span>
                        <span>{{ (prod.precio_promocional || 0) | monedaArs }}</span>
@@ -434,7 +441,7 @@
                     <span *ngIf="!prod.tiene_promocion">{{ prod.precio | monedaArs }}</span>
                  </div>
 
-                 <div class="w-24 text-center flex-shrink-0">
+                 <div class="w-24 text-center shrink-0">
                     <span class="px-2.5 py-1 rounded-full text-xs font-bold shadow-sm"
                        [class.bg-red-100]="prod.cantidad_stock < 5" [class.text-red-800]="prod.cantidad_stock < 5"
                        [class.bg-yellow-100]="prod.cantidad_stock >= 5 && prod.cantidad_stock <= 20" [class.text-yellow-800]="prod.cantidad_stock >= 5 && prod.cantidad_stock <= 20"
@@ -443,18 +450,18 @@
                     </span>
                  </div>
 
-                 <div class="w-20 text-center hidden xl:block text-gray-500 font-mono text-xs flex-shrink-0 font-medium">
+                 <div class="w-20 text-center hidden xl:block text-gray-500 font-mono text-xs shrink-0 font-medium">
                     {{ prod.cantidad_deposito || '-' }}
                  </div>
 
                  <ng-container *ngIf="mostrarProductosEliminados; else normalActions">
-  <div class="w-32 text-right text-xs flex-shrink-0 flex flex-col items-end">
+  <div class="w-32 text-right text-xs shrink-0 flex flex-col items-end">
     <span class="font-bold text-red-500 truncate max-w-full" title="{{ prod.eliminado_por }}">{{ prod.eliminado_por || '?' }}</span>
     <span class="text-[10px] text-gray-400">{{ prod.eliminado_en | date:'dd/MM HH:mm' }}</span>
   </div>
   
   <!-- ACTUALIZAR ESTA SECCIÓN CON BOTONES CONDICIONALES -->
-  <div class="w-24 text-center flex-shrink-0 flex gap-2 justify-center" (click)="$event.stopPropagation()">
+  <div class="w-24 text-center shrink-0 flex gap-2 justify-center" (click)="$event.stopPropagation()">
     <button *appPermiso="['stock', 'editar']" 
             (click)="restaurarProducto(prod)" 
             class="p-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors" 
@@ -477,7 +484,7 @@
 </ng-container>
 
                  <ng-template #normalActions>
-                   <div class="w-20 text-center flex-shrink-0" (click)="$event.stopPropagation()">
+                   <div class="w-20 text-center shrink-0" (click)="$event.stopPropagation()">
                      <button *appPermiso="['stock', 'editar']" (click)="toggleEstadoProducto(prod)"
                        class="w-8 h-8 rounded-full flex items-center justify-center transition-all mx-auto hover:scale-110 shadow-sm"
                        [class.bg-green-100]="prod.activo" [class.text-green-600]="prod.activo"
@@ -513,7 +520,7 @@
 
   </div>
 
-  <div *ngIf="isToastVisible()" class="fixed bottom-6 right-6 z-[10000] animate-slide-in-right">
+  <div *ngIf="isToastVisible()" class="fixed bottom-6 right-6 z-10000 animate-slide-in-right">
   <div class="flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border
               bg-white border-gray-100 text-gray-800
               dark:bg-gray-800 dark:border-gray-700 dark:text-white">
@@ -522,7 +529,7 @@
       'bg-green-100 text-green-600': tipoMensajeToast() === 'success',
       'bg-red-100 text-red-600': tipoMensajeToast() === 'error',
       'bg-amber-100 text-amber-600': tipoMensajeToast() === 'warning'
-    }" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
+    }" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
       <svg *ngIf="tipoMensajeToast() === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
       <svg *ngIf="tipoMensajeToast() === 'error'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       <svg *ngIf="tipoMensajeToast() === 'warning'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -535,7 +542,7 @@
   </div>
 </div>
 
-  <div *ngIf="mostrarScanner" class="fixed inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" (click)="cerrarScanner()">
+  <div *ngIf="mostrarScanner" class="fixed inset-0 z-200 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in" (click)="cerrarScanner()">
      <div class="w-full max-w-lg bg-gray-900 rounded-3xl overflow-hidden border border-gray-700 relative shadow-2xl" (click)="$event.stopPropagation()">
         <div class="absolute top-4 right-4 z-20">
            <button (click)="cerrarScanner()" class="bg-gray-800/80 text-white p-2.5 rounded-full hover:bg-red-600 transition-colors backdrop-blur-sm">
@@ -584,7 +591,7 @@
         </div>
         
         <label class="block text-xs font-bold uppercase mb-2 opacity-70 text-gray-700 dark:text-gray-300">Motivo (Obligatorio)</label>
-        <textarea [(ngModel)]="motivoEliminacion" class="w-full border rounded-xl p-3 mb-6 focus:ring-2 focus:ring-red-500 outline-none text-sm min-h-[80px]
+        <textarea [(ngModel)]="motivoEliminacion" class="w-full border rounded-xl p-3 mb-6 focus:ring-2 focus:ring-red-500 outline-none text-sm min-h-20
                                                          bg-white border-gray-300 text-gray-900
                                                          dark:bg-gray-900 dark:border-gray-600 dark:text-white" placeholder="Ej: Vencido, roto, error de carga..."></textarea>
 
@@ -600,11 +607,11 @@
   </div>
 
 <!-- MODAL PRESUPUESTO -->
-<div *ngIf="mostrarModalPresupuesto()" class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+<div *ngIf="mostrarModalPresupuesto()" class="fixed inset-0 z-100 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
   <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col border border-gray-200 dark:border-gray-700 animate-scale-up">
     
     <!-- Header FIJO -->
-    <div class="flex-shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+    <div class="shrink-0 bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-4 flex justify-between items-center rounded-t-2xl">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
           <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -668,7 +675,7 @@
     <!-- Backdrop para cerrar dropdown -->
     <div *ngIf="productosEncontrados().length > 0" 
          (click)="cerrarDropdownProductos()" 
-         class="fixed inset-0 z-[90]"></div>
+         class="fixed inset-0 z-90"></div>
 
     <div class="flex-1 w-full relative group">
       <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -690,7 +697,7 @@
       <button *ngIf="txtBusquedaPresupuesto && txtBusquedaPresupuesto.trim()" 
               (click)="limpiarBusquedaPresupuesto($event)" 
               type="button"
-              class="absolute right-14 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 z-[92]"
+              class="absolute right-14 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 z-92"
               title="Limpiar búsqueda">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -699,7 +706,7 @@
 
       <button (click)="abrirScannerPresupuesto()" 
               type="button"
-              class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 z-[92]"
+              class="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-all hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 z-92"
               title="Escanear para buscar">
         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
@@ -710,7 +717,7 @@
     
     <!-- Indicador de carga -->
     <div *ngIf="cargandoBusquedaPresupuesto()" 
-         class="absolute right-16 top-1/2 -translate-y-1/2 z-[91] pointer-events-none">
+         class="absolute right-16 top-1/2 -translate-y-1/2 z-91 pointer-events-none">
       <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
     </div>
 
@@ -723,7 +730,7 @@
     <!-- Lista de Resultados -->
     <div *ngIf="productosEncontrados().length > 0" 
          (click)="$event.stopPropagation()"
-         class="absolute z-[95] w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+         class="absolute z-95 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-60 overflow-y-auto">
       <button *ngFor="let prod of productosEncontrados()" 
               (click)="agregarAlCarrito(prod)"
               type="button"
@@ -745,7 +752,7 @@
     <!-- Mensaje cuando no hay resultados -->
     <div *ngIf="!cargandoBusquedaPresupuesto() && txtBusquedaPresupuesto.trim() && productosEncontrados().length === 0" 
          (click)="$event.stopPropagation()"
-         class="absolute z-[95] w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 text-center">
+         class="absolute z-95 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 text-center">
       <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <p class="text-sm text-gray-500 dark:text-gray-400">No se encontraron productos</p>
       <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Intenta con otro término</p>
@@ -840,7 +847,7 @@
       </div>
 
       <!-- Totales -->
-      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-900">
+      <div class="bg-linear-to-br from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-800 p-6 rounded-xl border-2 border-blue-200 dark:border-blue-900">
         <div class="space-y-3">
           <div class="flex justify-between text-sm">
             <span class="text-gray-600 dark:text-gray-300">Cantidad de Items:</span>
@@ -868,7 +875,7 @@
     </div>
 
     <!-- Footer con botones FIJO -->
-    <div class="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 p-6 bg-white dark:bg-gray-800 rounded-b-2xl">
+    <div class="shrink-0 border-t border-gray-200 dark:border-gray-700 p-6 bg-white dark:bg-gray-800 rounded-b-2xl">
       <div class="flex gap-3">
         <button (click)="cerrarModalPresupuesto()" 
                 class="flex-1 px-6 py-3 rounded-xl font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
@@ -876,7 +883,7 @@
         </button>
         <button (click)="generarPDFPresupuesto()" 
                 [disabled]="productosCarrito().length === 0 || !presupuestoActual().cliente.nombre.trim()"
-                class="flex-1 px-6 py-3 rounded-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+                class="flex-1 px-6 py-3 rounded-xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
           Generar Presupuesto
         </button>
@@ -890,7 +897,7 @@
   <div class="rounded-2xl shadow-2xl max-w-md w-full p-6 animate-scale-up border relative overflow-hidden
               bg-white border-gray-100
               dark:bg-gray-800 dark:border-gray-700">
-    <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-red-500 to-red-700"></div>
+    <div class="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-red-500 to-red-700"></div>
     
     <div class="flex items-center gap-4 mb-5">
       <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center text-red-600 animate-pulse">
@@ -911,7 +918,7 @@
       
       <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
         <div class="flex items-start gap-2">
-          <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg class="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
           </svg>
           <div>
@@ -933,13 +940,149 @@
         Cancelar
       </button>
       <button (click)="eliminarDefinitivamente()" 
-              class="px-5 py-2.5 rounded-xl font-bold bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/30 transition-all text-sm flex items-center gap-2">
+              class="px-5 py-2.5 rounded-xl font-bold bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white shadow-lg shadow-red-500/30 transition-all text-sm flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
         </svg>
         <span>Eliminar Permanentemente</span>
       </button>
     </div>
+  </div>
+</div>
+
+<div *ngIf="mostrarAuditoria()" class="fixed inset-0 z-200 bg-black/60 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 animate-fade-in" (click)="mostrarAuditoria.set(false)">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col h-[95vh] sm:h-[85vh] border border-gray-200 dark:border-gray-700 animate-scale-up" (click)="$event.stopPropagation()">
+    
+    <!-- HEADER -->
+    <div class="shrink-0 bg-linear-to-r from-indigo-600 to-blue-600 px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-white/20 flex items-center justify-center">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base sm:text-xl font-bold text-white">Registro de Auditoría</h3>
+          <p class="text-xs text-indigo-100 hidden sm:block">Historial de cambios en productos</p>
+        </div>
+      </div>
+      <button (click)="mostrarAuditoria.set(false)" class="text-white hover:bg-white/20 p-1.5 sm:p-2 rounded-full transition-colors">
+        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="shrink-0 bg-gray-50 dark:bg-gray-700/50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600">
+      <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-3">
+        <label class="text-xs font-bold uppercase tracking-wider text-gray-700 dark:text-gray-200">Filtrar por fecha:</label>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <input type="date" 
+                 [ngModel]="filtroFechaInicio()" 
+                 (ngModelChange)="filtroFechaInicio.set($event)" 
+                 class="px-3 py-2 rounded-lg border-2 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white w-full sm:w-auto">
+          <span class="text-gray-400 font-medium text-center sm:inline">hasta</span>
+          <input type="date" 
+                 [ngModel]="filtroFechaFin()" 
+                 (ngModelChange)="filtroFechaFin.set($event)" 
+                 class="px-3 py-2 rounded-lg border-2 focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white w-full sm:w-auto">
+          <button (click)="filtroFechaInicio.set(''); filtroFechaFin.set('')" 
+                  class="px-3 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-lg font-bold transition-colors text-sm flex items-center justify-center gap-1 w-full sm:w-auto">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTENIDO CON SCROLL -->
+    <div class="flex-1 overflow-hidden bg-white dark:bg-gray-900">
+      <div class="h-full overflow-y-auto custom-scrollbar">
+        <div *ngFor="let h of auditoriaFiltrada()" 
+             class="flex flex-col sm:grid sm:grid-cols-12 sm:items-center px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/40 transition-all group gap-3 sm:gap-0">
+          
+          <!-- FECHA Y HORA -->
+          <div class="sm:col-span-2 flex items-center justify-between sm:block">
+            <div>
+              <span class="text-xs block text-gray-400 dark:text-gray-500 uppercase tracking-tight font-medium">{{ h.fecha | date:'dd MMM yyyy' }}</span>
+              <span class="text-sm font-mono font-bold text-gray-700 dark:text-gray-300">{{ h.fecha | date:'HH:mm:ss' }}</span>
+            </div>
+            <!-- CAMPO MODIFICADO (Mobile) -->
+            <span class="sm:hidden px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold uppercase tracking-wide">
+              {{ h.campo_modificado }}
+            </span>
+          </div>
+
+          <!-- PRODUCTO Y USUARIO -->
+          <div class="sm:col-span-3">
+            <p class="text-sm font-bold text-gray-900 dark:text-white truncate mb-0.5">{{ h.productos?.nombre || 'Producto eliminado' }}</p>
+            <div class="flex items-center gap-1">
+              <svg class="w-3 h-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+              <span class="text-xs text-indigo-600 dark:text-indigo-400 font-semibold truncate">{{ h.usuario_email || 'Sistema' }}</span>
+            </div>
+          </div>
+
+          <!-- CAMPO MODIFICADO (Desktop) -->
+          <div class="hidden sm:flex sm:col-span-2 justify-center">
+            <span class="px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold uppercase tracking-wide">
+              {{ h.campo_modificado }}
+            </span>
+          </div>
+
+          <!-- VALORES (ANTES → DESPUÉS) -->
+          <div class="sm:col-span-5 flex flex-col sm:flex-row items-start sm:items-center justify-start sm:justify-end gap-2 sm:gap-3">
+            <div class="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+              <div class="flex-1 sm:text-right">
+                <span class="text-xs text-gray-400 block mb-0.5">Anterior</span>
+                <span class="text-sm text-red-500 dark:text-red-400 line-through font-mono break-all">{{ h.valor_anterior }}</span>
+              </div>
+              
+              <svg class="w-5 h-5 text-gray-300 dark:text-gray-600 shrink-0 rotate-90 sm:rotate-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+              
+              <div class="flex-1 sm:text-left">
+                <span class="text-xs text-gray-400 block mb-0.5">Nuevo</span>
+                <span class="text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded-lg font-mono break-all inline-block">
+                  {{ h.valor_nuevo }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- MENSAJE CUANDO NO HAY DATOS -->
+        <div *ngIf="auditoriaFiltrada().length === 0" class="flex flex-col items-center justify-center h-full py-12 sm:py-20 px-4">
+          <div class="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <p class="text-gray-500 dark:text-gray-400 font-medium text-center">No se encontraron registros</p>
+          <p class="text-sm text-gray-400 mt-1 text-center">Intenta con otro periodo de fechas</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="shrink-0 border-t border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-3 sm:py-4 bg-gray-50 dark:bg-gray-800/50">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-0">
+        <span class="text-sm text-gray-600 dark:text-gray-400 text-center sm:text-left">
+          Total de registros: <span class="font-bold text-gray-900 dark:text-white">{{ auditoriaFiltrada().length }}</span>
+        </span>
+        <button (click)="mostrarAuditoria.set(false)" 
+                class="w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          Cerrar
+        </button>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>

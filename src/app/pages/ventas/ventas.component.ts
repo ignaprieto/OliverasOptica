@@ -104,6 +104,8 @@ export class VentasComponent implements OnInit, OnDestroy {
 private facturacionService = inject(FacturacionService);
 clienteParaFacturaA = signal<Cliente | null>(null);
 mostrarSelectorClienteFacturaA = signal<boolean>(false);
+mostrarModalTipoFacturaRI = signal<boolean>(false);
+private stockSubscription: any;
   // ✅ CAMBIO 2: Constante para columnas específicas de Supabase
   private readonly COLUMNAS_PRODUCTOS = 'id, codigo, nombre, marca, categoria, talle, precio, cantidad_stock, cantidad_deposito, activo';
 private readonly COLUMNAS_CLIENTES = 'id, nombre, dni, email, limite_credito, saldo_actual, activo, cuit, condicion_iva';  
@@ -234,6 +236,28 @@ configRecibo = signal<any>(null);
     this.cargando.set(true);
     await this.facturacionService.obtenerDatosFacturacionCompleta();
     await this.cargarConfigRecibo();
+this.stockSubscription = this.supabase.getClient()
+    .channel('cambios-stock')
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'productos' },
+      (payload) => {
+        const productoActualizado = payload.new as Producto;
+        
+        // Actualizar el signal de productos si el producto está en la lista visible
+        this.productos.update(lista => 
+          lista.map(p => p.id === productoActualizado.id 
+            ? { ...p, cantidad_stock: productoActualizado.cantidad_stock } 
+            : p
+          )
+        );
+        
+        // Refrescar la detección de cambios (OnPush)
+        this.cdr.markForCheck();
+      }
+    )
+    .subscribe();
+
     // Configurar Debounce para Productos
     this.searchSubscription = this.searchSubject.pipe(
       debounceTime(400),
@@ -272,6 +296,9 @@ configRecibo = signal<any>(null);
     this.detenerScanner();
     if (this.searchSubscription) this.searchSubscription.unsubscribe();
     if (this.searchClienteSubscription) this.searchClienteSubscription.unsubscribe();
+    if (this.stockSubscription) {
+    this.supabase.getClient().removeChannel(this.stockSubscription);
+  }
   }
 
   async cargarPromocionesActivas() {
@@ -640,21 +667,15 @@ liberarCamara(): void {
 
   onTipoPagoChange() {
   if (this.esVentaCredito()) {
-    // Si es crédito, se aplica 'fiado'
-    this.facturacionService.aplicarReglaPorMetodo('fiado');
-    
+    // Si es crédito, forzamos desactivación: No se factura lo que no se cobra ya.
+    this.facturacionService.facturacionHabilitada.set(false);
     this.mostrarListaClientes.set(true);
     this.clientes.set([]);
-    this.clienteParaFacturaA.set(null); // Limpiar cliente para factura A
+    this.clienteParaFacturaA.set(null);
   } else {
-    // Si vuelve a venta normal, reseteamos
-    this.metodoPago.set('');
-    this.facturacionService.actualizarEstadoGlobal(false);
-    
-    this.mostrarListaClientes.set(false);
-    this.limpiarCliente();
+    // Si vuelve a normal, restaurar según el método de pago (usa la regla de la base de datos)
+    this.facturacionService.aplicarReglaPorMetodo(this.metodoPago());
   }
-  
   this.montoEntregado.set(0);
   this.vuelto.set(0);
 }
@@ -975,278 +996,242 @@ liberarCamara(): void {
     }
   }
 
-  async confirmarVenta() {
-    if (this.procesandoVenta()) return;
 
-    if (!this.esVentaCredito()) {
-        if (this.pagoDividido()) {
-            if (!this.metodoPago1() || !this.metodoPago2()) {
-                this.mostrarToast('Debe seleccionar ambos métodos de pago.', 'error');
-                return;
-            }
-        } else {
-            if (!this.metodoPago()) {
-                this.mostrarToast('Debe seleccionar un método de pago.', 'error');
-                return;
-            }
-        }
-    }
+async confirmarVenta() {
+  if (this.procesandoVenta()) return;
 
-    if (this.esVentaCredito()) {
-      if (!this.clienteSeleccionado()) {
-        this.mostrarToast('Debe seleccionar un cliente para venta a crédito.', 'error');
-        return;
-      }
-      if (!this.creditoSuficiente()) {
-        this.mostrarToast('El cliente no tiene crédito disponible suficiente.', 'error');
-        return;
-      }
-    }
+  // 1. VALIDACIÓN DE CARRITO Y CLIENTE BÁSICO
+  if (this.carrito().length === 0) return this.mostrarToast('El carrito está vacío', 'error');
+  if (!this.clienteNombre()) return this.mostrarToast('Debe ingresar el nombre del cliente', 'error');
 
-    if (this.pagoDividido() && !this.esVentaCredito()) {
-      const monto1 = this.montoPago1();
-      const monto2 = this.montoPago2();
-      
-      if (monto1 <= 0 || monto2 <= 0) {
-        this.mostrarToast('Ambos montos deben ser mayores a 0', 'error');
-        return;
+  // 2. VALIDACIÓN DE PAGOS (ORIGINALES)
+  if (!this.esVentaCredito()) {
+    if (this.pagoDividido()) {
+      if (!this.metodoPago1() || !this.metodoPago2()) return this.mostrarToast('Seleccione ambos métodos de pago.', 'error');
+      // Verificamos que la suma de los dos pagos coincida con el total
+      if (Math.abs((this.montoPago1() + this.montoPago2()) - this.totalFinal()) > 0.01) {
+        return this.mostrarToast('La suma de pagos debe igualar al total', 'error');
       }
-      
-      const sumaTotal = monto1 + monto2;
-      if (Math.abs(sumaTotal - this.totalFinal()) > 0.01) {
-        this.mostrarToast('La suma de ambos pagos debe ser igual al total', 'error');
-        return;
-      }
-      
-      if (this.metodoPago1() === 'efectivo' || this.metodoPago2() === 'efectivo') {
-        const cajaEstaAbierta = await this.verificarCajaAbierta();
-        if (!cajaEstaAbierta) {
-          this.mostrarToast('❌ No hay caja abierta. No se pueden realizar pagos en efectivo.', 'error');
-          return;
-        }
-      }
-      
-      if (this.metodoPago1() === 'efectivo' && this.efectivoEntregadoPago1() < monto1) {
-        this.mostrarToast('⚠️ El efectivo entregado en el pago 1 es insuficiente', 'error');
-        return;
-      }
-      if (this.metodoPago2() === 'efectivo' && this.efectivoEntregadoPago2() < monto2) {
-        this.mostrarToast('⚠️ El efectivo entregado en el pago 2 es insuficiente', 'error');
-        return;
-      }
-    } else if (!this.pagoDividido() && !this.esVentaCredito()) {
-      if (this.metodoPago() === 'efectivo') {
-        const cajaEstaAbierta = await this.verificarCajaAbierta();
-        if (!cajaEstaAbierta) {
-          this.mostrarToast('❌ No hay caja abierta.', 'error');
-          return;
-        }
-        if (this.montoEntregado() < this.totalFinal()) {
-          this.mostrarToast('⚠️ El monto entregado es insuficiente', 'error');
-          return;
-        }
-      }
-    }
-
-    this.procesandoVenta.set(true);
-    const carritoActual = this.carrito();
-    const totalSinDesc = carritoActual.reduce((acc, item) => acc + item.subtotal, 0);
-    let totalFinal = this.totalFinal();
-    if (!this.codigoDescuento()) totalFinal = totalSinDesc;
-
-    let usuario = await this.supabase.getCurrentUser();
-    if (!usuario) usuario = this.supabase.getVendedorTemp() || JSON.parse(localStorage.getItem('user') || '{}');
-    if (!usuario) {
-      this.mostrarToast('No se pudo obtener el usuario.', 'error');
-      this.procesandoVenta.set(false);
-      return;
-    }
-
-    let usuario_id: string;
-    let usuario_nombre: string;
-    if ('user_metadata' in usuario) {
-      usuario_id = usuario.id;
-      usuario_nombre = usuario.user_metadata?.['nombre'] || 'Desconocido';
     } else {
-      const vendedor = usuario as VendedorTemp;
-      usuario_id = vendedor.id;
-      usuario_nombre = vendedor.nombre || 'Desconocido';
+      if (!this.metodoPago()) return this.mostrarToast('Seleccione un método de pago.', 'error');
     }
+  } else {
+    // Si es crédito, validar que haya un cliente seleccionado de la lista
+    if (!this.clienteSeleccionado()) return this.mostrarToast('Seleccione un cliente para la venta a crédito.', 'error');
+    if (!this.creditoSuficiente()) return this.mostrarToast('El cliente no posee crédito suficiente.', 'error');
+  }
 
-    try {
-      let metodoPagoVenta = this.esVentaCredito() ? 'fiado' : this.metodoPago();
-      if (this.pagoDividido() && !this.esVentaCredito()) {
-        const metodo1Normalizado = this.normalizarMetodoPago(this.metodoPago1());
-        const metodo2Normalizado = this.normalizarMetodoPago(this.metodoPago2());
-        metodoPagoVenta = `${metodo1Normalizado} ($${this.montoPago1().toFixed(2)}) + ${metodo2Normalizado} ($${this.montoPago2().toFixed(2)})`; 
-      }
+  // 3. VALIDACIÓN DE CAJA PARA EFECTIVO (ORIGINAL)
+  const usaEfectivo = this.pagoDividido() 
+    ? (this.metodoPago1() === 'efectivo' || this.metodoPago2() === 'efectivo') 
+    : (this.metodoPago() === 'efectivo');
 
-      // 1. Insertar Venta
-const clienteIdFinal = this.esVentaCredito() 
-  ? this.clienteSeleccionado()?.id 
-  : this.clienteParaFacturaA()?.id || null;
-
-const { data: venta, error } = await this.supabase.getClient().from('ventas').insert({
-  usuario_id,
-  usuario_nombre,
-  cliente_nombre: this.clienteNombre(),
-  cliente_email: this.clienteEmail(),
-  metodo_pago: metodoPagoVenta,
-  total_sin_desc: totalSinDesc,
-  descuento_aplicado: this.descuentoAplicado(),
-  total_final: totalFinal,
-  cliente_id: clienteIdFinal, // <-- AHORA USA clienteIdFinal
-  es_credito: this.esVentaCredito()
-}).select().single();
-
-      if (error || !venta) throw new Error('Error al guardar la venta');
-
-      // 2. Insertar Detalles
-      for (const item of carritoActual) {
-        await this.supabase.getClient().from('detalle_venta').insert({
-          venta_id: venta.id,
-          producto_id: item.producto.id,
-          cantidad: item.cantidad,
-          precio_unitario: item.producto.precio,
-          subtotal: item.subtotal,
-          talle: item.producto.talle
-        });
-        await this.supabase.getClient().from('productos')
-          .update({ cantidad_stock: item.producto.cantidad_stock - item.cantidad })
-          .eq('id', item.producto.id);
-      }
-
-      // 3. Manejo de Crédito
-      if (this.esVentaCredito() && this.clienteSeleccionado()) {
-        const cliente = this.clienteSeleccionado()!;
-        await this.supabase.getClient().from('ventas_credito').insert({
-          venta_id: venta.id,
-          cliente_id: cliente.id,
-          monto_total: totalFinal,
-          saldo_pendiente: totalFinal,
-          estado: 'pendiente',
-          fecha_vencimiento: this.fechaVencimiento() || null,
-          observaciones: this.observacionesCredito() || null
-        });
-        const nuevoSaldo = cliente.saldo_actual + totalFinal;
-        await this.supabase.getClient().from('clientes')
-          .update({ saldo_actual: nuevoSaldo, updated_at: new Date().toISOString() })
-          .eq('id', cliente.id);
-      }
-
-      // 4. Manejo de Caja
-      if (!this.esVentaCredito()) {
-        if (this.pagoDividido()) {
-          if (this.metodoPago1() === 'efectivo') {
-            await this.registrarMovimientoEnCaja(
-              venta.id, 
-              this.montoPago1(), 
-              this.efectivoEntregadoPago1(), 
-              this.vueltoPago1(), 
-              'efectivo', 
-              { id: usuario_id, nombre: usuario_nombre }, 
-              `Pago 1/2 (${this.metodoPago1()})`
-            );
-          }
-          if (this.metodoPago2() === 'efectivo') {
-            await this.registrarMovimientoEnCaja(
-              venta.id, 
-              this.montoPago2(), 
-              this.efectivoEntregadoPago2(), 
-              this.vueltoPago2(), 
-              'efectivo', 
-              { id: usuario_id, nombre: usuario_nombre }, 
-              `Pago 2/2 (${this.metodoPago2()})`
-            );
-          }
-        } else if (this.metodoPago() === 'efectivo') {
-          await this.registrarMovimientoEnCaja(
-            venta.id, 
-            totalFinal, 
-            this.montoEntregado(), 
-            this.vuelto(), 
-            'efectivo', 
-            { id: usuario_id, nombre: usuario_nombre }
-          );
-        }
-      }
-
-      // ============================================================
-      //  5. LÓGICA DE FACTURACIÓN AUTOMÁTICA AFIP
-      // ============================================================
-      try {
-  const { data: configFiscal } = await this.supabase.getClient()
-    .from('facturacion')
-    .select('*')
-    .single();
-
-  if (configFiscal && configFiscal.facturacion_habilitada) {
+  if (usaEfectivo && !this.esVentaCredito()) {
+    const cajaAbierta = await this.verificarCajaAbierta();
+    if (!cajaAbierta) return this.mostrarToast('❌ No hay caja abierta. No se puede cobrar en efectivo.', 'error');
     
-    this.mostrarToast('Procesando facturación electrónica...', 'warning');
-
-    let tipoFactura = 'B';
-
-    if (configFiscal.condicion_iva === 'Monotributista') {
-      tipoFactura = 'C'; 
-    } else {
-      // Verificar cliente (puede ser de crédito o solo para factura A)
-      const clienteParaVerificar = this.esVentaCredito() 
-        ? this.clienteSeleccionado() 
-        : this.clienteParaFacturaA();
-      
-      if (clienteParaVerificar && 
-          clienteParaVerificar.condicion_iva === 'Responsable Inscripto' && 
-          clienteParaVerificar.cuit) {
-        tipoFactura = 'A';
-      } else {
-        tipoFactura = 'B';
-      }
-    }
-
-    const resultadoAfip = await this.facturacionService.facturarVenta(venta.id, tipoFactura);
-    
-    if (resultadoAfip) {
-       this.mostrarToast(`Factura ${tipoFactura} emitida correctamente`, 'success');
-       
-       venta.facturada = true;
-       venta.factura_tipo = tipoFactura;
-       venta.factura_nro = resultadoAfip.nroFactura;
+    // Validar monto entregado si no es pago dividido (en dividido ya se valida el monto exacto arriba)
+    if (!this.pagoDividido() && this.montoEntregado() < this.totalFinal()) {
+      return this.mostrarToast('Monto entregado insuficiente', 'error');
     }
   }
-} catch (billingError: any) {
-  console.error('Error en facturación automática:', billingError);
-  this.mostrarToast('Venta guardada, pero falló la facturación AFIP.', 'error');
+
+  // 4. LÓGICA DE FACTURACIÓN (SEGÚN CONDICIÓN IVA)
+  // Si la facturación está deshabilitada globalmente o es crédito (fiado), va sin factura
+  if (!this.facturacionService.facturacionHabilitada() || this.esVentaCredito()) {
+    return this.ejecutarVentaFinal(null);
+  }
+
+  const configFiscal = await this.facturacionService.obtenerDatosFacturacionCompleta();
+  if (!configFiscal) return this.ejecutarVentaFinal(null);
+
+  const emisorCondicion = configFiscal.condicion_iva; 
+  const cliente = this.clienteParaFacturaA();
+
+  // REGLA A: EMISOR MONOTRIBUTISTA -> SIEMPRE FACTURA C
+  if (emisorCondicion === 'Monotributista') {
+    return this.ejecutarVentaFinal('C');
+  }
+
+  // REGLA B: EMISOR RESPONSABLE INSCRIPTO
+  if (emisorCondicion === 'Responsable Inscripto') {
+    // Si el cliente es RI, abrimos el modal para que el cajero elija A o B
+    if (cliente && (cliente.condicion_iva === 'Responsable Inscripto' || cliente.condicion_iva === 'RI')) {
+      this.mostrarModalTipoFacturaRI.set(true);
+      this.cdr.markForCheck();
+      return; 
+    }
+    // Para el resto (Consumidor Final, Monotributista, etc) es Factura B
+    return this.ejecutarVentaFinal('B');
+  }
+
+  // Por seguridad, si nada coincide
+  return this.ejecutarVentaFinal(null);
 }
 
-      // 6. Preparar datos para el modal de recibo interno
-      this.ventaRecienCreada.set({
-        ...venta,
-        fecha_venta: new Date().toISOString(),
-        nombre_usuario: usuario_nombre,
-        productos: carritoActual.map(item => ({
-          producto_id: item.producto.id,
-          nombre: item.producto.nombre,
-          marca: item.producto.marca || 'Sin marca',
-          cantidad: item.cantidad,
-          precio_unitario: item.producto.tiene_promocion 
-            ? (item.producto.precio_promocional || item.producto.precio) 
-            : item.producto.precio,
-          subtotal: item.subtotal,
-          talle: item.producto.talle
-        }))
-      });
+// --- 3. EJECUCIÓN FINAL (CORREGIDO Y UNIFICADO) ---
+async ejecutarVentaFinal(tipoFactura: string | null) {
+  this.mostrarModalTipoFacturaRI.set(false);
+  this.procesandoVenta.set(true);
+  this.cdr.markForCheck();
 
-      this.mostrarToast('Venta registrada exitosamente', 'success');
-      this.resetearFormulario();
-      this.realizarBusquedaProductos('', true);
-      this.mostrarModalReciboPostVenta.set(true);
+  try {
+    const usuario = await this.supabase.getCurrentUser();
+    const carritoActual = this.carrito();
+    
+    // 1. Preparar items para el RPC
+    const itemsParaRpc = carritoActual.map(item => ({
+      producto_id: item.producto.id,
+      cantidad: item.cantidad,
+      precio_unitario: item.producto.precio,
+      subtotal: item.subtotal,
+      talle: item.producto.talle
+    }));
 
-    } catch (error: any) {
-      this.mostrarToast(error.message || 'Error al procesar la venta', 'error');
-    } finally {
-      this.procesandoVenta.set(false);
+    // 2. Llamada al RPC
+    const { data: venta, error } = await this.supabase.getClient().rpc('procesar_venta_completa', {
+  p_usuario_id: usuario.id,
+  p_usuario_nombre: usuario.user_metadata?.['nombre'] || usuario.nombre,
+  p_cliente_nombre: this.clienteNombre(),
+  p_cliente_email: this.clienteEmail(),
+  p_metodo_pago: this.pagoDividido() 
+    ? `${this.metodoPago1()} + ${this.metodoPago2()}` 
+    : (this.esVentaCredito() ? 'fiado' : this.metodoPago()),
+  p_descuento_aplicado: this.descuentoAplicado(),
+  p_cliente_id: (this.esVentaCredito() ? this.clienteSeleccionado()?.id : this.clienteParaFacturaA()?.id) || null,
+  p_es_credito: this.esVentaCredito(),
+  p_items: itemsParaRpc,
+  p_pago_dividido: this.pagoDividido(),
+  p_metodo_pago1: this.metodoPago1() || null,
+  p_monto_pago1: this.montoPago1(),
+  p_metodo_pago2: this.metodoPago2() || null,
+  p_monto_pago2: this.montoPago2(),
+  p_efectivo_entregado1: this.efectivoEntregadoPago1(),
+  p_vuelto1: this.vueltoPago1(),
+  p_efectivo_entregado2: this.efectivoEntregadoPago2(),
+  p_vuelto2: this.vueltoPago2(),
+  p_monto_entregado: this.montoEntregado(),
+  p_vuelto: this.vuelto(),
+  p_fecha_vencimiento: this.fechaVencimiento() || null,
+  p_observaciones_credito: this.observacionesCredito() || null
+});
+
+    if (error) {
+      // Manejo específico de error de stock concurrente
+      if (error.message.includes('Stock insuficiente')) {
+        this.mostrarToast(`Error de Stock: ${error.message}`, 'error');
+        this.realizarBusquedaProductos('', true); // Refrescar stock visual
+        return;
+      }
+      throw error;
     }
+
+    // 3. Facturación (Sigue siendo un paso posterior porque es API externa)
+    if (tipoFactura && venta) {
+      this.mostrarToast(`Emitiendo Factura ${tipoFactura}...`, 'warning');
+      try {
+        await this.facturacionService.facturarVenta(venta.id, tipoFactura);
+      } catch (fError: any) {
+        this.mostrarToast('Venta guardada, pero falló la factura AFIP', 'error');
+      }
+    }
+
+    // 4. Éxito
+    this.ventaRecienCreada.set({ ...venta, productos: carritoActual.map(i => ({...i.producto, cantidad: i.cantidad})) });
+    this.mostrarToast('Venta procesada correctamente', 'success');
+    this.resetearFormulario();
+    this.realizarBusquedaProductos('', true);
+    this.mostrarModalReciboPostVenta.set(true);
+
+  } catch (err: any) {
+    console.error(err);
+    this.mostrarToast('Error crítico: ' + (err.message || 'Consulte al administrador'), 'error');
+  } finally {
+    this.procesandoVenta.set(false);
+    this.cdr.markForCheck();
   }
+}
+
+async procesarFinalizacionVenta(tipoFactura: string | null) {
+  this.mostrarModalTipoFacturaRI.set(false);
+  this.procesandoVenta.set(true);
+  
+  const carritoActual = this.carrito();
+  const totalSinDesc = carritoActual.reduce((acc, item) => acc + item.subtotal, 0);
+  const totalFinal = this.totalFinal();
+
+  try {
+    const usuario = await this.supabase.getCurrentAppUser();
+    const usuario_id = usuario?.id || '0000';
+    const usuario_nombre = usuario?.nombre || 'Desconocido';
+
+    let metodoPagoVenta = this.esVentaCredito() ? 'fiado' : this.metodoPago();
+    if (this.pagoDividido() && !this.esVentaCredito()) {
+       metodoPagoVenta = `${this.metodoPago1()} ($${this.montoPago1()}) + ${this.metodoPago2()} ($${this.montoPago2()})`;
+    }
+
+    const clienteIdFinal = this.esVentaCredito() ? this.clienteSeleccionado()?.id : this.clienteParaFacturaA()?.id;
+
+    // 1. Insertar Venta
+    const { data: venta, error } = await this.supabase.getClient().from('ventas').insert({
+      usuario_id,
+      usuario_nombre,
+      cliente_nombre: this.clienteNombre(),
+      cliente_email: this.clienteEmail(),
+      metodo_pago: metodoPagoVenta,
+      total_sin_desc: totalSinDesc,
+      descuento_aplicado: this.descuentoAplicado(),
+      total_final: totalFinal,
+      cliente_id: clienteIdFinal || null,
+      es_credito: this.esVentaCredito()
+    }).select().single();
+
+    if (error) throw error;
+
+    // 2. Detalles y Stock (Simplificado para el ejemplo)
+    for (const item of carritoActual) {
+      await this.supabase.getClient().from('detalle_venta').insert({
+        venta_id: venta.id,
+        producto_id: item.producto.id,
+        cantidad: item.cantidad,
+        precio_unitario: item.producto.precio,
+        subtotal: item.subtotal,
+        talle: item.producto.talle
+      });
+      await this.supabase.getClient().rpc('actualizar_stock', {
+        producto_id: item.producto.id,
+        cantidad_cambio: -item.cantidad
+      });
+    }
+
+    // 3. Facturación Electrónica (Si se definió un tipo)
+    if (tipoFactura) {
+      this.mostrarToast(`Emitiendo Factura ${tipoFactura}...`, 'warning');
+      try {
+        const resAfip = await this.facturacionService.facturarVenta(venta.id, tipoFactura);
+        if (resAfip) {
+          this.mostrarToast(`Factura ${tipoFactura} N° ${resAfip.nroFactura} emitida`, 'success');
+          venta.facturada = true;
+          venta.factura_tipo = tipoFactura;
+          venta.factura_nro = resAfip.nroFactura;
+        }
+      } catch (e: any) {
+        this.mostrarToast('Venta guardada, pero error en AFIP: ' + e.message, 'error');
+      }
+    }
+
+    // 4. Finalizar
+    this.ventaRecienCreada.set({ ...venta, productos: carritoActual.map(c => ({...c.producto, cantidad: c.cantidad, subtotal: c.subtotal})) });
+    this.resetearFormulario();
+    this.mostrarModalReciboPostVenta.set(true);
+
+  } catch (error: any) {
+    this.mostrarToast('Error: ' + error.message, 'error');
+  } finally {
+    this.procesandoVenta.set(false);
+    this.cdr.markForCheck();
+  }
+}
 
 cerrarModalReciboPostVenta() {
   this.mostrarModalReciboPostVenta.set(false);

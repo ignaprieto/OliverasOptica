@@ -128,7 +128,6 @@ async toggleFacturacion() {
   async cerrarSesion() {
     try {
       await this.supabase.signOut();
-      await this.router.navigate(['/login']);
     } catch (error) {
       console.error('Error logout:', error);
       this.router.navigate(['/login']);

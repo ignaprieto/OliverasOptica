@@ -812,4 +812,5 @@ formatearFechaVencimiento(f: string | undefined): string {
   const fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   return fecha.toLocaleDateString('es-AR');
 }
+
 }

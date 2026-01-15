@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient, User, Session } from '@supabase/supabase-js';
 import { Router } from '@angular/router';
 import { environment } from '../../environments/environment';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject,firstValueFrom } from 'rxjs';
 
 // Interfaces
 export interface PermisoVista {
@@ -27,7 +27,7 @@ export interface AppUser {
 })
 export class SupabaseService {
   private supabase: SupabaseClient;
-  
+  private initialized = false;
   // Caché de estado
   private currentUserSubject = new BehaviorSubject<AppUser | null>(null);
   private permisosCache: PermisoVista[] | null = null;
@@ -39,6 +39,17 @@ export class SupabaseService {
         autoRefreshToken: true,
         detectSessionInUrl: true,
         storage: localStorage 
+      }
+    });
+
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        this.currentUserSubject.next(null);
+        this.permisosCache = null;
+        this.initialized = true;
+      } else if (session?.user) {
+        this.setSessionUser(session.user);
+        this.initialized = true;
       }
     });
     
@@ -61,15 +72,18 @@ export class SupabaseService {
   // ==========================================
 
   private async recoverSession() {
-    // 1. Intentar recuperar sesión de Supabase Auth
-    const { data } = await this.supabase.auth.getSession();
-    if (data.session?.user) {
-      this.setSessionUser(data.session.user);
-      return;
+    try {
+      const { data } = await this.supabase.auth.getSession();
+      if (data.session?.user) {
+        this.setSessionUser(data.session.user);
+      } else {
+        this.currentUserSubject.next(null);
+      }
+    } catch {
+      this.currentUserSubject.next(null);
+    } finally {
+      this.initialized = true;
     }
-
-    // 2. Limpiar usuario si no hay sesión
-    this.currentUserSubject.next(null);
   }
 
   private setSessionUser(user: User) {
@@ -98,6 +112,9 @@ export class SupabaseService {
   async getCurrentAppUser(): Promise<AppUser | null> {
     const current = this.currentUserSubject.value;
     if (current) return current;
+    
+    if (this.initialized) return null;
+
     await this.recoverSession();
     return this.currentUserSubject.value;
   }
@@ -119,17 +136,20 @@ export class SupabaseService {
   }
 
   async signOut() {
+    // Primero marcamos el estado como null y bloqueamos la recuperación
+    this.initialized = true; 
     this.currentUserSubject.next(null);
     this.permisosCache = null;
-    localStorage.removeItem('sb-' + environment.supabaseUrl + '-auth-token'); 
 
     try {
+      // Supabase limpia automáticamente el localStorage, no hace falta el removeItem manual
       await this.supabase.auth.signOut(); 
     } catch (error) {
       console.error('Error en signOut', error);
     }
 
-    this.router.navigate(['/login']);
+    // Usamos replaceUrl para limpiar el historial de navegación
+    await this.router.navigate(['/login'], { replaceUrl: true });
   }
 
   // ==========================================

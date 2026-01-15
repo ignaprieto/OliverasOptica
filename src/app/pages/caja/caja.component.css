@@ -1,4 +1,4 @@
-/* Agrega estos estilos a tu caja.component.css */
+@reference "tailwindcss";
 
 /* Backdrop con blur */
 .modal-backdrop {

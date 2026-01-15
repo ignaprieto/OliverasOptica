@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, ElementRef, OnDestroy, ChangeDetectionStrategy, signal, WritableSignal } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, OnDestroy, ChangeDetectionStrategy, signal, WritableSignal,computed } from '@angular/core';
 import { Producto } from '../../models/producto.model';
 import { SupabaseService } from '../../services/supabase.service';
 import { CommonModule } from '@angular/common';
@@ -10,7 +10,7 @@ import { Subject, Subscription } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { PermisosService } from '../../services/permisos.service';
 import { PermisoDirective } from '../../directives/permiso.directive';
-
+import { ScrollingModule } from '@angular/cdk/scrolling';
 // === INTERFACES LOCALES ===
 interface QuaggaInputStreamConstraints {
   width?: { min?: number; ideal?: number; max?: number };
@@ -54,7 +54,7 @@ interface QuaggaAPI {
 @Component({
   selector: 'app-stock',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, MonedaArsPipe, PermisoDirective],
+  imports: [CommonModule, FormsModule, RouterModule, MonedaArsPipe, PermisoDirective, ScrollingModule],
   templateUrl: './stock.component.html',
   styleUrls: ['./stock.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -79,7 +79,8 @@ esAdmin = false;
  mostrarToast: WritableSignal<boolean> = signal(false);
 tipoMensajeToast: WritableSignal<'success' | 'error' | 'warning'> = signal('success');
 mensajeToast: WritableSignal<string> = signal('');
-
+mostrarAuditoria = signal(false);
+historialAuditoria = signal<any[]>([]);
   // === CONSTANTES ===
   private readonly COLUMNAS_PRODUCTO = 'id, codigo, nombre, marca, talle, categoria, precio, cantidad_stock, cantidad_deposito, activo, eliminado, motivo_eliminacion, eliminado_por, eliminado_en';
 
@@ -187,6 +188,21 @@ productosEncontrados = signal<Producto[]>([]);
 cargandoBusquedaPresupuesto = signal(false);
 private busquedaPresupuestoSubject = new Subject<string>();
 private busquedaPresupuestoSubscription: Subscription | null = null;
+
+filtroFechaInicio = signal<string>('');
+filtroFechaFin = signal<string>('');
+auditoriaFiltrada = computed(() => {
+  const inicio = this.filtroFechaInicio();
+  const fin = this.filtroFechaFin();
+  const data = this.historialAuditoria();
+  
+  if (!inicio && !fin) return data;
+  
+  return data.filter(h => {
+    const fecha = h.fecha.split('T')[0];
+    return (!inicio || fecha >= inicio) && (!fin || fecha <= fin);
+  });
+});
 
   constructor(
     private supabase: SupabaseService, 
@@ -1758,5 +1774,15 @@ async eliminarDefinitivamente() {
 cancelarEliminarDefinitivo() {
   this.mostrarModalEliminarDefinitivo = false;
   this.productoAEliminarDefinitivo = null;
+}
+
+async verHistorialAuditoria() {
+  this.mostrarAuditoria.set(true);
+  const { data } = await this.supabase.getClient()
+    .from('auditoria_cambios')
+    .select('*, productos(nombre)')
+    .order('fecha', { ascending: false }); 
+  
+  if (data) this.historialAuditoria.set(data);
 }
 }

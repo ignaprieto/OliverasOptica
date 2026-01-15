@@ -9,7 +9,7 @@
       </h2>
       <button routerLink="/dashboard"
         class="group px-6 py-3 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg hover:shadow-xl transform hover:-translate-y-1
-               bg-gradient-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800
+               bg-linear-to-r from-gray-200 to-gray-300 hover:from-gray-300 hover:to-gray-400 text-gray-800
                dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-600 dark:hover:to-gray-700 dark:text-gray-100">
         <span class="flex items-center space-x-2">
           <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,7 +275,7 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-green-500 bg-white dark:bg-gray-800 transition-colors">
-        <div class="bg-green-100 text-green-700 p-3 rounded-full flex-shrink-0">
+        <div class="bg-green-100 text-green-700 p-3 rounded-full shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2zm0 4a1 1 0 100-2 1 1 0 000 2z" />
           </svg>
@@ -295,7 +295,7 @@
       </div>
 
       <div class="rounded-xl shadow-md p-4 flex items-center space-x-4 border-l-4 border-orange-500 bg-white dark:bg-gray-800 transition-colors">
-        <div class="bg-orange-100 text-orange-700 p-3 rounded-full flex-shrink-0">
+        <div class="bg-orange-100 text-orange-700 p-3 rounded-full shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-4-4v12m-4-8h8m-4-4v12m-4-8h8m-4-4v12M3 13h18M3 17h18" />
           </svg>
@@ -360,7 +360,7 @@
     </div>
 
     <div *ngIf="!cargando()" 
-     class="space-y-6  max-h-[800px] overflow-y-auto pr-2 custom-scrollbar"
+     class="space-y-6  max-h-200 overflow-y-auto pr-2 custom-scrollbar"
      (scroll)="onScroll($event)">
         
         <div *ngFor="let item of items(); trackBy: trackByFn" 
@@ -514,19 +514,19 @@
                             </button>
                             
                             <button *appPermiso="['historial', 'eliminar']"
-                                    (click)="iniciarEliminacionVenta(item); $event.stopPropagation()"
-                                    [disabled]="item.recambio_realizado"
-                                    class="group/btn inline-flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1"
-                                    [ngClass]="{
-                                        'bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 dark:border-red-800': !item.recambio_realizado,
-                                        'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200 dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700': item.recambio_realizado
-                                    }"
-                                    [title]="item.recambio_realizado ? 'No se puede eliminar una venta con recambio realizado' : 'Eliminar venta'">
-                                <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
-                                </svg>
-                                <span class="hidden sm:inline ml-1.5">Eliminar</span>
-                            </button>
+        (click)="iniciarEliminacionVenta(item); $event.stopPropagation()"
+        [disabled]="item.recambio_realizado || item.facturada"
+        class="group/btn inline-flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 text-sm rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1"
+        [ngClass]="{
+            'bg-red-50 text-red-600 hover:bg-red-100 focus:ring-red-500 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30 dark:border-red-800': !item.recambio_realizado && !item.facturada,
+            'bg-gray-50 text-gray-400 cursor-not-allowed border border-gray-200 dark:bg-gray-800 dark:text-gray-600 dark:border-gray-700': item.recambio_realizado || item.facturada
+        }"
+        [title]="item.facturada ? 'No se puede eliminar una venta facturada ante ARCA' : (item.recambio_realizado ? 'No se puede eliminar una venta con recambio realizado' : 'Eliminar venta')">
+    <svg class="w-4 h-4 transition-transform group-hover/btn:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m2 0a2 2 0 00-2-2H9a2 2 0 00-2 2h10z"></path>
+    </svg>
+    <span class="hidden sm:inline ml-1.5">Eliminar</span>
+</button>
                         </div>
   
                         <div class="flex gap-2 mt-3" *ngIf="item.tipo === 'venta'">
@@ -538,9 +538,14 @@
                             </button>
                             <button *appPermiso="['historial', 'ver']"
         (click)="abrirModalEmail(item); $event.stopPropagation()"
-        class="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1"
-        [ngClass]="themeService.theme() === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'">
-  <span>Enviar detalle</span>
+        class="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+        [ngClass]="item.facturada 
+            ? 'bg-green-600 hover:bg-green-700 text-white' 
+            : 'bg-blue-600 hover:bg-blue-700 text-white'">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+    </svg>
+    <span>{{ item.facturada ? 'Enviar Factura' : 'Enviar Detalle' }}</span>
 </button>
 
                             <button
@@ -575,13 +580,15 @@
     </span>
   </div>
 
-    <a *ngIf="item.facturada" 
-       [href]="item.factura_pdf_url" 
-       target="_blank" 
-       (click)="$event.stopPropagation()"
-       class="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
-       Ver Factura
-    </a>
+    <button *ngIf="item.facturada" 
+    (click)="verFactura(item); $event.stopPropagation()"
+    class="px-3 py-1.5 text-sm rounded-lg transition-colors flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+    </svg>
+    Ver Factura
+</button>
                         </div>
                     </div>
                 </div>
@@ -707,7 +714,7 @@
     <div *ngIf="!cargando() && items().length === 0" 
      [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'"
      class="text-center py-12 rounded-xl shadow-lg">
-    <div class="text-gray-400 text-6xl mb-4">📋</div>
+    
     <h3 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'"
         class="text-xl font-semibold mb-2">No hay registros</h3>
     <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'">
@@ -759,7 +766,7 @@
                       [id]="'producto-' + i"
                       [(ngModel)]="producto.seleccionado"
                       (change)="calcularTotalesRecambio()"
-                      class="w-5 h-5 text-red-600 focus:ring-red-500 rounded flex-shrink-0">
+                      class="w-5 h-5 text-red-600 focus:ring-red-500 rounded shrink-0">
                     <div>
                       <div [ngClass]="themeService.theme() === 'dark' ? 'text-gray-100' : 'text-gray-900'"
                            class="font-medium">{{ producto.nombre }}</div>
@@ -830,7 +837,7 @@
                       {{ producto.marca }} | Talle: {{ producto.talle }} | Stock: {{ producto.cantidad_stock }}
                     </div>
                   </div>
-                  <div class="text-right flex-shrink-0">
+                  <div class="text-right shrink-0">
                     <div [ngClass]="themeService.theme() === 'dark' ? 'text-green-400' : 'text-green-600'"
                          class="font-semibold">{{ (producto.precio || 0) | monedaArs }}</div>
                     <button class="bg-green-500 text-white px-3 py-1 rounded-full text-xs hover:bg-green-600 transition mt-1">
@@ -911,7 +918,7 @@
                      ? 'bg-blue-900/20 border border-blue-800/50' 
                      : 'bg-blue-50 border border-blue-200'">
                 <div class="flex items-start space-x-2">
-                  <svg class="w-5 h-5 flex-shrink-0 mt-0.5"
+                  <svg class="w-5 h-5 shrink-0 mt-0.5"
                        [ngClass]="themeService.theme() === 'dark' ? 'text-blue-400' : 'text-blue-600'"
                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
@@ -1061,102 +1068,34 @@
       </div>
     </div>
 
-    <div *ngIf="toastVisible()" class="fixed bottom-6 right-6 z-[10000] animate-slide-in-right">
+    <div *ngIf="toastVisible()" class="fixed bottom-6 right-6 z-10000 animate-slide-in-right">
       <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 text-gray-800'"
            class="flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl border">
         
         <div [ngClass]="{
-          'bg-green-100 text-green-600': tipoMensajeToast() === 'success',
-          'bg-red-100 text-red-600': tipoMensajeToast() === 'error',
-          'bg-amber-100 text-amber-600': tipoMensajeToast() === 'warning'
-        }" class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0">
-          <svg *ngIf="tipoMensajeToast() === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-          </svg>
-          <svg *ngIf="tipoMensajeToast() === 'error'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-          <svg *ngIf="tipoMensajeToast() === 'warning'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-          </svg>
-        </div>
+  'bg-green-100 text-green-600': tipoMensajeToast() === 'success',
+  'bg-red-100 text-red-600': tipoMensajeToast() === 'error',
+  'bg-amber-100 text-amber-600': tipoMensajeToast() === 'warning'
+}" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0">
+  
+  <svg *ngIf="tipoMensajeToast() === 'success'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+  </svg>
+  
+  <svg *ngIf="tipoMensajeToast() === 'error'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2 -2m0 0l2 -2m-2 2l-2 -2m2 2l2 2m7 -2a9 9 0 1 1 -18 0 9 9 0 0 1 18 0z" />
+  </svg>
+  
+  <svg *ngIf="tipoMensajeToast() === 'warning'" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502 -1.667 1.732 -3L13.732 4c-.77 -1.333 -2.694 -1.333 -3.464 0L3.34 16c-.77 1.333 .192 3 1.732 3z"></path>
+  </svg>
+</div>
 
         <div>
           <h4 class="font-bold text-sm">
             {{ tipoMensajeToast() === 'success' ? '¡Éxito!' : tipoMensajeToast() === 'warning' ? '¡Atención!' : 'Error' }}
           </h4>
           <p class="text-sm opacity-80">{{ toastMensaje() }}</p>
-        </div>
-      </div>
-    </div>
-
-    <div *ngIf="mostrarModalEmail()" 
-         class="fixed inset-0 z-50 flex items-center justify-center p-4">
-      
-      <div class="absolute inset-0 bg-black/10 backdrop-blur-sm"
-           (click)="cerrarModalEmail()"></div>
-
-      <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800' : 'bg-white'" 
-           class="relative rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-scale"
-           (click)="$event.stopPropagation()">
-        
-        <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-          <div class="sm:flex sm:items-start">
-            
-            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-              <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
-              <h3 [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'" 
-                  class="text-lg sm:text-xl font-bold mb-2" 
-                  id="modal-title">
-                Enviar Detalle de Venta
-              </h3>
-              <div class="mt-2">
-                <label class="block text-sm font-medium mb-2" 
-                       [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-700'">
-                  Email de destino
-                </label>
-                <input
-                  type="email"
-                  [ngModel]="emailDestino()"
-                  (ngModelChange)="emailDestino.set($event)"
-                  placeholder="cliente@ejemplo.com"
-                  class="w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  [ngClass]="themeService.theme() === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
-                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'"/>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-700/50' : 'bg-gray-50'" 
-             class="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-2">
-          
-          <button
-            type="button"
-            (click)="enviarDetalleEmail()"
-            [disabled]="enviandoEmail()"
-            class="w-full inline-flex justify-center items-center gap-2 rounded-xl border border-transparent shadow-sm px-4 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-base font-medium text-white hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm transition-all duration-200 disabled:opacity-50">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-            </svg>
-            {{ enviandoEmail() ? 'Enviando...' : 'Enviar Email' }}
-          </button>
-          
-          <button
-            type="button"
-            (click)="cerrarModalEmail()"
-            [ngClass]="themeService.theme() === 'dark' 
-              ? 'bg-gray-600 text-gray-200 hover:bg-gray-500 border-gray-500' 
-              : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'"
-            class="mt-3 w-full inline-flex justify-center rounded-xl border shadow-sm px-4 py-2.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm transition-all duration-200">
-            Cancelar
-          </button>
         </div>
       </div>
     </div>
@@ -1325,7 +1264,7 @@
 <!-- Modal de selección de tipo de factura (solo para RI → Monotributista) -->
 <!-- Modal de selección de tipo de factura -->
 <div *ngIf="mostrarModalSeleccionFactura()" 
-     class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+     class="fixed inset-0 z-60 flex items-center justify-center p-4">
   
   <div class="absolute inset-0 bg-black/60 backdrop-blur-md"
        (click)="cerrarModalFacturacion()"></div>
@@ -1367,7 +1306,7 @@
            'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800': ventaParaFacturar()?.cliente_info?.condicion_iva === 'Monotributista' || ventaParaFacturar()?.cliente_info?.condicion_iva === 'Monotributo'
          }">
       <div class="flex items-start gap-3">
-        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0"
+        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0"
              [ngClass]="{
                'bg-blue-100 dark:bg-blue-900/40': ventaParaFacturar()?.cliente_info?.condicion_iva === 'Consumidor Final' || ventaParaFacturar()?.cliente_info?.condicion_iva === 'Exento',
                'bg-purple-100 dark:bg-purple-900/40': ventaParaFacturar()?.cliente_info?.condicion_iva === 'Responsable Inscripto',
@@ -1424,7 +1363,7 @@
           (click)="confirmarFacturacion('A')"
           class="w-full p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 text-left border-purple-300 hover:border-purple-500 bg-purple-50 hover:bg-purple-100 dark:border-purple-700 dark:bg-purple-900/20 dark:hover:bg-purple-900/30">
           <div class="flex items-start gap-3">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-purple-100 dark:bg-purple-900/40">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 bg-purple-100 dark:bg-purple-900/40">
               <span class="text-xl sm:text-2xl font-bold text-purple-700 dark:text-purple-400">A</span>
             </div>
             <div class="flex-1">
@@ -1468,7 +1407,7 @@
           (click)="confirmarFacturacion('B')"
           class="w-full p-3 sm:p-4 rounded-xl border-2 transition-all duration-200 text-left border-blue-300 hover:border-blue-500 bg-blue-50 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900/20 dark:hover:bg-blue-900/30">
           <div class="flex items-start gap-3">
-            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-blue-100 dark:bg-blue-900/40">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 dark:bg-blue-900/40">
               <span class="text-xl sm:text-2xl font-bold text-blue-700 dark:text-blue-400">B</span>
             </div>
             <div class="flex-1">
@@ -1508,6 +1447,91 @@
         class="px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl border-2 font-medium text-sm sm:text-base transition-colors border-gray-300 text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700">
         Cancelar
       </button>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="mostrarModalEmail()" 
+     class="fixed inset-0 z-100 flex items-center justify-center p-4 animate-fade-in">
+  
+  <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" (click)="cerrarModalEmail()"></div>
+
+  <div [ngClass]="themeService.theme() === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'" 
+       class="relative rounded-2xl shadow-2xl max-w-md w-full animate-fade-in-scale border overflow-hidden"
+       (click)="$event.stopPropagation()">
+    
+    <div class="p-6">
+      <div class="flex items-start gap-4 mb-6">
+        <div [ngClass]="ventaParaEmail()?.facturada ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'" 
+             class="shrink-0 w-12 h-12 rounded-full flex items-center justify-center shadow-sm">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+
+        <div class="flex-1">
+          <h3 [ngClass]="themeService.theme() === 'dark' ? 'text-white' : 'text-gray-900'" 
+              class="text-xl font-bold leading-tight">
+            {{ ventaParaEmail()?.facturada ? 'Enviar Factura AFIP' : 'Enviar Detalle de Venta' }}
+          </h3>
+          <p [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400' : 'text-gray-500'" class="text-sm mt-1">
+            Se enviará un archivo PDF adjunto.
+          </p>
+        </div>
+      </div>
+
+      <div *ngIf="ventaParaEmail()?.facturada" 
+           class="mb-6 p-4 rounded-xl border border-green-200 bg-green-50/50 dark:bg-green-900/10 dark:border-green-800/50">
+         <p class="text-[10px] font-black text-green-800 dark:text-green-400 uppercase tracking-widest mb-1">Documento Fiscal</p>
+         <p class="text-sm font-medium text-green-700 dark:text-green-300">
+           Factura {{ ventaParaEmail()?.factura_tipo }}: {{ ventaParaEmail()?.factura_nro }}
+         </p>
+      </div>
+
+      <div class="space-y-2">
+        <div class="flex justify-between items-end px-1">
+          <label class="text-xs font-bold uppercase tracking-wider opacity-60"
+                 [ngClass]="themeService.theme() === 'dark' ? 'text-gray-300' : 'text-gray-600'">
+            Email del destinatario
+          </label>
+          <span *ngIf="emailDestino()" 
+                [ngClass]="emailEsValido() ? 'text-green-500' : 'text-red-500'"
+                class="text-[10px] font-bold uppercase transition-all">
+            {{ emailEsValido() ? '✓ Válido' : '✗ Inválido' }}
+          </span>
+        </div>
+
+        <input type="email"
+               [(ngModel)]="emailDestino"
+               placeholder="ejemplo@correo.com"
+               class="w-full px-4 py-3 rounded-xl border transition-all outline-none text-base"
+               [ngClass]="{
+                  'dark:bg-gray-900/50 dark:border-gray-600 text-white focus:border-blue-500': themeService.theme() === 'dark',
+                  'bg-gray-50 border-gray-300 text-gray-900 focus:border-blue-500': themeService.theme() !== 'dark',
+                  'border-red-500 ring-2 ring-red-500/20': emailDestino() && !emailEsValido(),
+                  'border-green-500 ring-2 ring-green-500/20': emailDestino() && emailEsValido()
+               }"/>
+      </div>
+
+      <div class="mt-8 flex flex-col sm:flex-row-reverse gap-3">
+        <button (click)="enviarDetalleEmail()"
+                [disabled]="enviandoEmail() || !emailEsValido()"
+                class="w-full sm:flex-1 px-6 py-3.5 rounded-xl font-bold text-white shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
+                [ngClass]="ventaParaEmail()?.facturada ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'">
+          <svg *ngIf="!enviandoEmail()" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+          </svg>
+          <div *ngIf="enviandoEmail()" class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          {{ enviandoEmail() ? 'Enviando...' : 'Enviar ahora' }}
+        </button>
+
+        <button (click)="cerrarModalEmail()" 
+                [disabled]="enviandoEmail()"
+                class="w-full sm:flex-1 px-6 py-3.5 rounded-xl font-bold transition-all active:scale-[0.98]"
+                [ngClass]="themeService.theme() === 'dark' ? 'text-gray-400 hover:bg-gray-700/50 hover:text-white' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'">
+          Cancelar
+        </button>
+      </div>
     </div>
   </div>
 </div>

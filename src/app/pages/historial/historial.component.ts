@@ -104,11 +104,11 @@ interface ConfigRecibo {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class HistorialComponent implements OnInit {
-  private facturacionService = inject(FacturacionService); // <--- INYECTADO
+  private facturacionService = inject(FacturacionService); 
+  mostrarModalTipoEnvio = signal<boolean>(false);
+ventaParaTipoEnvio = signal<any>(null);
 filtroFacturacion = signal<'todas' |'facturadas' | 'no_facturadas'>('todas');
   // ==================== CONSTANTES DE COLUMNAS ====================
-// AGREGA 'cliente_id' AL INICIO DE LA LISTA
-// Al inicio del componente, verifica que esta línea incluya cliente_id:
 private readonly COLUMNAS_VISTA = 'id, cliente_id, tipo, fecha, nombre_usuario, cliente_nombre, cliente_email, metodo_pago, descuento_aplicado, total_final, productos, recambio_realizado, realizado_por, venta_id_referencia, motivo, observaciones, productos_devueltos, productos_recambio, total_original, total_devuelto, total_recambio, diferencia_abonada, metodo_pago_diferencia, monto_descuento_recambio, eliminado_por, fecha_eliminacion, id_texto, facturada, factura_tipo, factura_pdf_url';
 private readonly COLUMNAS_PRODUCTOS = 'id, nombre, marca, categoria, precio, talle, cantidad_stock, codigo';
 
@@ -481,54 +481,30 @@ if (this.items().length >= this.totalItems()) {
   }
 
   async cargarConfigRecibo(): Promise<void> {
-    try {
-      const { data, error } = await this.supabase.getClient()
-        .from('configuracion_recibo')
-        .select('*')
-        .single();
+  try {
+    const { data, error } = await this.supabase.getClient()
+      .from('configuracion_recibo')
+      .select('*')
+      .single();
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          this.configRecibo.set({
-            nombre_negocio: 'PRISYS SOLUTIONS',
-            direccion: '9 DE JULIO 1718',
-            ciudad: 'Corrientes - Capital (3400)',
-            telefono1: '(3735) 475716',
-            telefono2: '(3735) 410299',
-            whatsapp1: '3735 475716',
-            whatsapp2: '3735 410299',
-            email_empresa: null,
-            logo_url: null,
-            mensaje_agradecimiento: '¡Gracias por su compra!',
-            mensaje_pie: 'DESARROLLADO POR PRISYS SOLUTIONS',
-            email_desarrollador: 'prisys.solutions@gmail.com'
-          });
-        }
+    if (error) {
+      if (error.code === 'PGRST116') {
+        // No hay configuración guardada, dejamos null
+        this.configRecibo.set(null);
         return;
       }
-
-      if (data) {
-        this.configRecibo.set(data);
-      }
-    } catch (error) {
-      console.error('Error al cargar configuración del recibo:', error);
-      this.configRecibo.set({
-        nombre_negocio: 'PRISYS SOLUTIONS',
-        direccion: '9 DE JULIO 1718',
-        ciudad: 'Corrientes - Capital (3400)',
-        telefono1: '(3735) 475716',
-        telefono2: '(3735) 410299',
-        whatsapp1: '3735 475716',
-        whatsapp2: '3735 410299',
-        email_empresa: null,
-        logo_url: null,
-        mensaje_agradecimiento: '¡Gracias por su compra!',
-        mensaje_pie: 'DESARROLLADO POR PRISYS SOLUTIONS',
-        email_desarrollador: 'prisys.solutions@gmail.com'
-      });
+      throw error;
     }
-    this.cdr.markForCheck();
+
+    if (data) {
+      this.configRecibo.set(data);
+    }
+  } catch (error) {
+    console.error('Error al cargar configuración del recibo:', error);
+    this.configRecibo.set(null);
   }
+  this.cdr.markForCheck();
+}
 
   // ==================== MÉTODOS DE RECAMBIO ====================
   puedeRealizarRecambio(venta: any): boolean {
@@ -971,16 +947,22 @@ if (this.items().length >= this.totalItems()) {
 
   // ==================== MÉTODOS DE ELIMINACIÓN ====================
   iniciarEliminacionVenta(venta: any) {
-    if (venta.recambio_realizado) {
-      this.mostrarToast('No se puede eliminar una venta que ya tiene un recambio realizado.', 'error');
-      return;
-    }
-    
-    this.ventaAEliminar.set(venta);
-    this.mostrandoConfirmacionEliminar.set(true);
-    this.cdr.markForCheck();
+  // Condición 1: No se puede eliminar si tiene recambio
+  if (venta.recambio_realizado) {
+    this.mostrarToast('No se puede eliminar una venta que ya tiene un recambio realizado.', 'error');
+    return;
   }
-
+  
+  // Condición 2: No se puede eliminar si está facturada
+  if (venta.facturada) {
+    this.mostrarToast('No se puede eliminar una venta que ya ha sido facturada ante ARCA.', 'error');
+    return;
+  }
+  
+  this.ventaAEliminar.set(venta);
+  this.mostrandoConfirmacionEliminar.set(true);
+  this.cdr.markForCheck();
+}
   cancelarEliminacion() {
     this.mostrandoConfirmacionEliminar.set(false);
     this.ventaAEliminar.set(null);
@@ -991,6 +973,12 @@ if (this.items().length >= this.totalItems()) {
   async confirmarEliminacion() {
     const venta = this.ventaAEliminar();
     if (!venta || this.eliminandoVenta()) return;
+
+  if (venta.facturada) {
+    this.mostrarToast('Operación no permitida: La venta se encuentra facturada.', 'error');
+    this.cancelarEliminacion();
+    return;
+  }
     
     if (!this.motivoEliminacion().trim()) {
       this.mostrarToast('El motivo de eliminación es obligatorio.', 'error');
@@ -1211,27 +1199,45 @@ private async generarReciboA4(venta: any, descargar: boolean, jsPDF: any): Promi
   
   // Información de la empresa (alineada a la derecha)
   const xEmpresa = anchoPagina - margenDer;
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(31, 78, 120);
-  doc.text(config?.nombre_negocio || 'PRISYS SOLUTIONS', xEmpresa, y, { align: 'right' });
+doc.setFontSize(16);
+doc.setFont('helvetica', 'bold');
+doc.setTextColor(31, 78, 120);
+
+if (config?.nombre_negocio) {
+  doc.text(config.nombre_negocio, xEmpresa, y, { align: 'right' });
   y += 6;
-  
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(80, 80, 80);
-  doc.text(config?.direccion || '9 DE JULIO 1718', xEmpresa, y, { align: 'right' });
+}
+
+doc.setFontSize(9);
+doc.setFont('helvetica', 'normal');
+doc.setTextColor(80, 80, 80);
+
+if (config?.direccion) {
+  doc.text(config.direccion, xEmpresa, y, { align: 'right' });
   y += 4;
-  doc.text(config?.ciudad || 'Corrientes - Capital (3400)', xEmpresa, y, { align: 'right' });
+}
+
+if (config?.ciudad) {
+  doc.text(config.ciudad, xEmpresa, y, { align: 'right' });
   y += 4;
-  doc.text(`Tel: ${config?.telefono1 || '(3735) 475716'} / ${config?.telefono2 || '(3735) 410299'}`, xEmpresa, y, { align: 'right' });
+}
+
+if (config?.telefono1 || config?.telefono2) {
+  const telefonos = [config.telefono1, config.telefono2].filter(Boolean).join(' / ');
+  doc.text(`Tel: ${telefonos}`, xEmpresa, y, { align: 'right' });
   y += 4;
-  doc.text(`WhatsApp: ${config?.whatsapp1 || '3735 475716'} / ${config?.whatsapp2 || '3735 410299'}`, xEmpresa, y, { align: 'right' });
+}
+
+if (config?.whatsapp1 || config?.whatsapp2) {
+  const whatsapps = [config.whatsapp1, config.whatsapp2].filter(Boolean).join(' / ');
+  doc.text(`WhatsApp: ${whatsapps}`, xEmpresa, y, { align: 'right' });
   y += 4;
-  
-  if (config?.email_empresa) {
-    doc.text(config.email_empresa, xEmpresa, y, { align: 'right' });
-  }
+}
+
+if (config?.email_empresa) {
+  doc.text(config.email_empresa, xEmpresa, y, { align: 'right' });
+  y += 4;
+}
   
   y = 70;
   doc.setTextColor(0, 0, 0);
@@ -1504,11 +1510,10 @@ y += alturaEncabezado;
   y += 28; // Mantiene el espacio original entre método de pago y agradecimiento
   
   // ==================== MENSAJE DE AGRADECIMIENTO ====================
-  // Asegurar que el agradecimiento quede antes de la línea del pie
-  const yPieLinea = 275; // Posición de la línea decorativa del pie
-  const espacioMinimo = 8; // Espacio mínimo antes de la línea
+if (config?.mensaje_agradecimiento) {
+  const yPieLinea = 275;
+  const espacioMinimo = 8;
   
-  // Si 'y' está muy cerca del pie, ajustarlo para que quede bien posicionado
   if (y > yPieLinea - espacioMinimo) {
     y = yPieLinea - espacioMinimo;
   }
@@ -1516,29 +1521,30 @@ y += alturaEncabezado;
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(31, 78, 120);
-  const mensajeGracias = config?.mensaje_agradecimiento || '¡Gracias por su compra!';
-  doc.text(mensajeGracias, anchoPagina / 2, y, { align: 'center' });
+  doc.text(config.mensaje_agradecimiento, anchoPagina / 2, y, { align: 'center' });
   doc.setTextColor(0, 0, 0);
-  
-  // ==================== PIE DE PÁGINA ====================
-  const yPie = 280;
-  
-  // Línea decorativa
-  doc.setDrawColor(31, 78, 120);
-  doc.setLineWidth(0.3);
-  doc.line(margenIzq, yPieLinea, anchoPagina - margenDer, yPieLinea);
-  
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(120, 120, 120);
-  
-  const mensajePie = config?.mensaje_pie || 'DESARROLLADO POR PRISYS SOLUTIONS';
-  doc.text(mensajePie, anchoPagina / 2, yPie, { align: 'center' });
-  
-  const emailDev = config?.email_desarrollador || 'prisys.solutions@gmail.com';
-  doc.text(emailDev, anchoPagina / 2, yPie + 4, { align: 'center' });
-  
-  doc.setTextColor(0, 0, 0);
+}
+
+// ==================== PIE DE PÁGINA ====================
+const yPie = 280;
+const yPieLinea = 275;
+
+// Línea decorativa
+doc.setDrawColor(31, 78, 120);
+doc.setLineWidth(0.3);
+doc.line(margenIzq, yPieLinea, anchoPagina - margenDer, yPieLinea);
+
+doc.setFontSize(8);
+doc.setFont('helvetica', 'normal');
+doc.setTextColor(120, 120, 120);
+
+const mensajePie = config?.mensaje_pie || 'DESARROLLADO POR PRISYS SOLUTIONS';
+doc.text(mensajePie, anchoPagina / 2, yPie, { align: 'center' });
+
+const emailDev = config?.email_desarrollador || 'prisys.solutions@gmail.com';
+doc.text(emailDev, anchoPagina / 2, yPie + 4, { align: 'center' });
+
+doc.setTextColor(0, 0, 0);
   
   return doc.output('blob');
 }
@@ -1619,35 +1625,43 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
   }
 
   // Nombre del negocio
+  if (config?.nombre_negocio) {
   doc.setFontSize(13);
   doc.setFont('helvetica', 'bold');
-  doc.text(config?.nombre_negocio || 'PRISYS SOLUTIONS', 40, y, { align: 'center' });
+  doc.text(config.nombre_negocio, 40, y, { align: 'center' });
   y += 6;
-  
-  // Información de contacto
-  doc.setFontSize(7.5);
-  doc.setFont('helvetica', 'normal');
-  
-  doc.text(config?.direccion || '9 DE JULIO 1718', 40, y, { align: 'center' });
+}
+
+// Información de contacto
+doc.setFontSize(7.5);
+doc.setFont('helvetica', 'normal');
+
+if (config?.direccion) {
+  doc.text(config.direccion, 40, y, { align: 'center' });
   y += 3.5;
-  
-  doc.text(config?.ciudad || 'Corrientes - Capital (3400)', 40, y, { align: 'center' });
+}
+
+if (config?.ciudad) {
+  doc.text(config.ciudad, 40, y, { align: 'center' });
   y += 3.5;
-  
-  const tel1 = config?.telefono1 || '(3735) 475716';
-  const tel2 = config?.telefono2 || '(3735) 410299';
-  doc.text(`Tel: ${tel1} - ${tel2}`, 40, y, { align: 'center' });
+}
+
+if (config?.telefono1 || config?.telefono2) {
+  const telefonos = [config.telefono1, config.telefono2].filter(Boolean).join(' - ');
+  doc.text(`Tel: ${telefonos}`, 40, y, { align: 'center' });
   y += 3.5;
-  
-  const wsp1 = config?.whatsapp1 || '3735 475716';
-  const wsp2 = config?.whatsapp2 || '3735 410299';
-  doc.text(`WhatsApp: ${wsp1} - ${wsp2}`, 40, y, { align: 'center' });
+}
+
+if (config?.whatsapp1 || config?.whatsapp2) {
+  const whatsapps = [config.whatsapp1, config.whatsapp2].filter(Boolean).join(' - ');
+  doc.text(`WhatsApp: ${whatsapps}`, 40, y, { align: 'center' });
   y += 3.5;
-  
-  if (config?.email_empresa) {
-    doc.text(config.email_empresa, 40, y, { align: 'center' });
-    y += 3.5;
-  }
+}
+
+if (config?.email_empresa) {
+  doc.text(config.email_empresa, 40, y, { align: 'center' });
+  y += 3.5;
+}
   
   y += 4;
   
@@ -1890,57 +1904,80 @@ private async generarReciboTermica(venta: any, descargar: boolean, jsPDF: any): 
   }
 }
 
- async enviarDetalleEmail() {
+async enviarDetalleEmail() {
+  const venta = this.ventaParaEmail();
   const email = this.emailDestino();
-  
-  if (!email.trim()) {
-    this.mostrarToast('Debes ingresar un email válido', 'error');
+
+  if (!email.trim() || !venta || !this.emailEsValido()) {
+    this.mostrarToast('Email inválido o datos incompletos', 'warning');
     return;
   }
-  
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    this.mostrarToast('Formato de email inválido', 'error');
-    return;
-  }
-  
+
   this.enviandoEmail.set(true);
-  
+
   try {
-    const venta = this.ventaParaEmail();
-    // SIEMPRE usar formato A4 para emails, sin abrir el PDF
-    const pdfBlob = await this.generarReciboPDF(venta, false, 'a4');
-    if (!pdfBlob) throw new Error('No se pudo generar PDF');
-    
-    const base64data = await this.blobToBase64(pdfBlob as Blob);
-    const base64Content = base64data.split(',')[1];
-    
-    const detalleVenta = {
-      id: venta.id.slice(-8),
-      fecha: new Date(venta.fecha_venta).toLocaleString('es-AR'),
-      cliente: venta.cliente_nombre || 'Cliente',
-      productos: venta.productos,
-      total: venta.total_final,
-      metodo_pago: venta.metodo_pago,
-      descuento: venta.descuento_aplicado || 0
-    };
-    
-    const { error } = await this.supabase.getClient().functions.invoke('enviar-detalle-venta', {
-      body: {
+    let pdfBlob: Blob;
+    let payload: any;
+
+    if (venta.facturada) {
+      // --- CASO FACTURA ---
+      const [
+        { data: vComp, error: e1 }, 
+        { data: configF, error: e2 }, 
+        { data: configRec, error: e3 }
+      ] = await Promise.all([
+        this.supabase.getClient().from('ventas').select('*, detalle_venta(*, productos(*)), clientes(*)').eq('id', venta.id).single(),
+        this.supabase.getClient().from('facturacion').select('*').single(),
+        this.supabase.getClient().from('configuracion_recibo').select('*').single()
+      ]);
+
+      if (e1 || !vComp) throw new Error('No se pudo obtener datos de la factura');
+
+      const configC = { 
+        ...configF, 
+        nombre_comercial: configRec?.nombre_negocio, 
+        logo_url: configRec?.logo_url 
+      };
+
+      pdfBlob = await this.facturacionService.generarFacturaPDF(vComp, configC);
+      
+      payload = {
         email: email,
-        detalle: detalleVenta,
-        pdfBase64: base64Content
-      }
-    });
+        pdfBase64: await this.blobToPureBase64(pdfBlob),
+        numero: venta.factura_nro || venta.id.slice(-8),
+        tipo: venta.factura_tipo || 'A',
+        esFactura: true,
+        nombreCliente: venta.cliente_nombre || 'Cliente'
+      };
+    } else {
+      // --- CASO RECIBO ---
+      const blobResult = await this.generarReciboPDF(venta, false, 'a4');
+      if (!blobResult) throw new Error('No se pudo generar el PDF del recibo');
+      pdfBlob = blobResult;
+
+      payload = {
+        email: email,
+        pdfBase64: await this.blobToPureBase64(pdfBlob),
+        numero: venta.id.slice(-8),
+        tipo: 'Recibo',
+        esFactura: false,
+        nombreCliente: venta.cliente_nombre || 'Cliente'
+      };
+    }
+
+    // Invocamos la función unificada
+    const resultado = await this.invocarEnvioComprobante(payload);
     
-    if (error) throw error;
-    
-    this.mostrarToast('Email enviado correctamente', 'success');
-    this.cerrarModalEmail(); // Cierra el modal directamente sin abrir PDF
-    
+    if (resultado.success) {
+      this.mostrarToast('Enviado correctamente a ' + email, 'success');
+      this.cerrarModalEmail();
+    } else {
+      throw new Error(resultado.error || 'Error desconocido en el servidor');
+    }
+
   } catch (error: any) {
-    console.error('Error enviando email:', error);
-    this.mostrarToast('Error al enviar email', 'error');
+    console.error('❌ Error en el proceso de envío:', error);
+    this.mostrarToast('Error: ' + (error.message || 'No se pudo enviar el correo'), 'error');
   } finally {
     this.enviandoEmail.set(false);
     this.cdr.markForCheck();
@@ -2231,4 +2268,60 @@ limpiarBusquedaProducto(): void {
   this.busquedaProducto.set('');
   this.cdr.markForCheck();
 }
+
+async verFactura(item: any) {
+  try {
+    // Mostramos el toast inmediatamente
+    this.mostrarToast("Generando comprobante...", "success");
+    this.cargando.set(true);
+    
+    // Ejecutamos la lógica del servicio
+    await this.facturacionService.visualizarFactura(item.id);
+    
+  } catch (error) {
+    this.mostrarToast("No se pudo generar la vista de la factura", "error");
+  } finally {
+    this.cargando.set(false);
+    this.cdr.markForCheck();
+  }
+}
+
+
+private async blobToPureBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64WithPrefix = reader.result as string;
+      if (!base64WithPrefix.includes(',')) {
+        reject(new Error("Formato de PDF inválido"));
+        return;
+      }
+      const pureBase64 = base64WithPrefix.split(',')[1];
+      resolve(pureBase64);
+    };
+    reader.onerror = () => reject(new Error("Error al leer el archivo PDF"));
+    reader.readAsDataURL(blob);
+  });
+}
+
+
+private async invocarEnvioComprobante(payload: any) {
+  
+  const { data, error } = await this.supabase.getClient().functions.invoke('enviar-comprobante', {
+    body: payload
+  });
+
+  if (error) {
+    console.error("Error Supabase Function:", error);
+    throw error;
+  }
+  
+  return data;
+}
+
+emailEsValido = computed(() => {
+  const email = this.emailDestino();
+  const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return regex.test(email);
+});
 }

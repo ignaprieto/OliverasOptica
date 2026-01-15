@@ -1,4 +1,4 @@
-
+@reference "tailwindcss";
 /* Animaciones mejoradas */
 @keyframes slideIn {
   from {

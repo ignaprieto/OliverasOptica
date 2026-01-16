@@ -102,8 +102,6 @@ declare global {
 })
 export class VentasComponent implements OnInit, OnDestroy {
 private facturacionService = inject(FacturacionService);
-clienteParaFacturaA = signal<Cliente | null>(null);
-mostrarSelectorClienteFacturaA = signal<boolean>(false);
 mostrarModalTipoFacturaRI = signal<boolean>(false);
 private stockSubscription: any;
   // ✅ CAMBIO 2: Constante para columnas específicas de Supabase
@@ -493,12 +491,13 @@ this.stockSubscription = this.supabase.getClient()
   }
 
   seleccionarCliente(cliente: Cliente) {
-    this.clienteSeleccionado.set(cliente);
-    this.clienteNombre.set(cliente.nombre);
-    this.clienteEmail.set(cliente.email || '');
-    this._busquedaCliente.set('');
-    this.mostrarListaClientes.set(false);
-  }
+  this.clienteSeleccionado.set(cliente);
+  this.clienteNombre.set(cliente.nombre);
+  this.clienteEmail.set(cliente.email || '');
+  this._busquedaCliente.set('');
+  this.mostrarListaClientes.set(false);
+  this.cdr.markForCheck(); // Importante para OnPush
+}
 
   limpiarCliente() {
     this.clienteSeleccionado.set(null);
@@ -671,7 +670,6 @@ liberarCamara(): void {
     this.facturacionService.facturacionHabilitada.set(false);
     this.mostrarListaClientes.set(true);
     this.clientes.set([]);
-    this.clienteParaFacturaA.set(null);
   } else {
     // Si vuelve a normal, restaurar según el método de pago (usa la regla de la base de datos)
     this.facturacionService.aplicarReglaPorMetodo(this.metodoPago());
@@ -1046,7 +1044,7 @@ async confirmarVenta() {
   if (!configFiscal) return this.ejecutarVentaFinal(null);
 
   const emisorCondicion = configFiscal.condicion_iva; 
-  const cliente = this.clienteParaFacturaA();
+const cliente = this.clienteSeleccionado();
 
   // REGLA A: EMISOR MONOTRIBUTISTA -> SIEMPRE FACTURA C
   if (emisorCondicion === 'Monotributista') {
@@ -1098,7 +1096,7 @@ async ejecutarVentaFinal(tipoFactura: string | null) {
     ? `${this.metodoPago1()} + ${this.metodoPago2()}` 
     : (this.esVentaCredito() ? 'fiado' : this.metodoPago()),
   p_descuento_aplicado: this.descuentoAplicado(),
-  p_cliente_id: (this.esVentaCredito() ? this.clienteSeleccionado()?.id : this.clienteParaFacturaA()?.id) || null,
+  p_cliente_id: this.clienteSeleccionado()?.id || null,
   p_es_credito: this.esVentaCredito(),
   p_items: itemsParaRpc,
   p_pago_dividido: this.pagoDividido(),
@@ -1170,7 +1168,7 @@ async procesarFinalizacionVenta(tipoFactura: string | null) {
        metodoPagoVenta = `${this.metodoPago1()} ($${this.montoPago1()}) + ${this.metodoPago2()} ($${this.montoPago2()})`;
     }
 
-    const clienteIdFinal = this.esVentaCredito() ? this.clienteSeleccionado()?.id : this.clienteParaFacturaA()?.id;
+const clienteIdFinal = this.clienteSeleccionado()?.id || null;
 
     // 1. Insertar Venta
     const { data: venta, error } = await this.supabase.getClient().from('ventas').insert({
@@ -1299,7 +1297,6 @@ async seleccionarFormatoReciboPostVenta(formato: 'termica' | 'a4') {
   
   this.esVentaCredito.set(false);
   this.limpiarCliente();
-  this.clienteParaFacturaA.set(null);
   this.fechaVencimiento.set('');
   this.observacionesCredito.set('');
 }
@@ -1960,33 +1957,4 @@ async cargarConfigRecibo(): Promise<void> {
     return cliente.id ?? '';
   }
 
-  abrirSelectorClienteFacturaA() {
-  this.mostrarSelectorClienteFacturaA.set(true);
-  this.busquedaCliente = ''; // Trigger búsqueda
-}
-
-// Método para seleccionar cliente solo para factura A
-seleccionarClienteParaFacturaA(cliente: Cliente) {
-  this.clienteParaFacturaA.set(cliente);
-  this.clienteNombre.set(cliente.nombre);
-  this.clienteEmail.set(cliente.email || '');
-  this._busquedaCliente.set('');
-  this.mostrarSelectorClienteFacturaA.set(false);
-  
-  // Aplicar regla de facturación según el cliente
-  if (cliente.condicion_iva === 'Responsable Inscripto' && cliente.cuit) {
-    // Si el cliente es RI con CUIT, puede factura A
-    this.mostrarToast('Cliente Responsable Inscripto seleccionado - Factura A disponible', 'success');
-  } else {
-    this.mostrarToast('Cliente seleccionado - Factura B/C según configuración', 'success');
-  }
-}
-
-// Método para limpiar cliente de factura A
-limpiarClienteFacturaA() {
-  this.clienteParaFacturaA.set(null);
-  this.clienteNombre.set('');
-  this.clienteEmail.set('');
-  this._busquedaCliente.set('');
-}
 }

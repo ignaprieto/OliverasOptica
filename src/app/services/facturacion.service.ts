@@ -355,42 +355,38 @@ async visualizarFactura(ventaId: string) {
 
   // --- PIE DE PÁGINA (QR Y CAE) ---
   const pieY = 260;
-  const fechaEmision = new Date(venta.fecha_venta || new Date());
   
-  // Estructura de datos requerida por ARCA/AFIP para el QR
+  // Usamos los campos afip_... que guardamos en la Edge Function
+  // Si no existen (facturas viejas), usamos fallbacks
   const datosQR = {
     ver: 1,
-    fecha: fechaEmision.toISOString().split('T')[0],
-    cuit: parseInt(config.cuit?.replace(/\D/g, '') || "0"),
-    ptoVta: config.punto_venta,
-    tipoCmp: codTipoCmp,
-    nroCmp: parseInt(venta.factura_nro || 0),
-    importe: total,
+    fecha: venta.afip_fecha_emision || new Date(venta.created_at).toISOString().split('T')[0],
+    cuit: Number(config.cuit.replace(/\D/g, '')),
+    ptoVta: Number(venta.afip_pto_vta || config.punto_venta),
+    tipoCmp: Number(venta.afip_tipo_cmp || codTipoCmp),
+    nroCmp: Number(venta.afip_nro_cbte || venta.factura_nro),
+    importe: Number(venta.afip_importe_total || venta.total_final),
     moneda: "PES",
     ctz: 1,
-    tipoDocRec: esFacturaA ? 80 : (clienteCuit.length > 10 ? 80 : 99),
-    nroDocRec: parseInt(clienteCuit.replace(/\D/g, '')) || 0,
+    tipoDocRec: Number(venta.afip_tipo_doc_rec || (esFacturaA ? 80 : 99)),
+    nroDocRec: Number(venta.afip_nro_doc_rec || 0),
     tipoCodAut: "E",
-    codAut: parseInt(venta.cae || 0)
+    codAut: Number(venta.cae)
   };
 
-  // Codificación segura para btoa (soporte para caracteres especiales)
-  const base64QR = btoa(unescape(encodeURIComponent(JSON.stringify(datosQR))));
-  const urlQR = `https://www.arca.gob.ar/fe/qr/?p=${base64QR}`;
+  const base64QR = btoa(JSON.stringify(datosQR));
+  
+  const urlQR = `https://www.afip.gob.ar/fe/qr/?p=${base64QR}`;
 
   try {
     const qrDataUrl = await QRCode.toDataURL(urlQR, { errorCorrectionLevel: 'M', margin: 1 });
-    doc.addImage(qrDataUrl, 'PNG', 10, pieY - 5, 30, 30);
+    doc.addImage(qrDataUrl, 'PNG', 10, pieY - 5, 33, 33);
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
-    doc.text('ARCA', 45, pieY + 5);
+    doc.text('ARCA / AFIP', 45, pieY + 5);
     doc.setFontSize(8);
     doc.text('Comprobante Autorizado', 45, pieY + 10);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
-    doc.text('Esta Administración Federal no se responsabiliza por los datos ingresados', 45, pieY + 15);
-    doc.text('en el detalle de la operación.', 45, pieY + 18);
     
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
@@ -398,7 +394,7 @@ async visualizarFactura(ventaId: string) {
     const fechaVto = venta.cae_vto ? new Date(venta.cae_vto).toLocaleDateString('es-AR') : '-';
     doc.text(`Fecha Vto. CAE: ${fechaVto}`, 140, pieY + 15);
   } catch (e) {
-    console.error('Error generando QR de ARCA:', e);
+    console.error('Error generando QR:', e);
   }
 
   return doc.output('blob');
